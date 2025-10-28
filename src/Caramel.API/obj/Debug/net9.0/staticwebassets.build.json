@@ -1,0 +1,1382 @@
+{
+  "Version": 1,
+  "Hash": "FvNcA1pw5295mqfZJ8GG9Br+vEOcWVlG1y+3f5NzElk=",
+  "Source": "Caramel.API",
+  "BasePath": "_content/Caramel.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "Caramel.API/wwwroot",
+      "Source": "Caramel.API",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/",
+      "BasePath": "_content/Caramel.API",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/3lru2dswsv-7mfyau3kgl.gz",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "assets/index-UdvnZh6r#[.{fingerprint=7mfyau3kgl}]?.css.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-UdvnZh6r.css",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "jpkx1hicjr",
+      "Integrity": "6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-UdvnZh6r.css"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/90pt45wzmd-oedhujdkyq.gz",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "assets/index-9EqanlEg#[.{fingerprint=oedhujdkyq}]?.js.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-9EqanlEg.js",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "9det048xb9",
+      "Integrity": "/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-9EqanlEg.js"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/cjweh2uhf6-69kjnsiwqx.gz",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "vite#[.{fingerprint=69kjnsiwqx}]?.svg.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/vite.svg",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "0v179rs1ub",
+      "Integrity": "1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/vite.svg"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/xi3ydpkdeh-1l0k8dlci8.gz",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "index#[.{fingerprint=1l0k8dlci8}]?.html.gz",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Alternative",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/index.html",
+      "AssetTraitName": "Content-Encoding",
+      "AssetTraitValue": "gzip",
+      "Fingerprint": "r09r517mn8",
+      "Integrity": "leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/index.html"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-9EqanlEg.js",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "assets/index-9EqanlEg#[.{fingerprint}]?.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "oedhujdkyq",
+      "Integrity": "IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/assets/index-9EqanlEg.js"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-UdvnZh6r.css",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "assets/index-UdvnZh6r#[.{fingerprint}]?.css",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "7mfyau3kgl",
+      "Integrity": "jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/assets/index-UdvnZh6r.css"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/index.html",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "index#[.{fingerprint}]?.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "1l0k8dlci8",
+      "Integrity": "9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/index.html"
+    },
+    {
+      "Identity": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/vite.svg",
+      "SourceId": "Caramel.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/",
+      "BasePath": "_content/Caramel.API",
+      "RelativePath": "vite#[.{fingerprint}]?.svg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "Fingerprint": "69kjnsiwqx",
+      "Integrity": "SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs=",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/vite.svg"
+    }
+  ],
+  "Endpoints": [
+    {
+      "Route": "assets/index-9EqanlEg.js",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/90pt45wzmd-oedhujdkyq.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000040448166"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "24722"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-9EqanlEg.js",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-9EqanlEg.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "61372"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-9EqanlEg.js.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/90pt45wzmd-oedhujdkyq.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "24722"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-9EqanlEg.oedhujdkyq.js",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/90pt45wzmd-oedhujdkyq.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.000040448166"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "24722"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "oedhujdkyq"
+        },
+        {
+          "Name": "label",
+          "Value": "assets/index-9EqanlEg.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-9EqanlEg.oedhujdkyq.js",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-9EqanlEg.js",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "61372"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "oedhujdkyq"
+        },
+        {
+          "Name": "label",
+          "Value": "assets/index-9EqanlEg.js"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-IDhSz1qFd6wMxLq6SCwN5+E6q+cNtDD4Djzu/nNtoGQ="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-9EqanlEg.oedhujdkyq.js.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/90pt45wzmd-oedhujdkyq.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "24722"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/javascript"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "oedhujdkyq"
+        },
+        {
+          "Name": "label",
+          "Value": "assets/index-9EqanlEg.js.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-/T0tET1XzYNeE/KFyU8H5PGUcOYykW1MYoblLSPcRTw="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-UdvnZh6r.7mfyau3kgl.css",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/3lru2dswsv-7mfyau3kgl.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.001562500000"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "639"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "7mfyau3kgl"
+        },
+        {
+          "Name": "label",
+          "Value": "assets/index-UdvnZh6r.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-UdvnZh6r.7mfyau3kgl.css",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-UdvnZh6r.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1264"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "7mfyau3kgl"
+        },
+        {
+          "Name": "label",
+          "Value": "assets/index-UdvnZh6r.css"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-UdvnZh6r.7mfyau3kgl.css.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/3lru2dswsv-7mfyau3kgl.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "639"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "7mfyau3kgl"
+        },
+        {
+          "Name": "label",
+          "Value": "assets/index-UdvnZh6r.css.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-UdvnZh6r.css",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/3lru2dswsv-7mfyau3kgl.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.001562500000"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "639"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-UdvnZh6r.css",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/assets/index-UdvnZh6r.css",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1264"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-jzUWPBcj2TE+Ka5PGr2UHzONbqQpO7W6R+kSzfd1jzo="
+        }
+      ]
+    },
+    {
+      "Route": "assets/index-UdvnZh6r.css.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/3lru2dswsv-7mfyau3kgl.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "639"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/css"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-6XPA8BYdKWfkOO+ZGfOaGg3uNp+YrjQt1N5jUD4sClw="
+        }
+      ]
+    },
+    {
+      "Route": "index.1l0k8dlci8.html",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/xi3ydpkdeh-1l0k8dlci8.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.003831417625"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "260"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "1l0k8dlci8"
+        },
+        {
+          "Name": "label",
+          "Value": "index.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY="
+        }
+      ]
+    },
+    {
+      "Route": "index.1l0k8dlci8.html",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/index.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "373"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "1l0k8dlci8"
+        },
+        {
+          "Name": "label",
+          "Value": "index.html"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY="
+        }
+      ]
+    },
+    {
+      "Route": "index.1l0k8dlci8.html.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/xi3ydpkdeh-1l0k8dlci8.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "260"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "1l0k8dlci8"
+        },
+        {
+          "Name": "label",
+          "Value": "index.html.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk="
+        }
+      ]
+    },
+    {
+      "Route": "index.html",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/xi3ydpkdeh-1l0k8dlci8.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.003831417625"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "260"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY="
+        }
+      ]
+    },
+    {
+      "Route": "index.html",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/index.html",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "373"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-9et+aCipk/ZR6IuYTEPF2o5QBUCajs5hGdtPEjW5UcY="
+        }
+      ]
+    },
+    {
+      "Route": "index.html.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/xi3ydpkdeh-1l0k8dlci8.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "260"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "text/html"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-leB3Svkur++mGC4u+OhdkfDmpLaclTrWaI5VouqcKSk="
+        }
+      ]
+    },
+    {
+      "Route": "vite.69kjnsiwqx.svg",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/cjweh2uhf6-69kjnsiwqx.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.001288659794"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "775"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/svg+xml"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "69kjnsiwqx"
+        },
+        {
+          "Name": "label",
+          "Value": "vite.svg"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs="
+        }
+      ]
+    },
+    {
+      "Route": "vite.69kjnsiwqx.svg",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/vite.svg",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1497"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/svg+xml"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "69kjnsiwqx"
+        },
+        {
+          "Name": "label",
+          "Value": "vite.svg"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs="
+        }
+      ]
+    },
+    {
+      "Route": "vite.69kjnsiwqx.svg.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/cjweh2uhf6-69kjnsiwqx.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "775"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/svg+xml"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=31536000, immutable"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "fingerprint",
+          "Value": "69kjnsiwqx"
+        },
+        {
+          "Name": "label",
+          "Value": "vite.svg.gz"
+        },
+        {
+          "Name": "integrity",
+          "Value": "sha256-1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48="
+        }
+      ]
+    },
+    {
+      "Route": "vite.svg",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/cjweh2uhf6-69kjnsiwqx.gz",
+      "Selectors": [
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip",
+          "Quality": "0.001288659794"
+        }
+      ],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "775"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/svg+xml"
+        },
+        {
+          "Name": "ETag",
+          "Value": "W/\"SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs=\""
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs="
+        }
+      ]
+    },
+    {
+      "Route": "vite.svg",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/wwwroot/vite.svg",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "1497"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/svg+xml"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "max-age=3600, must-revalidate"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-SnSK/UQ5GLsWWRyDTEAdrjPoeGGrXbrQgRw6O0qSFPs="
+        }
+      ]
+    },
+    {
+      "Route": "vite.svg.gz",
+      "AssetFile": "/home/codeacula/Dev/caramel/src/Caramel.API/obj/Debug/net9.0/compressed/cjweh2uhf6-69kjnsiwqx.gz",
+      "Selectors": [],
+      "ResponseHeaders": [
+        {
+          "Name": "Accept-Ranges",
+          "Value": "bytes"
+        },
+        {
+          "Name": "Content-Length",
+          "Value": "775"
+        },
+        {
+          "Name": "Content-Type",
+          "Value": "image/svg+xml"
+        },
+        {
+          "Name": "ETag",
+          "Value": "\"1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48=\""
+        },
+        {
+          "Name": "Last-Modified",
+          "Value": "Tue, 28 Oct 2025 16:41:55 GMT"
+        },
+        {
+          "Name": "Cache-Control",
+          "Value": "no-cache"
+        },
+        {
+          "Name": "Content-Encoding",
+          "Value": "gzip"
+        },
+        {
+          "Name": "Vary",
+          "Value": "Content-Encoding"
+        }
+      ],
+      "EndpointProperties": [
+        {
+          "Name": "integrity",
+          "Value": "sha256-1AU3txN9n5Dd653zBLam5zvwTi+8uF/FPEP9hABUE48="
+        }
+      ]
+    }
+  ]
+}

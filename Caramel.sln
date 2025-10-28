@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{EEE25912-D718-43F9-8348-D5A4D1C6F873}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Caramel.API", "src\Caramel.API\Caramel.API.csproj", "{D9082A74-A208-4CB3-81DB-1BA5AAC049A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D9082A74-A208-4CB3-81DB-1BA5AAC049A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9082A74-A208-4CB3-81DB-1BA5AAC049A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9082A74-A208-4CB3-81DB-1BA5AAC049A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9082A74-A208-4CB3-81DB-1BA5AAC049A8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D9082A74-A208-4CB3-81DB-1BA5AAC049A8} = {EEE25912-D718-43F9-8348-D5A4D1C6F873}
+	EndGlobalSection
+EndGlobal
