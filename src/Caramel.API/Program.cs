@@ -1,8 +1,14 @@
+using Caramel.Twitch;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Configure Twitch client credentials
+builder.Services.Configure<CaramelTwitchClientCredentials>(
+    builder.Configuration.GetSection("TwitchClient"));
 
 var app = builder.Build();
 
@@ -14,28 +20,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+try
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
+    app.Logger.LogInformation("Starting Caramel API...");
+    var twitchCredentials = app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<CaramelTwitchClientCredentials>>().Value;
+    var twitchClient = new CaramelTwitchClient(twitchCredentials);
+    await twitchClient.ConnectAsync();
+}
+catch (Exception ex)
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    app.Logger.LogCritical(ex, "Application start-up failed");
+    throw;
+}
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
