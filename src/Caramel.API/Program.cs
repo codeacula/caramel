@@ -1,26 +1,17 @@
-using Caramel.AI;
-using Caramel.API;
-using Caramel.Database;
-using Caramel.Discord;
+using Caramel.Cache;
+using Caramel.GRPC;
 
-using NetCord.Hosting.Services;
 
 WebApplicationBuilder webAppBuilder = WebApplication.CreateBuilder(args);
 var configuration = webAppBuilder.Configuration;
 
 _ = webAppBuilder.Services.AddControllers();
 _ = webAppBuilder.Services
-  .AddDatabaseServices(configuration)
-  .AddAPIServices(configuration)
-  .AddAiServices(configuration)
-  .AddDiscordServices();
+  .AddCacheServices(configuration.GetConnectionString("Redis")!)
+  .AddGrpcClientServices();
 
 WebApplication app = webAppBuilder.Build();
 
-// Apply database migrations
-await app.Services.MigrateDatabaseAsync();
-
-_ = app.AddModules(typeof(ICaramelAPIApp).Assembly);
 _ = app.UseRequestLocalization();
 
 if (app.Environment.IsDevelopment())

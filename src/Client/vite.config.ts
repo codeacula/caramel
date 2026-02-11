@@ -1,5 +1,5 @@
-import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
@@ -14,7 +14,7 @@ export default defineConfig({
   },
   build: {
     // Build straight into ASP.NET's static files for production
-    outDir: '../Caramel.API/wwwroot',
+    outDir: '../Apollo.API/wwwroot',
     emptyOutDir: true,
   },
 })

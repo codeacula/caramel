@@ -1,0 +1,173 @@
+using Caramel.Core;
+using Caramel.Core.ToDos;
+using Caramel.Database.ToDos.Events;
+using Caramel.Domain.People.ValueObjects;
+using Caramel.Domain.ToDos.Models;
+using Caramel.Domain.ToDos.ValueObjects;
+
+using FluentResults;
+
+using Marten;
+
+namespace Caramel.Database.ToDos;
+
+public sealed class ToDoStore(IDocumentSession session, TimeProvider timeProvider) : IToDoStore
+{
+  public async Task<Result> CompleteAsync(ToDoId id, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      _ = session.Events.Append(id.Value, new ToDoCompletedEvent(id.Value, time));
+
+      await session.SaveChangesAsync(cancellationToken);
+
+      return Result.Ok();
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result<ToDo>> CreateAsync(ToDoId id, PersonId personId, Description description, Priority priority, Energy energy, Interest interest, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      var ev = new ToDoCreatedEvent(id.Value, personId.Value, description.Value, (int)priority.Value, (int)energy.Value, (int)interest.Value, time);
+
+      _ = session.Events.StartStream<DbToDo>(id.Value, [ev]);
+      await session.SaveChangesAsync(cancellationToken);
+
+      var newToDo = await session.Events.AggregateStreamAsync<DbToDo>(id.Value, token: cancellationToken);
+
+      return newToDo is null ? Result.Fail<ToDo>("Failed to create new toDo") : Result.Ok((ToDo)newToDo);
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result> DeleteAsync(ToDoId id, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      _ = session.Events.Append(id.Value, new ToDoDeletedEvent(id.Value, time));
+
+      await session.SaveChangesAsync(cancellationToken);
+
+      return Result.Ok();
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result<ToDo>> GetAsync(ToDoId id, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var dbToDo = await session.Query<DbToDo>().FirstOrDefaultAsync(t => t.Id == id.Value && !t.IsDeleted, cancellationToken);
+      return dbToDo is null ? Result.Fail<ToDo>($"ToDo with ID {id.Value} not found") : Result.Ok((ToDo)dbToDo);
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result<IEnumerable<ToDo>>> GetByPersonIdAsync(PersonId personId, bool includeCompleted = false, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var query = session.Query<DbToDo>()
+        .Where(t => t.PersonId == personId.Value && !t.IsDeleted);
+
+      if (!includeCompleted)
+      {
+        query = query.Where(t => !t.IsCompleted);
+      }
+
+      var dbToDos = await query.ToListAsync(cancellationToken);
+
+      var toDos = dbToDos.Select(t => (ToDo)t);
+      return Result.Ok(toDos);
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result> UpdateAsync(ToDoId id, Description description, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      _ = session.Events.Append(id.Value, new ToDoUpdatedEvent(id.Value, description.Value, time));
+
+      await session.SaveChangesAsync(cancellationToken);
+
+      return Result.Ok();
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result> UpdatePriorityAsync(ToDoId toDoId, Priority priority, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      _ = session.Events.Append(toDoId.Value, new ToDoPriorityUpdatedEvent(toDoId.Value, (int)priority.Value, time));
+
+      await session.SaveChangesAsync(cancellationToken);
+
+      return Result.Ok();
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result> UpdateEnergyAsync(ToDoId toDoId, Energy energy, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      _ = session.Events.Append(toDoId.Value, new ToDoEnergyUpdatedEvent(toDoId.Value, (int)energy.Value, time));
+
+      await session.SaveChangesAsync(cancellationToken);
+
+      return Result.Ok();
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+
+  public async Task<Result> UpdateInterestAsync(ToDoId toDoId, Interest interest, CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var time = timeProvider.GetUtcDateTime();
+      _ = session.Events.Append(toDoId.Value, new ToDoInterestUpdatedEvent(toDoId.Value, (int)interest.Value, time));
+
+      await session.SaveChangesAsync(cancellationToken);
+
+      return Result.Ok();
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail(ex.Message);
+    }
+  }
+}

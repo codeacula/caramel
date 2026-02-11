@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>ea0797f8-b37f-4f42-a7b7-3cfac0e6ec48</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="NetCord" Version="1.0.0-alpha.455" />
+    <PackageReference Include="Quartz" Version="3.15.1" />
+    <PackageReference Include="Quartz.Extensions.DependencyInjection" Version="3.15.1" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.15.1" />
+    <PackageReference Include="Quartz.Serialization.SystemTextJson" Version="3.15.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Caramel.AI\Caramel.AI.csproj" />
+    <ProjectReference Include="..\Caramel.Application\Caramel.Application.csproj" />
+    <ProjectReference Include="..\Caramel.Cache\Caramel.Cache.csproj" />
+    <ProjectReference Include="..\Caramel.Core\Caramel.Core.csproj" />
+    <ProjectReference Include="..\Caramel.Domain\Caramel.Domain.csproj" />
+    <ProjectReference Include="..\Caramel.Database\Caramel.Database.csproj" />
+    <ProjectReference Include="..\Caramel.GRPC\Caramel.GRPC.csproj" />
+    <ProjectReference Include="..\Caramel.Notifications\Caramel.Notifications.csproj" />
+  </ItemGroup>
+
+</Project>

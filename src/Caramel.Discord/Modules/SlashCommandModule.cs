@@ -1,0 +1,187 @@
+using Caramel.Core.Reminders.Requests;
+using Caramel.Core.ToDos.Requests;
+using Caramel.Discord.Components;
+using Caramel.Domain.People.ValueObjects;
+
+using NetCord;
+using NetCord.Rest;
+using NetCord.Services.ApplicationCommands;
+
+using CaramelPlatform = Caramel.Domain.Common.Enums.Platform;
+
+namespace Caramel.Discord.Modules;
+
+public class SlashCommandModule(ICaramelServiceClient caramelServiceClient) : ApplicationCommandModule<ApplicationCommandContext>
+{
+  [SlashCommand("config", "Allows you to configure your Caramel settings.")]
+  public async Task ConfigAsync()
+  {
+    _ = await RespondAsync(InteractionCallback.DeferredMessage());
+
+    // Fetch user & settings
+
+    // Display settings to the user
+    var container = new ComponentContainerProperties
+    {
+      AccentColor = new Color(0x3B5BA5),
+
+      Components = [
+        new TextDisplayProperties("### Your current settings will be displayed here."),
+      ]
+    };
+
+    _ = await ModifyResponseAsync(message =>
+    {
+      message.Components = [container];
+      message.Flags = MessageFlags.IsComponentsV2;
+    });
+  }
+
+  [SlashCommand("todo", "Quickly create a new To Do")]
+  public async Task CreateFastToDoAsync(
+    [SlashCommandParameter(Name = "title", Description = "The title of the To Do")] string todoTitle,
+    [SlashCommandParameter(Name = "description", Description = "Any notes or details about the To Do")] string todoDescription
+  )
+  {
+    _ = await RespondAsync(InteractionCallback.DeferredMessage());
+
+    var platformId = new PlatformId(
+      Context.User.Username,
+      Context.User.Id.ToString(CultureInfo.InvariantCulture),
+      CaramelPlatform.Discord
+    );
+
+    var createRequest = new CreateToDoRequest
+    {
+      PlatformId = platformId,
+      Title = todoTitle,
+      Description = todoDescription,
+      ReminderDate = null,
+    };
+
+    var result = await caramelServiceClient.CreateToDoAsync(createRequest, CancellationToken.None);
+
+    if (result.IsFailed)
+    {
+      _ = await ModifyResponseAsync(message =>
+      {
+        message.Content = $"⚠️ Unable to create your to-do: {result.GetErrorMessages(", ")}";
+        message.Components = [];
+      });
+
+      return;
+    }
+
+    var container = new ToDoQuickCreateComponent(result.Value, createRequest.ReminderDate);
+
+    _ = await ModifyResponseAsync(message =>
+    {
+      message.Components = [container];
+      message.Content = string.Empty;
+      message.Flags = MessageFlags.IsComponentsV2;
+    });
+  }
+
+  [SlashCommand("todos", "List your current To Dos")]
+  public async Task ListToDosAsync(
+    [SlashCommandParameter(Name = "include-completed", Description = "Include completed to-dos in the list")] bool includeCompleted = false)
+  {
+    _ = await RespondAsync(InteractionCallback.DeferredMessage());
+
+    var platformId = new PlatformId(Context.User.Username, Context.User.Id.ToString(CultureInfo.InvariantCulture), CaramelPlatform.Discord);
+    var result = await caramelServiceClient.GetToDosAsync(platformId, includeCompleted, CancellationToken.None);
+
+    if (result.IsFailed)
+    {
+      _ = await ModifyResponseAsync(message =>
+      {
+        message.Content = $"⚠️ Unable to fetch your to-dos: {result.GetErrorMessages(", ")}";
+        message.Components = [];
+      });
+      return;
+    }
+
+    var todos = result.Value;
+    var container = new ToDoListComponent(todos, includeCompleted);
+
+    _ = await ModifyResponseAsync(message =>
+    {
+      message.Components = [container];
+      message.Content = string.Empty;
+      message.Flags = MessageFlags.IsComponentsV2;
+    });
+  }
+
+  [SlashCommand("daily_todos", "Get Caramel's suggested task list for today")]
+  public async Task DailyTodosAsync()
+  {
+    _ = await RespondAsync(InteractionCallback.DeferredMessage());
+
+    var platformId = new PlatformId(Context.User.Username, Context.User.Id.ToString(CultureInfo.InvariantCulture), CaramelPlatform.Discord);
+    var result = await caramelServiceClient.GetDailyPlanAsync(platformId, CancellationToken.None);
+
+    if (result.IsFailed)
+    {
+      _ = await ModifyResponseAsync(message =>
+      {
+        message.Content = $"⚠️ Unable to generate your daily plan: {result.GetErrorMessages(", ")}";
+        message.Components = [];
+      });
+      return;
+    }
+
+    var dailyPlan = result.Value;
+    var container = new DailyPlanComponent(dailyPlan);
+
+    _ = await ModifyResponseAsync(message =>
+    {
+      message.Components = [container];
+      message.Content = string.Empty;
+      message.Flags = MessageFlags.IsComponentsV2;
+    });
+  }
+
+  [SlashCommand("remind", "Set a quick reminder")]
+  public async Task CreateReminderAsync(
+    [SlashCommandParameter(Name = "message", Description = "What to remind you about")] string reminderMessage,
+    [SlashCommandParameter(Name = "when", Description = "When to remind you (e.g., 'in 10 minutes', 'in 2 hours', 'tomorrow')")] string reminderTime
+  )
+  {
+    _ = await RespondAsync(InteractionCallback.DeferredMessage());
+
+    var platformId = new PlatformId(
+      Context.User.Username,
+      Context.User.Id.ToString(CultureInfo.InvariantCulture),
+      CaramelPlatform.Discord
+    );
+
+    var createRequest = new CreateReminderRequest
+    {
+      PlatformId = platformId,
+      Message = reminderMessage,
+      ReminderTime = reminderTime,
+    };
+
+    var result = await caramelServiceClient.CreateReminderAsync(createRequest, CancellationToken.None);
+
+    if (result.IsFailed)
+    {
+      _ = await ModifyResponseAsync(message =>
+      {
+        message.Content = $"⚠️ Unable to set your reminder: {result.GetErrorMessages(", ")}";
+        message.Components = [];
+      });
+
+      return;
+    }
+
+    var container = new ReminderCreatedComponent(result.Value);
+
+    _ = await ModifyResponseAsync(message =>
+    {
+      message.Components = [container];
+      message.Content = string.Empty;
+      message.Flags = MessageFlags.IsComponentsV2;
+    });
+  }
+}
