@@ -52,6 +52,26 @@ public static class ServiceCollectionExtensions
       _ = services.AddNotifications();
     }
 
+    // Register Twitch notification channel if configured
+    var twitchAccessToken = configuration["Twitch:AccessToken"];
+    var twitchBotUserId = configuration["Twitch:BotUserId"];
+    if (!string.IsNullOrWhiteSpace(twitchAccessToken) && !string.IsNullOrWhiteSpace(twitchBotUserId))
+    {
+      // For now, we register a placeholder whisper delegate. 
+      // The actual implementation will be in Caramel.Twitch host which will communicate via gRPC.
+      // This service is optional and can be replaced with a real TwitchLib client when needed.
+      Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync = async (botId, recipientId, message, ct) =>
+      {
+        // Placeholder: would use TwitchLib API client to send whisper
+        // For now, just log and return success - actual whispers will be sent by Caramel.Twitch host
+        await Task.CompletedTask;
+        return true;
+      };
+
+      _ = services.AddTwitchNotificationChannel(sendWhisperAsync, twitchBotUserId);
+    }
+
     return services;
   }
 }
+

@@ -29,6 +29,21 @@ services:
     networks:
       - caramel
 
+  caramel-twitch:
+    image: caramel-twitch
+    build:
+      context: .
+      dockerfile: src/Caramel.Twitch/Dockerfile
+    ports:
+      - 5146:5146
+    env_file:
+      - .env
+    depends_on:
+      - caramel-service
+      - redis
+    networks:
+      - caramel
+
   caramel-service:
     image: caramel-service
     build:

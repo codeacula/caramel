@@ -19,4 +19,16 @@ public static class ServiceCollectionExtensions
     _ = services.AddScoped<IPersonNotificationClient, PersonNotificationClient>();
     return services;
   }
+
+  public static IServiceCollection AddTwitchNotificationChannel(this IServiceCollection services, Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync, string botUserId)
+  {
+    if (string.IsNullOrWhiteSpace(botUserId))
+    {
+      throw new ArgumentException("Twitch bot user ID must be configured", nameof(botUserId));
+    }
+
+    _ = services.AddScoped<INotificationChannel>(_ => new TwitchNotificationChannel(botUserId, sendWhisperAsync));
+    return services;
+  }
 }
+

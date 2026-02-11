@@ -12,18 +12,20 @@ Caramel is a personal assistant for neurodivergent users, built as a modular mic
 
 ## System Architecture
 
-Caramel uses a **hub-and-spoke architecture** where `Caramel.Service` acts as the central backend. Interface layers (`API`, `Discord`) communicate with it via gRPC.
+Caramel uses a **hub-and-spoke architecture** where `Caramel.Service` acts as the central backend. Interface layers (`API`, `Discord`, `Twitch`) communicate with it via gRPC.
 
 ```mermaid
 graph TD
     subgraph Clients
         User[User / Web Frontend]
         DiscordPlatform[Discord Platform]
+        TwitchPlatform[Twitch Platform]
     end
 
     subgraph "Caramel System"
         API[Caramel.API<br/>:5144]
         Bot[Caramel.Discord]
+        Twitch[Caramel.Twitch]
         
         subgraph "Core Backend"
             Service[Caramel.Service<br/>:5270]
@@ -35,9 +37,11 @@ graph TD
 
     User -->|HTTP/REST| API
     DiscordPlatform -->|WebSocket| Bot
+    TwitchPlatform -->|OAuth/EventSub| Twitch
     
     API -->|gRPC| Service
     Bot -->|gRPC| Service
+    Twitch -->|gRPC| Service
     
     Service -->|Read/Write| DB
     Service -->|Cache| Redis
@@ -51,6 +55,7 @@ graph TD
 | Caramel.Service | 5270 | gRPC | Central backend host |
 | Caramel.API | 5144 | HTTP | REST gateway + Swagger UI |
 | Caramel.Discord | 5145 | WebSocket | Discord bot (worker service, port exposed in Docker only) |
+| Caramel.Twitch | 5146 | HTTP/WebSocket | Twitch bot with OAuth callback and EventSub |
 | PostgreSQL | 5432 | TCP | Database |
 | Redis | 6379 | TCP | Distributed cache |
 
@@ -72,6 +77,7 @@ graph TD
         Service[Caramel.Service]:::host
         API[Caramel.API]:::host
         Discord[Caramel.Discord]:::host
+        Twitch[Caramel.Twitch]:::host
     end
 
     subgraph Infrastructure [Infrastructure Layer]
@@ -98,6 +104,7 @@ graph TD
     
     API --> GRPC
     Discord --> GRPC
+    Twitch --> GRPC
 
     GRPC --> Application
     Application --> Domain
@@ -115,7 +122,7 @@ graph TD
 
 | Layer | Projects | Description |
 |-------|----------|-------------|
-| **Presentation** | `Caramel.Service`, `Caramel.API`, `Caramel.Discord` | Entry points and host applications |
+| **Presentation** | `Caramel.Service`, `Caramel.API`, `Caramel.Discord`, `Caramel.Twitch` | Entry points and host applications |
 | **Transport** | `Caramel.GRPC` | Shared gRPC contracts, clients, and interceptors |
 | **Application** | `Caramel.Application` | Use cases, MediatR handlers, orchestration |
 | **Infrastructure** | `Caramel.Database`, `Caramel.AI`, `Caramel.Cache`, `Caramel.Notifications` | External concerns: persistence, LLMs, caching, notifications |
@@ -481,6 +488,42 @@ HTTP/REST gateway with OpenAPI documentation. Serves the Vue SPA and forwards re
 Discord bot host using NetCord. Handles slash commands, interactions, and bot functionality.
 
 **Key Packages:** `NetCord.Hosting`
+
+---
+
+### Caramel.Twitch
+
+Twitch bot host with EventSub integration and OAuth authentication. Handles chat messages, whispers, and channel interactions via Twitch API.
+
+**Features:**
+- OAuth 2.0 authentication flow for secure user linking
+- EventSub WebSocket subscriptions for real-time events (chat messages, whispers, follows, etc.)
+- Session management with encrypted credentials
+- gRPC client for communication with Caramel.Service
+- Modular event handler architecture
+
+**Core Components:**
+- `Program.cs` - Startup configuration, DI setup, gRPC client initialization
+- `Handlers/` - Event-specific handlers:
+  - `ChatMessageEventHandler` - Processes incoming chat messages
+  - `WhisperEventHandler` - Handles whispered messages
+  - `ChannelFollowEventHandler` - Tracks new follows
+- `Extensions/` - Helper utilities:
+  - `TwitchPlatformExtension` - Maps Twitch user IDs to Caramel platform format
+- `Auth/` - OAuth state management and session handling
+- `Events/` - Typed EventSub event DTOs
+
+**Configuration (see `.env.example`):**
+```
+Twitch__ClientId=your_twitch_client_id_here
+Twitch__ClientSecret=your_twitch_client_secret_here
+Twitch__OAuthCallbackUrl=http://localhost:5146/auth/callback
+Twitch__EncryptionKey=your_secure_32_byte_base64_key_here
+```
+
+**Key Packages:** `TwitchLib.Api`, `TwitchLib.EventSub.Websockets`, `Grpc.Net.Client`
+
+**Development Port:** 5146 (exposed in Docker)
 
 ---
 
