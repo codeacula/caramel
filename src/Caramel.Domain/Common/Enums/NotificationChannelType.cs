@@ -7,5 +7,6 @@ public enum NotificationChannelType
 {
   Discord = 0,
   Email = 1,
-  Push = 2
+  Push = 2,
+  Twitch = 3
 }
