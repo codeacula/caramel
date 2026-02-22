@@ -14,13 +14,17 @@ export interface TwitchChatMessage {
 
 const MAX_MESSAGES = 200;
 const RECONNECT_DELAY_MS = 3000;
+const MAX_MESSAGE_LENGTH = 500;
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
+export type SendStatus = "idle" | "sending" | "error";
 
 export function useTwitchChat() {
   const messages = ref<TwitchChatMessage[]>([]);
   const status = ref<ConnectionStatus>("disconnected");
   const errorMessage = ref<string | null>(null);
+  const sendStatus = ref<SendStatus>("idle");
+  const sendError = ref<string | null>(null);
 
   let socket: WebSocket | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -108,6 +112,61 @@ export function useTwitchChat() {
     messages.value = [];
   }
 
+  async function sendMessage(text: string): Promise<boolean> {
+    const trimmed = text.trim();
+
+    if (!trimmed) {
+      sendError.value = "Message cannot be empty.";
+      sendStatus.value = "error";
+      return false;
+    }
+
+    if (trimmed.length > MAX_MESSAGE_LENGTH) {
+      sendError.value = `Message exceeds ${MAX_MESSAGE_LENGTH} characters.`;
+      sendStatus.value = "error";
+      return false;
+    }
+
+    sendStatus.value = "sending";
+    sendError.value = null;
+
+    try {
+      const response = await fetch("/chat/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: trimmed }),
+      });
+
+      if (response.ok) {
+        sendStatus.value = "idle";
+        return true;
+      }
+
+      // Try to extract a meaningful error from the response body
+      let detail = `Server responded with ${response.status}.`;
+      try {
+        const body = await response.json();
+        if (typeof body?.detail === "string") detail = body.detail;
+        else if (typeof body?.title === "string") detail = body.title;
+      } catch {
+        // Ignore parse errors – keep the status-code message
+      }
+
+      sendError.value = detail;
+      sendStatus.value = "error";
+      return false;
+    } catch (err) {
+      sendError.value = err instanceof Error ? err.message : "Failed to send message.";
+      sendStatus.value = "error";
+      return false;
+    }
+  }
+
+  function clearSendError() {
+    sendError.value = null;
+    sendStatus.value = "idle";
+  }
+
   onMounted(() => {
     stopped = false;
     connect();
@@ -121,7 +180,12 @@ export function useTwitchChat() {
     messages,
     status,
     errorMessage,
+    sendStatus,
+    sendError,
     clearMessages,
+    clearSendError,
     disconnect,
+    sendMessage,
+    maxMessageLength: MAX_MESSAGE_LENGTH,
   };
 }

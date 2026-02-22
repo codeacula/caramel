@@ -18,11 +18,15 @@ export default defineConfig({
         target: "http://localhost:5146",
         changeOrigin: true,
       },
+      "/chat": {
+        target: "http://localhost:5146",
+        changeOrigin: true,
+      },
     },
   },
   build: {
     // Build straight into ASP.NET's static files for production
-    outDir: "../Apollo.API/wwwroot",
+    outDir: "../Caramel.API/wwwroot",
     emptyOutDir: true,
   },
 });

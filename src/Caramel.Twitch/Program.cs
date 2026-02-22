@@ -12,6 +12,9 @@ using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Register MVC controllers
+_ = builder.Services.AddControllers();
+
 // Configuration
 _ = builder.Configuration.AddEnvironmentVariables();
 _ = builder.Configuration.AddUserSecrets<ICaramelTwitch>(optional: true);
@@ -62,6 +65,8 @@ _ = builder.Services.AddHostedService<EventSubLifecycleService>();
 
 // Build application
 var app = builder.Build();
+
+_ = app.MapControllers();
 
 // Register OAuth endpoints
 var stateManager = app.Services.GetRequiredService<OAuthStateManager>();
@@ -372,4 +377,5 @@ internal static partial class CaramelTwitchProgramLogs
 
   [LoggerMessage(Level = LogLevel.Error, Message = "EventSub connection error: {Error} - will retry")]
   public static partial void EventSubConnectionError(ILogger logger, string error);
+
 }

@@ -3,10 +3,24 @@ import { computed, nextTick, ref, watch } from "vue";
 import { useTwitchChat } from "../composables/useTwitchChat";
 import type { TwitchChatMessage } from "../composables/useTwitchChat";
 
-const { messages, status, errorMessage, clearMessages } = useTwitchChat();
+const {
+  messages,
+  status,
+  errorMessage,
+  sendStatus,
+  sendError,
+  clearMessages,
+  clearSendError,
+  sendMessage,
+  maxMessageLength,
+} = useTwitchChat();
 
 const feedEl = ref<HTMLElement | null>(null);
 const autoScroll = ref(true);
+const inputText = ref("");
+const inputEl = ref<HTMLInputElement | null>(null);
+
+// ── Connection status display ────────────────────────────────────────────────
 
 const statusLabel = computed(() => {
   switch (status.value) {
@@ -28,6 +42,45 @@ const statusClass = computed(() => ({
   "status-disconnected": status.value === "disconnected",
   "status-error": status.value === "error",
 }));
+
+// ── Send bar ─────────────────────────────────────────────────────────────────
+
+const canSend = computed(
+  () =>
+    status.value === "connected" &&
+    sendStatus.value !== "sending" &&
+    inputText.value.trim().length > 0 &&
+    inputText.value.trim().length <= maxMessageLength,
+);
+
+const charsLeft = computed(() => maxMessageLength - inputText.value.length);
+
+const charCountClass = computed(() => ({
+  "char-count": true,
+  "char-warn": charsLeft.value <= 50 && charsLeft.value > 0,
+  "char-over": charsLeft.value < 0,
+}));
+
+async function handleSend() {
+  if (!canSend.value) return;
+  const text = inputText.value;
+  const ok = await sendMessage(text);
+  if (ok) {
+    inputText.value = "";
+    inputEl.value?.focus();
+  }
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+  // Clear a stale send error as soon as the user starts typing again
+  if (sendError.value) clearSendError();
+}
+
+// ── Feed scroll ───────────────────────────────────────────────────────────────
 
 function formatTime(timestamp: string): string {
   try {
@@ -57,20 +110,16 @@ watch(
   () => {
     if (!autoScroll.value) return;
     nextTick(() => {
-      if (feedEl.value) {
-        feedEl.value.scrollTop = feedEl.value.scrollHeight;
-      }
+      if (feedEl.value) feedEl.value.scrollTop = feedEl.value.scrollHeight;
     });
   },
-  { deep: false }
+  { deep: false },
 );
 
 function scrollToBottom() {
   autoScroll.value = true;
   nextTick(() => {
-    if (feedEl.value) {
-      feedEl.value.scrollTop = feedEl.value.scrollHeight;
-    }
+    if (feedEl.value) feedEl.value.scrollTop = feedEl.value.scrollHeight;
   });
 }
 </script>
@@ -94,20 +143,14 @@ function scrollToBottom() {
           {{ statusLabel }}
         </span>
 
-        <a href="/auth/login" class="btn btn-auth" target="_blank" rel="noopener noreferrer">
-          Authorize Twitch
-        </a>
+        <a href="/auth/login" class="btn btn-auth" target="_blank" rel="noopener noreferrer"> Authorize Twitch </a>
 
-        <button class="btn btn-clear" @click="clearMessages" title="Clear messages">
-          Clear
-        </button>
+        <button class="btn btn-clear" @click="clearMessages" title="Clear messages">Clear</button>
       </div>
     </div>
 
-    <!-- Error banner -->
-    <div v-if="errorMessage" class="error-banner" role="alert">
-      ⚠ {{ errorMessage }}
-    </div>
+    <!-- WebSocket error banner -->
+    <div v-if="errorMessage" class="error-banner" role="alert">⚠ {{ errorMessage }}</div>
 
     <!-- Empty state -->
     <div v-if="messages.length === 0" class="empty-state">
@@ -115,9 +158,7 @@ function scrollToBottom() {
       <p v-else-if="status === 'connected'">
         Waiting for messages. Make sure the bot is authorized and your channel IDs are configured.
       </p>
-      <p v-else>
-        No messages yet. Connect by authorizing Twitch above, then reload.
-      </p>
+      <p v-else>No messages yet. Connect by authorizing Twitch above, then reload.</p>
     </div>
 
     <!-- Message feed -->
@@ -130,17 +171,11 @@ function scrollToBottom() {
       aria-label="Twitch chat messages"
       @scroll="onScroll"
     >
-      <div
-        v-for="msg in messages"
-        :key="msg.messageId"
-        class="chat-message"
-      >
+      <div v-for="msg in messages" :key="msg.messageId" class="chat-message">
         <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
-        <span
-          class="msg-username"
-          :style="usernameStyle(msg)"
-          :title="`#${msg.broadcasterLogin}`"
-        >{{ msg.chatterDisplayName }}</span>
+        <span class="msg-username" :style="usernameStyle(msg)" :title="`#${msg.broadcasterLogin}`">{{
+          msg.chatterDisplayName
+        }}</span>
         <span class="msg-colon" aria-hidden="true">:</span>
         <span class="msg-text">{{ msg.messageText }}</span>
       </div>
@@ -158,15 +193,52 @@ function scrollToBottom() {
       </button>
     </Transition>
 
-    <!-- Footer -->
-    <div class="chat-footer">
-      {{ messages.length }} message{{ messages.length !== 1 ? "s" : "" }}
+    <!-- Send error banner -->
+    <Transition name="fade">
+      <div v-if="sendError" class="send-error-banner" role="alert">
+        <span>⚠ {{ sendError }}</span>
+        <button class="send-error-dismiss" @click="clearSendError" aria-label="Dismiss error">✕</button>
+      </div>
+    </Transition>
+
+    <!-- Send bar -->
+    <div class="send-bar">
+      <div class="send-input-wrap">
+        <input
+          ref="inputEl"
+          v-model="inputText"
+          class="send-input"
+          type="text"
+          placeholder="Send a message…"
+          :disabled="status !== 'connected' || sendStatus === 'sending'"
+          :maxlength="maxMessageLength + 50"
+          aria-label="Chat message"
+          @keydown="handleKeydown"
+        />
+        <span :class="charCountClass" aria-live="polite">{{ charsLeft }}</span>
+      </div>
+
+      <button
+        class="send-btn"
+        :disabled="!canSend"
+        :aria-busy="sendStatus === 'sending'"
+        aria-label="Send message"
+        @click="handleSend"
+      >
+        <span v-if="sendStatus === 'sending'" class="send-spinner" aria-hidden="true" />
+        <svg v-else viewBox="0 0 24 24" aria-hidden="true" class="send-icon">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+        </svg>
+      </button>
     </div>
+
+    <!-- Footer -->
+    <div class="chat-footer">{{ messages.length }} message{{ messages.length !== 1 ? "s" : "" }}</div>
   </div>
 </template>
 
 <style scoped>
-/* Panel */
+/* ── Panel ───────────────────────────────────────────────────────────────── */
 .chat-panel {
   display: flex;
   flex-direction: column;
@@ -179,9 +251,10 @@ function scrollToBottom() {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid #2a2a2e;
+  position: relative;
 }
 
-/* Header */
+/* ── Header ──────────────────────────────────────────────────────────────── */
 .chat-header {
   display: flex;
   align-items: center;
@@ -217,7 +290,7 @@ function scrollToBottom() {
   flex-wrap: wrap;
 }
 
-/* Status badge */
+/* ── Status badge ────────────────────────────────────────────────────────── */
 .status-badge {
   display: inline-flex;
   align-items: center;
@@ -277,11 +350,16 @@ function scrollToBottom() {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
-/* Buttons */
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
   padding: 4px 12px;
   border-radius: 5px;
@@ -290,7 +368,9 @@ function scrollToBottom() {
   cursor: pointer;
   border: 1px solid transparent;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
 
@@ -314,7 +394,7 @@ function scrollToBottom() {
   color: #efeff1;
 }
 
-/* Error banner */
+/* ── Error banners ───────────────────────────────────────────────────────── */
 .error-banner {
   padding: 8px 14px;
   background: rgba(255, 80, 80, 0.1);
@@ -324,7 +404,36 @@ function scrollToBottom() {
   flex-shrink: 0;
 }
 
-/* Empty state */
+.send-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 140, 0, 0.1);
+  color: #ffaa40;
+  border-top: 1px solid rgba(255, 140, 0, 0.2);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.send-error-dismiss {
+  background: transparent;
+  border: none;
+  color: #ffaa40;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.send-error-dismiss:hover {
+  opacity: 1;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────── */
 .empty-state {
   flex: 1;
   display: flex;
@@ -337,7 +446,7 @@ function scrollToBottom() {
   line-height: 1.6;
 }
 
-/* Feed */
+/* ── Feed ────────────────────────────────────────────────────────────────── */
 .chat-feed {
   flex: 1;
   overflow-y: auto;
@@ -360,11 +469,10 @@ function scrollToBottom() {
   background: #52525e;
 }
 
-/* Individual message */
+/* ── Message rows ────────────────────────────────────────────────────────── */
 .chat-message {
   display: flex;
   align-items: baseline;
-  gap: 0;
   padding: 3px 14px;
   line-height: 1.55;
   word-break: break-word;
@@ -399,10 +507,10 @@ function scrollToBottom() {
   flex: 1;
 }
 
-/* Scroll-to-bottom button */
+/* ── Scroll-to-bottom ────────────────────────────────────────────────────── */
 .scroll-btn {
   position: absolute;
-  bottom: 44px;
+  bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
   background: #9147ff;
@@ -414,7 +522,9 @@ function scrollToBottom() {
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
   z-index: 10;
 }
 .scroll-btn:hover {
@@ -422,9 +532,117 @@ function scrollToBottom() {
   transform: translateX(-50%) translateY(-1px);
 }
 
-/* Footer */
+/* ── Send bar ────────────────────────────────────────────────────────────── */
+.send-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #18181b;
+  border-top: 1px solid #2a2a2e;
+  flex-shrink: 0;
+}
+
+.send-input-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.send-input {
+  width: 100%;
+  padding: 7px 44px 7px 12px;
+  border-radius: 6px;
+  border: 1px solid #3a3a40;
+  background: #0e0e10;
+  color: #efeff1;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.send-input::placeholder {
+  color: #6b6b7d;
+}
+.send-input:focus {
+  border-color: #9147ff;
+}
+.send-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.char-count {
+  position: absolute;
+  right: 10px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #6b6b7d;
+  pointer-events: none;
+  user-select: none;
+  transition: color 0.15s;
+}
+.char-warn {
+  color: #ffb400;
+}
+.char-over {
+  color: #ff5050;
+}
+
+.send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: none;
+  background: #9147ff;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    opacity 0.15s,
+    transform 0.1s;
+}
+.send-btn:hover:not(:disabled) {
+  background: #a970ff;
+  transform: scale(1.05);
+}
+.send-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.send-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* Spinner for the sending state */
+.send-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
 .chat-footer {
-  padding: 5px 14px;
+  padding: 4px 14px;
   font-size: 11px;
   color: #6b6b7d;
   background: #18181b;
@@ -433,7 +651,7 @@ function scrollToBottom() {
   text-align: right;
 }
 
-/* Fade transition */
+/* ── Transitions ─────────────────────────────────────────────────────────── */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s;
