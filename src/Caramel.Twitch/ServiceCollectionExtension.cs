@@ -23,6 +23,10 @@ public static class ServiceCollectionExtension
     // Register chat broadcaster for Redis pub/sub
     _ = services.AddSingleton<ITwitchChatBroadcaster, TwitchChatBroadcaster>();
 
+    // Register Twitch API utilities
+    _ = services.AddSingleton<ITwitchUserResolver, TwitchUserResolver>();
+    _ = services.AddSingleton<ITwitchWhisperService, TwitchWhisperService>();
+
     // Register handlers as singletons (they're called from event handlers)
     _ = services.AddSingleton<ChatMessageEventHandler>();
     _ = services.AddSingleton<WhisperEventHandler>();

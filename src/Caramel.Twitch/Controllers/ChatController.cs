@@ -11,6 +11,7 @@ namespace Caramel.Twitch.Controllers;
 public sealed class ChatController(
   TwitchTokenManager tokenManager,
   TwitchConfig twitchConfig,
+  IHttpClientFactory httpClientFactory,
   ILogger<ChatController> logger) : ControllerBase
 {
   private const int MaxMessageLength = 500;
@@ -45,7 +46,7 @@ public sealed class ChatController(
     {
       var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
 
-      using var httpClient = new HttpClient();
+      using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
       httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
       httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 

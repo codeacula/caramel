@@ -54,3 +54,4 @@ TestResult.xml
 nunit-*.xml
 
 .env
+src/Caramel.API/wwwroot/assets/**

@@ -1,4 +1,7 @@
-using TwitchLib.Api;
+using System.Text.Json;
+
+using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Caramel.Twitch.Auth;
 
@@ -9,15 +12,19 @@ namespace Caramel.Twitch.Auth;
 public sealed class TwitchTokenManager
 {
   private readonly TwitchConfig _config;
+  private readonly IHttpClientFactory _httpClientFactory;
+  private readonly ILogger<TwitchTokenManager> _logger;
   private readonly object _lock = new();
   private string _accessToken;
   private string? _refreshToken;
   private DateTime _expiresAt = DateTime.MinValue;
   private const int RefreshThresholdSeconds = 300; // Refresh if expires within 5 minutes
 
-  public TwitchTokenManager(TwitchConfig config)
+  public TwitchTokenManager(TwitchConfig config, IHttpClientFactory httpClientFactory, ILogger<TwitchTokenManager> logger)
   {
     _config = config;
+    _httpClientFactory = httpClientFactory;
+    _logger = logger;
     _accessToken = config.AccessToken;
     _refreshToken = config.RefreshToken;
     // Assume initial token from config is valid for 1 hour
@@ -66,6 +73,8 @@ public sealed class TwitchTokenManager
 
       _expiresAt = DateTime.UtcNow.AddSeconds(expiresInSeconds);
     }
+
+    TwitchTokenManagerLogs.TokensUpdated(_logger, expiresInSeconds);
   }
 
   /// <summary>
@@ -74,7 +83,9 @@ public sealed class TwitchTokenManager
   /// </summary>
   private async Task RefreshAccessTokenAsync(CancellationToken cancellationToken)
   {
-    var httpClient = new HttpClient();
+    TwitchTokenManagerLogs.RefreshingToken(_logger);
+
+    using var httpClient = _httpClientFactory.CreateClient("TwitchHelix");
     var requestBody = new FormUrlEncodedContent(new[]
     {
       new KeyValuePair<string, string>("client_id", _config.ClientId),
@@ -90,15 +101,17 @@ public sealed class TwitchTokenManager
 
     if (!response.IsSuccessStatusCode)
     {
+      var error = await response.Content.ReadAsStringAsync(cancellationToken);
       throw new InvalidOperationException(
-        $"OAuth token refresh failed with status {response.StatusCode}: {await response.Content.ReadAsStringAsync(cancellationToken)}");
+        $"OAuth token refresh failed with status {response.StatusCode}: {error}");
     }
 
     var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-    var json = System.Text.Json.JsonDocument.Parse(responseContent);
+    var json = JsonDocument.Parse(responseContent);
     var root = json.RootElement;
 
-    var accessToken = root.GetProperty("access_token").GetString() ?? throw new InvalidOperationException("Missing access_token in response");
+    var accessToken = root.GetProperty("access_token").GetString()
+      ?? throw new InvalidOperationException("Missing access_token in response");
     var expiresIn = root.GetProperty("expires_in").GetInt32();
     var refreshToken = root.TryGetProperty("refresh_token", out var rtElement)
       ? rtElement.GetString()
@@ -128,4 +141,16 @@ public sealed class TwitchTokenManager
       return _refreshToken != null;
     }
   }
+}
+
+/// <summary>
+/// Structured logging for <see cref="TwitchTokenManager"/>.
+/// </summary>
+internal static partial class TwitchTokenManagerLogs
+{
+  [LoggerMessage(Level = LogLevel.Information, Message = "Refreshing Twitch OAuth access token")]
+  public static partial void RefreshingToken(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "Twitch tokens updated, expires in {ExpiresInSeconds}s")]
+  public static partial void TokensUpdated(ILogger logger, int expiresInSeconds);
 }

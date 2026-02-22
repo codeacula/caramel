@@ -30,5 +30,26 @@ public static class ServiceCollectionExtensions
     _ = services.AddScoped<INotificationChannel>(_ => new TwitchNotificationChannel(botUserId, sendWhisperAsync));
     return services;
   }
+
+  /// <summary>
+  /// Registers a Twitch whisper notification channel that resolves the send delegate lazily
+  /// from <paramref name="whisperSendFactory"/> at the time each notification is dispatched.
+  /// Use this overload when the whisper sender is itself registered in DI so that the
+  /// delegate is always backed by a fully-constructed service instance.
+  /// </summary>
+  public static IServiceCollection AddTwitchNotificationChannel(this IServiceCollection services, Func<IServiceProvider, Func<string, string, string, CancellationToken, Task<bool>>> whisperSendFactory, string botUserId)
+  {
+    if (string.IsNullOrWhiteSpace(botUserId))
+    {
+      throw new ArgumentException("Twitch bot user ID must be configured", nameof(botUserId));
+    }
+
+    _ = services.AddScoped<INotificationChannel>(sp =>
+    {
+      var sendDelegate = whisperSendFactory(sp);
+      return new TwitchNotificationChannel(botUserId, sendDelegate);
+    });
+    return services;
+  }
 }
 

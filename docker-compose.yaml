@@ -1,16 +1,34 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - caramel-api
+      - caramel-twitch
+    networks:
+      - caramel
+
   caramel-api:
     image: caramel-api
     build:
       context: .
       dockerfile: src/Caramel.API/Dockerfile
-    ports:
-      - 5144:5144
+    expose:
+      - "5144"
     env_file:
       - .env
+    restart: unless-stopped
     depends_on:
-      - caramel-service
-      - redis
+      caramel-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - caramel
 
@@ -19,13 +37,16 @@ services:
     build:
       context: .
       dockerfile: src/Caramel.Discord/Dockerfile
-    ports:
-      - 5145:5145
+    expose:
+      - "5145"
     env_file:
       - .env
+    restart: unless-stopped
     depends_on:
-      - caramel-service
-      - redis
+      caramel-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - caramel
 
@@ -34,13 +55,16 @@ services:
     build:
       context: .
       dockerfile: src/Caramel.Twitch/Dockerfile
-    ports:
-      - 5146:5146
+    expose:
+      - "5146"
     env_file:
       - .env
+    restart: unless-stopped
     depends_on:
-      - caramel-service
-      - redis
+      caramel-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - caramel
 
@@ -49,49 +73,61 @@ services:
     build:
       context: .
       dockerfile: src/Caramel.Service/Dockerfile
-    ports:
-      - 5270:5270
+    expose:
+      - "5270"
     env_file:
       - .env
+    restart: unless-stopped
     depends_on:
-      - pgsql
-      - redis
+      pgsql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - caramel
 
   pgsql:
-    image: postgres
+    image: postgres:16-alpine
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-caramel}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-caramel}
       - POSTGRES_DB=${POSTGRES_DB:-caramel_db}
     volumes:
-      - pgsql_data:/var/lib/postgresql
+      - pgsql_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5433:5432"
     networks:
       - caramel
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-caramel} -d ${POSTGRES_DB:-caramel_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD:-caramel_redis}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6380:6379"
     volumes:
       - redis_data:/data
     networks:
       - caramel
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-caramel_redis}", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
+      start_period: 5s
 
 volumes:
   pgsql_data:
   redis_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   caramel:

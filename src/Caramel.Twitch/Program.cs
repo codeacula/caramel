@@ -7,6 +7,7 @@ using Caramel.Twitch.Handlers;
 using Caramel.Twitch.Services;
 
 using TwitchLib.EventSub.Core.EventArgs.Channel;
+using TwitchLib.EventSub.Core.EventArgs.User;
 using TwitchLib.EventSub.Websockets;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
@@ -26,19 +27,15 @@ _ = builder.Services.AddLogging(config =>
   config.SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information);
 });
 
-// Register Redis for person cache and pub/sub broadcast
+// Register Redis, cache, gRPC, and Twitch-specific services
 string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException("Redis connection string is missing.");
-_ = builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(_ =>
-    StackExchange.Redis.ConnectionMultiplexer.Connect(redisConnectionString));
+_ = builder.Services
+  .AddCacheServices(redisConnectionString)
+  .AddGrpcClientServices()
+  .AddTwitchServices();
 
-// Register gRPC client to Caramel.Service
-_ = builder.Services.AddGrpcClientServices();
-
-// Register cache services
-_ = builder.Services.AddCacheServices(redisConnectionString);
-
-// Register Twitch-specific services
-_ = builder.Services.AddTwitchServices();
+// Register a named HttpClient for Twitch Helix API calls
+_ = builder.Services.AddHttpClient("TwitchHelix");
 
 // Get TwitchConfig for OAuth setup
 var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<TwitchConfig>() ?? throw new InvalidOperationException("TwitchConfig is missing");
@@ -47,20 +44,18 @@ var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<Tw
 _ = builder.Services.AddSingleton<OAuthStateManager>();
 _ = builder.Services.AddSingleton<TwitchTokenManager>();
 
-// Register chat broadcaster (Redis pub/sub publisher for UI)
-_ = builder.Services.AddSingleton<ITwitchChatBroadcaster, TwitchChatBroadcaster>();
+// Register Twitch notification channel — sends whispers via the Helix API.
+// The factory overload resolves ITwitchWhisperService lazily from the scoped DI
+// container each time a notification is dispatched, avoiding the pre-build ordering issue.
+_ = builder.Services.AddTwitchNotificationChannel(
+  whisperSendFactory: sp =>
+  {
+    var svc = sp.GetRequiredService<ITwitchWhisperService>();
+    return (botId, recipientId, message, ct) => svc.SendWhisperAsync(botId, recipientId, message, ct);
+  },
+  botUserId: twitchConfig.BotUserId);
 
-// Register Twitch notification channel with a stub delegate for sending whispers
-// TODO: Implement actual whisper sending via TwitchLib.Api.Helix.Whispers
-Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync = async (botId, recipientId, message, ct) =>
-{
-  await Task.Delay(0, ct);
-  return true;
-};
-_ = builder.Services.AddTwitchNotificationChannel(sendWhisperAsync, twitchConfig.BotUserId);
-
-// Register EventSub WebSocket client and lifecycle service
-_ = builder.Services.AddSingleton<EventSubWebsocketClient>();
+// Register EventSub lifecycle service (EventSubWebsocketClient already registered by AddTwitchServices)
 _ = builder.Services.AddHostedService<EventSubLifecycleService>();
 
 // Build application
@@ -77,7 +72,7 @@ app.MapGet("/auth/login", () =>
   var state = stateManager.GenerateState();
 
   // Request scopes for chat read/write, whispers, and moderation actions
-  const string scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat";
+  const string scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat user:manage:whispers";
 
   var oauthUrl = $"https://id.twitch.tv/oauth2/authorize?" +
     $"client_id={Uri.EscapeDataString(twitchConfig.ClientId)}&" +
@@ -88,7 +83,7 @@ app.MapGet("/auth/login", () =>
   return Results.Redirect(oauthUrl);
 });
 
-app.MapGet("/auth/callback", async (string code, string state, ILogger<Program> callbackLogger, CancellationToken ct) =>
+app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactory httpClientFactory, ILogger<Program> callbackLogger, CancellationToken ct) =>
 {
   try
   {
@@ -98,7 +93,7 @@ app.MapGet("/auth/callback", async (string code, string state, ILogger<Program> 
       return Results.BadRequest("Invalid or expired state parameter");
     }
 
-    var httpClient = new HttpClient();
+    using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
     var tokenRequest = new FormUrlEncodedContent(new[]
     {
       new KeyValuePair<string, string>("client_id", twitchConfig.ClientId),
@@ -129,9 +124,9 @@ app.MapGet("/auth/callback", async (string code, string state, ILogger<Program> 
 
     return Results.Content("""
       <!doctype html>
-      <html><head><title>Caramel – Authorized</title></head>
+      <html><head><title>Caramel - Authorized</title></head>
       <body style="font-family:sans-serif;text-align:center;padding:4rem">
-        <h1>✅ Twitch authorized successfully</h1>
+        <h1>Twitch authorized successfully</h1>
         <p>You can close this window and return to Caramel.</p>
       </body></html>
       """, "text/html");
@@ -143,7 +138,7 @@ app.MapGet("/auth/callback", async (string code, string state, ILogger<Program> 
   }
 });
 
-// Auth status endpoint – allows the UI and other services to check token state
+// Auth status endpoint - allows the UI and other services to check token state
 app.MapGet("/auth/status", () =>
 {
   var hasToken = tokenManager.CanRefresh() || tokenManager.GetCurrentAccessToken() is { Length: > 0 };
@@ -165,38 +160,58 @@ await app.RunAsync();
 /// <summary>
 /// Manages the EventSub WebSocket connection lifecycle.
 /// Waits for valid OAuth tokens then connects to Twitch EventSub, subscribes to
-/// channel.chat.message events, and wires the handlers.
+/// channel.chat.message and user.whisper.message events, and wires the handlers.
+/// Event handlers are registered exactly once to prevent duplicate invocations.
+/// Uses a TaskCompletionSource to detect disconnects and re-enter the connect loop.
 /// </summary>
 internal sealed class EventSubLifecycleService(
   EventSubWebsocketClient eventSubClient,
   TwitchConfig twitchConfig,
   TwitchTokenManager tokenManager,
+  ITwitchUserResolver userResolver,
   ChatMessageEventHandler chatHandler,
   WhisperEventHandler whisperHandler,
+  IHttpClientFactory httpClientFactory,
   ILogger<EventSubLifecycleService> logger) : BackgroundService
 {
+  private TaskCompletionSource _disconnectTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+  private bool _handlersWired;
+
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)
   {
     try
     {
       CaramelTwitchProgramLogs.EventSubStarting(logger);
 
+      // Wire event handlers exactly once to prevent duplicate invocations on reconnect
+      WireEventHandlers();
+
       while (!stoppingToken.IsCancellationRequested)
       {
         try
         {
-          var accessToken = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
+          _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
 
-          // Wire up EventSub event handlers before connecting
-          eventSubClient.WebsocketConnected += (sender, args) => OnWebsocketConnectedAsync(sender, args, accessToken);
-          eventSubClient.WebsocketDisconnected += OnWebsocketDisconnectedAsync;
-          eventSubClient.ChannelChatMessage += OnChannelChatMessageAsync;
+          // Reset the disconnect signal before each connection attempt
+          _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
           CaramelTwitchProgramLogs.EventSubConnecting(logger);
           await eventSubClient.ConnectAsync();
 
-          // Keep alive until cancelled or disconnected
-          await Task.Delay(Timeout.Infinite, stoppingToken);
+          // Wait until either the host is stopping or the WebSocket disconnects
+          using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+          var cancelTask = Task.Delay(Timeout.Infinite, cts.Token);
+          var completedTask = await Task.WhenAny(_disconnectTcs.Task, cancelTask);
+
+          if (completedTask == cancelTask)
+          {
+            // Host is shutting down
+            break;
+          }
+
+          // WebSocket disconnected - log and retry after a brief delay
+          CaramelTwitchProgramLogs.EventSubConnectionError(logger, "WebSocket disconnected, reconnecting...");
+          await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
         catch (OperationCanceledException)
         {
@@ -225,7 +240,24 @@ internal sealed class EventSubLifecycleService(
     }
   }
 
-  private async Task OnWebsocketConnectedAsync(object? sender, WebsocketConnectedArgs args, string accessToken)
+  /// <summary>
+  /// Registers event handlers on the EventSub client exactly once.
+  /// </summary>
+  private void WireEventHandlers()
+  {
+    if (_handlersWired)
+    {
+      return;
+    }
+
+    eventSubClient.WebsocketConnected += OnWebsocketConnectedAsync;
+    eventSubClient.WebsocketDisconnected += OnWebsocketDisconnectedAsync;
+    eventSubClient.ChannelChatMessage += OnChannelChatMessageAsync;
+    eventSubClient.UserWhisperMessage += OnUserWhisperMessageAsync;
+    _handlersWired = true;
+  }
+
+  private async Task OnWebsocketConnectedAsync(object? sender, WebsocketConnectedArgs args)
   {
     if (args.IsRequestedReconnect)
     {
@@ -236,55 +268,35 @@ internal sealed class EventSubLifecycleService(
 
     try
     {
-      // Subscribe to channel.chat.message for each configured channel ID via the Helix API.
-      // We call the REST endpoint directly because TwitchLib.Api.Helix v3.x does not expose
-      // a WebSocket-transport overload of CreateEventSubSubscriptionAsync.
-      var channelIds = twitchConfig.ChannelIds
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      var accessToken = await tokenManager.GetValidAccessTokenAsync();
 
-      using var httpClient = new HttpClient();
+      // Resolve channel login names/IDs to numeric IDs required by the Helix API.
+      var rawChannelIds = twitchConfig.ChannelIds
+        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+      var channelIds = await userResolver.ResolveUserIdsAsync(rawChannelIds);
+
+      // Resolve bot user ID (may be a username in config)
+      var botUserId = await userResolver.ResolveUserIdAsync(twitchConfig.BotUserId);
+
+      using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
       httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
       httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
       foreach (var channelId in channelIds)
       {
-        try
+        // Subscribe to channel chat messages
+        await CreateEventSubSubscriptionAsync(httpClient, "channel.chat.message", "1", new Dictionary<string, string>
         {
-          var body = new
-          {
-            type = "channel.chat.message",
-            version = "1",
-            condition = new Dictionary<string, string>
-            {
-              { "broadcaster_user_id", channelId },
-              { "user_id", twitchConfig.BotUserId },
-            },
-            transport = new
-            {
-              method = "websocket",
-              session_id = eventSubClient.SessionId,
-            },
-          };
-
-          var json = JsonSerializer.Serialize(body);
-          using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-          var response = await httpClient.PostAsync("https://api.twitch.tv/helix/eventsub/subscriptions", content);
-
-          if (response.IsSuccessStatusCode)
-          {
-            CaramelTwitchProgramLogs.EventSubSubscribed(logger, "channel.chat.message", channelId);
-          }
-          else
-          {
-            var errorBody = await response.Content.ReadAsStringAsync();
-            CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, "channel.chat.message", channelId, $"{(int)response.StatusCode}: {errorBody}");
-          }
-        }
-        catch (Exception ex)
-        {
-          CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, "channel.chat.message", channelId, ex.Message);
-        }
+          { "broadcaster_user_id", channelId },
+          { "user_id", botUserId },
+        });
       }
+
+      // Subscribe to incoming whispers directed at the bot user
+      await CreateEventSubSubscriptionAsync(httpClient, "user.whisper.message", "1", new Dictionary<string, string>
+      {
+        { "user_id", botUserId },
+      });
     }
     catch (Exception ex)
     {
@@ -292,9 +304,53 @@ internal sealed class EventSubLifecycleService(
     }
   }
 
+  private async Task CreateEventSubSubscriptionAsync(
+    HttpClient httpClient,
+    string eventType,
+    string version,
+    Dictionary<string, string> condition)
+  {
+    var conditionDisplay = string.Join(", ", condition.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+
+    try
+    {
+      var body = new
+      {
+        type = eventType,
+        version,
+        condition,
+        transport = new
+        {
+          method = "websocket",
+          session_id = eventSubClient.SessionId,
+        },
+      };
+
+      var json = JsonSerializer.Serialize(body);
+      using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+      var response = await httpClient.PostAsync("https://api.twitch.tv/helix/eventsub/subscriptions", content);
+
+      if (response.IsSuccessStatusCode)
+      {
+        CaramelTwitchProgramLogs.EventSubSubscribed(logger, eventType, conditionDisplay);
+      }
+      else
+      {
+        var errorBody = await response.Content.ReadAsStringAsync();
+        CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, $"{(int)response.StatusCode}: {errorBody}");
+      }
+    }
+    catch (Exception ex)
+    {
+      CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, ex.Message);
+    }
+  }
+
   private Task OnWebsocketDisconnectedAsync(object? sender, WebsocketDisconnectedArgs args)
   {
     CaramelTwitchProgramLogs.EventSubDisconnected(logger);
+    // Signal the connect loop to re-enter
+    _ = _disconnectTcs.TrySetResult();
     return Task.CompletedTask;
   }
 
@@ -310,6 +366,16 @@ internal sealed class EventSubLifecycleService(
       evt.MessageId,
       evt.Message.Text,
       evt.Color,
+      CancellationToken.None);
+  }
+
+  private async Task OnUserWhisperMessageAsync(object? sender, UserWhisperMessageArgs args)
+  {
+    var evt = args.Payload.Event;
+    await whisperHandler.HandleAsync(
+      evt.FromUserId,
+      evt.FromUserLogin,
+      evt.Whisper.Text,
       CancellationToken.None);
   }
 
@@ -377,5 +443,4 @@ internal static partial class CaramelTwitchProgramLogs
 
   [LoggerMessage(Level = LogLevel.Error, Message = "EventSub connection error: {Error} - will retry")]
   public static partial void EventSubConnectionError(ILogger logger, string error);
-
 }

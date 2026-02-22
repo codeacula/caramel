@@ -20,19 +20,19 @@ _ = webAppBuilder.Services
   .AddCacheServices(redisConnectionString)
   .AddGrpcClientServices();
 
-// WebSocket connection registry – shared between the endpoint and the background broadcaster
+// WebSocket connection registry -- shared between the endpoint and the background broadcaster
 var socketRegistry = new ConcurrentDictionary<string, WebSocket>();
 _ = webAppBuilder.Services.AddSingleton(socketRegistry);
 
 // Background service: subscribes to Redis pub/sub and fans out to all WebSocket clients
 _ = webAppBuilder.Services.AddHostedService<TwitchChatRelayService>();
 
-// CORS – allow the Vite dev server to connect (production serves same origin)
+// CORS -- allow the Vite dev server and Caddy proxy to connect
 _ = webAppBuilder.Services.AddCors(options =>
 {
   options.AddPolicy("ViteDev", policy =>
     policy
-      .WithOrigins("http://localhost:5173")
+      .WithOrigins("http://localhost:5173", "http://localhost:8080")
       .AllowAnyHeader()
       .AllowAnyMethod());
 });
@@ -53,7 +53,7 @@ _ = app.UseHttpsRedirection();
 _ = app.UseDefaultFiles();
 _ = app.UseStaticFiles();
 
-// WebSocket endpoint – clients connect here to receive live Twitch chat messages
+// WebSocket endpoint -- clients connect here to receive live Twitch chat messages
 app.Map("/ws/chat", async (HttpContext context, ConcurrentDictionary<string, WebSocket> registry) =>
 {
   if (!context.WebSockets.IsWebSocketRequest)
@@ -70,7 +70,7 @@ app.Map("/ws/chat", async (HttpContext context, ConcurrentDictionary<string, Web
   try
   {
     // Keep the socket alive by draining incoming frames until the client disconnects.
-    // We ignore any incoming data – this is a one-way broadcast channel.
+    // We ignore any incoming data -- this is a one-way broadcast channel.
     var buffer = new byte[256];
     while (webSocket.State == WebSocketState.Open)
     {
@@ -86,6 +86,9 @@ app.Map("/ws/chat", async (HttpContext context, ConcurrentDictionary<string, Web
     _ = registry.TryRemove(id, out _);
   }
 });
+
+// SPA fallback: serve index.html for any unmatched routes (client-side routing)
+app.MapFallbackToFile("index.html");
 
 await app.RunAsync();
 
