@@ -9,10 +9,12 @@ global using Caramel.Core.Logging;
 global using Caramel.Core.People;
 global using Caramel.Core.Reminders.Requests;
 global using Caramel.Core.ToDos.Requests;
+global using Caramel.Core.Twitch;
 global using Caramel.Domain.Common.Enums;
 global using Caramel.Domain.People.ValueObjects;
 global using Caramel.GRPC;
 global using Caramel.Twitch.Handlers;
+global using Caramel.Twitch.Services;
 
 global using FluentResults;
 
@@ -29,4 +31,3 @@ global using TwitchLib.Api.Core;
 global using TwitchLib.Api.Helix;
 global using TwitchLib.EventSub.Websockets;
 global using TwitchLib.EventSub.Websockets.Core.EventArgs;
-

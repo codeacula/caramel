@@ -1,4 +1,5 @@
 using Caramel.Twitch.Extensions;
+using Caramel.Twitch.Services;
 
 namespace Caramel.Twitch.Handlers;
 
@@ -8,6 +9,7 @@ namespace Caramel.Twitch.Handlers;
 public sealed class ChatMessageEventHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
+  ITwitchChatBroadcaster broadcaster,
   ILogger<ChatMessageEventHandler> logger)
 {
   private const string BotCommandPrefix = "!caramel";
@@ -15,17 +17,37 @@ public sealed class ChatMessageEventHandler(
 
   /// <summary>
   /// Processes an incoming chat message from a Twitch channel.
+  /// Broadcasts the message to the Redis pub/sub channel for UI display before
+  /// applying any bot-directed filtering.
   /// </summary>
   public async Task HandleAsync(
     string broadcasterUserId,
     string broadcasterLogin,
     string chatterUserId,
     string chatterLogin,
+    string chatterDisplayName,
+    string messageId,
     string messageText,
+    string color,
     CancellationToken cancellationToken = default)
   {
     try
     {
+      CaramelTwitchLogs.ChatMessageReceived(logger, chatterLogin);
+
+      // Broadcast every message to Redis so the UI can display it regardless of
+      // whether it is directed at the bot.
+      await broadcaster.PublishAsync(
+        messageId,
+        broadcasterUserId,
+        broadcasterLogin,
+        chatterUserId,
+        chatterLogin,
+        chatterDisplayName,
+        messageText,
+        color,
+        cancellationToken);
+
       // Ignore messages from the bot itself
       if (chatterLogin.Equals(BotCommandPrefix, StringComparison.OrdinalIgnoreCase))
       {
@@ -54,7 +76,6 @@ public sealed class ChatMessageEventHandler(
 
       if (!isDirectedAtBot)
       {
-        // Ignore messages not directed at the bot
         return;
       }
 
@@ -80,7 +101,6 @@ public sealed class ChatMessageEventHandler(
     commandType = string.Empty;
     commandContent = string.Empty;
 
-    // Normalize: remove prefix and extra whitespace
     var normalized = messageText.AsSpan().Trim();
 
     if (normalized.StartsWith(BotCommandPrefix.AsSpan(), StringComparison.OrdinalIgnoreCase))
@@ -93,7 +113,6 @@ public sealed class ChatMessageEventHandler(
       normalized = normalized[(idx + MentionPrefix.Length)..].Trim();
     }
 
-    // Check for commands
     if (normalized.StartsWith("todo", StringComparison.OrdinalIgnoreCase) || normalized.StartsWith("task", StringComparison.OrdinalIgnoreCase))
     {
       var spaceIdx = normalized.IndexOf(' ');
@@ -149,7 +168,7 @@ public sealed class ChatMessageEventHandler(
       {
         PlatformId = platformId,
         Message = commandContent,
-        ReminderTime = DateTime.UtcNow.AddMinutes(1).ToString("O") // Default: 1 minute from now
+        ReminderTime = DateTime.UtcNow.AddMinutes(1).ToString("O")
       };
 
       var result = await caramelServiceClient.CreateReminderAsync(request, cancellationToken);
@@ -164,29 +183,29 @@ public sealed class ChatMessageEventHandler(
     }
   }
 
-   private async Task HandleGeneralMessageAsync(
-     string messageText,
-     PlatformId platformId,
-     CancellationToken cancellationToken)
-   {
-     var request = new ProcessMessageRequest
-     {
-       PlatformUserId = platformId.PlatformUserId,
-       Platform = platformId.Platform,
-       Username = platformId.Username,
-       Content = messageText
-     };
+  private async Task HandleGeneralMessageAsync(
+    string messageText,
+    PlatformId platformId,
+    CancellationToken cancellationToken)
+  {
+    var request = new ProcessMessageRequest
+    {
+      PlatformUserId = platformId.PlatformUserId,
+      Platform = platformId.Platform,
+      Username = platformId.Username,
+      Content = messageText
+    };
 
-     var result = await caramelServiceClient.SendMessageAsync(request, cancellationToken);
-     if (result.IsFailed)
-     {
-       CaramelTwitchLogs.MessageProcessingFailed(logger, platformId.Username, result.Errors.First().Message);
-     }
-   }
+    var result = await caramelServiceClient.SendMessageAsync(request, cancellationToken);
+    if (result.IsFailed)
+    {
+      CaramelTwitchLogs.MessageProcessingFailed(logger, platformId.Username, result.Errors.First().Message);
+    }
+  }
 }
 
 /// <summary>
-/// Structured logging for Caramel.Twitch handler.
+/// Structured logging for Caramel.Twitch chat message handler.
 /// </summary>
 public static partial class CaramelTwitchLogs
 {

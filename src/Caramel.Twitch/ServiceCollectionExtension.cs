@@ -1,3 +1,5 @@
+using Caramel.Twitch.Services;
+
 using TwitchLib.EventSub.Websockets;
 
 namespace Caramel.Twitch;
@@ -16,8 +18,10 @@ public static class ServiceCollectionExtension
     });
 
     // Register EventSub WebSocket client
-    // Note: The client requires OAuth setup via SetAccessToken and SetClientId during EventSub subscription
     _ = services.AddSingleton<EventSubWebsocketClient>();
+
+    // Register chat broadcaster for Redis pub/sub
+    _ = services.AddSingleton<ITwitchChatBroadcaster, TwitchChatBroadcaster>();
 
     // Register handlers as singletons (they're called from event handlers)
     _ = services.AddSingleton<ChatMessageEventHandler>();

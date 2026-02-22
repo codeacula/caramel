@@ -12,6 +12,10 @@ Caramel is a personal assistant for neurodivergent users, built as a modular mic
 
 ## System Architecture
 
+> **Twitch chat → UI flow (new):**
+> Caramel.Twitch receives EventSub messages → publishes to Redis pub/sub `caramel:twitch:chat` → Caramel.API `TwitchChatRelayService` fans out over WebSocket `/ws/chat` → Vue `useTwitchChat` composable → `TwitchChat.vue` renders the feed.
+
+
 Caramel uses a **hub-and-spoke architecture** where `Caramel.Service` acts as the central backend. Interface layers (`API`, `Discord`, `Twitch`) communicate with it via gRPC.
 
 ```mermaid
@@ -478,8 +482,18 @@ Main backend host application. Runs the gRPC server, Quartz scheduler (e.g., `To
 ### Caramel.API
 
 HTTP/REST gateway with OpenAPI documentation. Serves the Vue SPA and forwards requests to Caramel.Service via gRPC.
+Also hosts the WebSocket endpoint for real-time Twitch chat broadcast to the UI.
 
-**Key Packages:** `Microsoft.AspNetCore.OpenApi`
+**Endpoints:**
+- `GET /ws/chat` - WebSocket endpoint; upgrade here to receive a live stream of `TwitchChatMessage` JSON frames
+- `GET /openapi` - OpenAPI spec (development only)
+
+**Real-time chat broadcast:**
+1. `TwitchChatRelayService` (hosted service) subscribes to the Redis pub/sub channel `caramel:twitch:chat` on startup
+2. When a frame arrives it fans out to every open WebSocket client registered in the shared `ConcurrentDictionary<string, WebSocket>`
+3. The `/ws/chat` endpoint accepts upgrades, registers the socket, drains incoming frames (keep-alive), and de-registers on close
+
+**Key Packages:** `Microsoft.AspNetCore.OpenApi`, `StackExchange.Redis`
 
 ---
 
@@ -496,22 +510,37 @@ Discord bot host using NetCord. Handles slash commands, interactions, and bot fu
 Twitch bot host with EventSub integration and OAuth authentication. Handles chat messages, whispers, and channel interactions via Twitch API.
 
 **Features:**
-- OAuth 2.0 authentication flow for secure user linking
-- EventSub WebSocket subscriptions for real-time events (chat messages, whispers, follows, etc.)
-- Session management with encrypted credentials
+- OAuth 2.0 authorization code flow for secure bot/broadcaster token management
+- EventSub WebSocket subscriptions for real-time events (`channel.chat.message`)
+- Publishes every incoming chat message to Redis pub/sub (`caramel:twitch:chat`) so `Caramel.API` can broadcast it to the UI via WebSocket
+- Bot-directed message processing (commands, AI routing) via `ChatMessageEventHandler`
 - gRPC client for communication with Caramel.Service
-- Modular event handler architecture
+
+**HTTP Endpoints (port 5146):**
+- `GET /auth/login` - Begins Twitch OAuth authorization code flow (redirects to Twitch)
+- `GET /auth/callback` - Receives the authorization code, exchanges it for tokens, stores them
+- `GET /auth/status` - Returns `{ "authorized": true/false }` indicating whether valid tokens are held
+- `GET /health` - Liveness probe
+
+**OAuth Scopes requested:**
+`chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat`
 
 **Core Components:**
-- `Program.cs` - Startup configuration, DI setup, gRPC client initialization
-- `Handlers/` - Event-specific handlers:
-  - `ChatMessageEventHandler` - Processes incoming chat messages
-  - `WhisperEventHandler` - Handles whispered messages
-  - `ChannelFollowEventHandler` - Tracks new follows
-- `Extensions/` - Helper utilities:
-  - `TwitchPlatformExtension` - Maps Twitch user IDs to Caramel platform format
-- `Auth/` - OAuth state management and session handling
-- `Events/` - Typed EventSub event DTOs
+- `Program.cs` - Startup, DI, OAuth endpoints, `EventSubLifecycleService`
+- `Services/TwitchChatBroadcaster` (`ITwitchChatBroadcaster`) - Publishes all chat messages to Redis pub/sub
+- `Handlers/ChatMessageEventHandler` - Broadcasts to Redis then routes bot-directed messages to AI/commands
+- `Handlers/WhisperEventHandler` - Routes whispers to the AI
+- `Extensions/TwitchPlatformExtension` - Maps Twitch user IDs to `PlatformId`
+- `Auth/OAuthStateManager` - CSRF-safe state parameter generation and validation
+- `Auth/TwitchTokenManager` - Access/refresh token lifecycle with automatic renewal
+
+**Message broadcast flow:**
+```
+Twitch EventSub WS → ChannelChatMessage event
+  → ChatMessageEventHandler.HandleAsync
+      → ITwitchChatBroadcaster.PublishAsync → Redis pub/sub "caramel:twitch:chat"
+      → (if bot-directed) command dispatch or AI routing via gRPC
+```
 
 **Configuration (see `.env.example`):**
 ```
@@ -519,9 +548,11 @@ Twitch__ClientId=your_twitch_client_id_here
 Twitch__ClientSecret=your_twitch_client_secret_here
 Twitch__OAuthCallbackUrl=http://localhost:5146/auth/callback
 Twitch__EncryptionKey=your_secure_32_byte_base64_key_here
+Twitch__BotUserId=your_bot_user_id_here
+Twitch__ChannelIds=channel_id_1,channel_id_2
 ```
 
-**Key Packages:** `TwitchLib.Api`, `TwitchLib.EventSub.Websockets`, `Grpc.Net.Client`
+**Key Packages:** `TwitchLib.Api`, `TwitchLib.EventSub.Websockets`, `TwitchLib.EventSub.Core`, `StackExchange.Redis`, `Grpc.Net.Client`
 
 **Development Port:** 5146 (exposed in Docker)
 
@@ -530,6 +561,18 @@ Twitch__EncryptionKey=your_secure_32_byte_base64_key_here
 ### Client
 
 Vue 3 single-page application built with Vite and TypeScript.
+Displays a live Twitch chat feed via WebSocket and provides a Twitch OAuth authorization button.
+
+**Key UI features:**
+- `TwitchChat.vue` - Full-screen chat panel: live message feed, connection status badge, "Authorize Twitch" button, clear and scroll-to-bottom controls
+- `composables/useTwitchChat.ts` - Manages the WebSocket connection to `/ws/chat` with automatic reconnection, message capping at 200 entries, and reactive `ConnectionStatus`
+
+**Vite dev proxy routing:**
+| Path | Target | Notes |
+|------|--------|-------|
+| `/api` | `http://localhost:5144` | Caramel.API REST |
+| `/ws` | `http://localhost:5144` (ws) | WebSocket upgrade |
+| `/auth` | `http://localhost:5146` | Twitch OAuth (Caramel.Twitch) |
 
 **Key Packages:** `vue`, `vite`, `typescript`
 

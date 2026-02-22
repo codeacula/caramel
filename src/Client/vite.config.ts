@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
   plugins: [vue()],
@@ -7,14 +7,22 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     proxy: {
-      // If you expose any HTTP endpoints (e.g., /api or OpenAPI), proxy them in dev:
-      '/api': 'http://localhost:5144',
-      '/interactions': 'http://localhost:5144',
+      "/api": "http://localhost:5144",
+      "/interactions": "http://localhost:5144",
+      "/ws": {
+        target: "http://localhost:5144",
+        ws: true,
+        changeOrigin: true,
+      },
+      "/auth": {
+        target: "http://localhost:5146",
+        changeOrigin: true,
+      },
     },
   },
   build: {
     // Build straight into ASP.NET's static files for production
-    outDir: '../Apollo.API/wwwroot',
+    outDir: "../Apollo.API/wwwroot",
     emptyOutDir: true,
   },
-})
+});
