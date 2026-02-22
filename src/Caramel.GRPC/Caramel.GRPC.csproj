@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentResults" Version="4.0.0" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.76.0" />
+    <PackageReference Include="protobuf-net.Grpc" Version="1.2.2" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.2.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Caramel.Application\Caramel.Application.csproj" />
+    <ProjectReference Include="..\Caramel.Core\Caramel.Core.csproj" />
+  </ItemGroup>
+</Project>

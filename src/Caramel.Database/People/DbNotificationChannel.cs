@@ -1,0 +1,17 @@
+using Caramel.Domain.Common.Enums;
+
+namespace Caramel.Database.People;
+
+/// <summary>
+/// Represents a notification channel for a person in the database.
+/// </summary>
+public sealed record DbNotificationChannel
+{
+  public required Platform PersonPlatform { get; init; }
+  public required string PersonProviderId { get; init; }
+  public NotificationChannelType Type { get; init; }
+  public required string Identifier { get; init; }
+  public bool IsEnabled { get; init; }
+  public DateTime CreatedOn { get; init; }
+  public DateTime UpdatedOn { get; init; }
+}

@@ -1,0 +1,33 @@
+using Caramel.AI.DTOs;
+using Caramel.AI.Requests;
+
+namespace Caramel.AI;
+
+public interface ICaramelAIAgent
+{
+  /// <summary>
+  /// Creates a new request builder for custom configuration.
+  /// </summary>
+  IAIRequestBuilder CreateRequest();
+
+  IAIRequestBuilder CreateToolPlanningRequest(
+    IEnumerable<ChatMessageDTO> messages,
+    string userTimezone,
+    string activeTodos);
+
+  IAIRequestBuilder CreateResponseRequest(
+    IEnumerable<ChatMessageDTO> messages,
+    string actionsSummary,
+    string userTimezone);
+
+  IAIRequestBuilder CreateReminderRequest(
+    string userTimezone,
+    string currentTime,
+    string reminderItems);
+
+  IAIRequestBuilder CreateDailyPlanRequest(
+    string userTimezone,
+    string currentTime,
+    string activeTodos,
+    int taskCount);
+}

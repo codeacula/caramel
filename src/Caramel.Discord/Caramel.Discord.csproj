@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>32a85135-a1d1-4dc8-9688-4ca04732b29a</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetCord" Version="1.0.0-alpha.455" />
+    <PackageReference Include="NetCord.Hosting" Version="1.0.0-alpha.455" />
+    <PackageReference Include="NetCord.Hosting.AspNetCore" Version="1.0.0-alpha.455" />
+    <PackageReference Include="NetCord.Hosting.Services" Version="1.0.0-alpha.455" />
+    <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <ProjectReference Include="../Caramel.Application/Caramel.Application.csproj" />
+      <ProjectReference Include="../Caramel.Cache/Caramel.Cache.csproj" />
+      <ProjectReference Include="../Caramel.Domain/Caramel.Domain.csproj" />
+      <ProjectReference Include="../Caramel.GRPC/Caramel.GRPC.csproj" />
+      <ProjectReference Include="../Caramel.Core/Caramel.Core.csproj" />
+  </ItemGroup>
+
+</Project>
