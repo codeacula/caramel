@@ -10,6 +10,7 @@ public sealed class ChatMessageEventHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
   ITwitchChatBroadcaster broadcaster,
+  ITwitchSetupState setupState,
   ILogger<ChatMessageEventHandler> logger)
 {
   private const string BotCommandPrefix = "!caramel";
@@ -49,7 +50,8 @@ public sealed class ChatMessageEventHandler(
         cancellationToken);
 
       // Ignore messages from the bot itself
-      if (chatterLogin.Equals(BotCommandPrefix, StringComparison.OrdinalIgnoreCase))
+      var setup = setupState.Current;
+      if (setup is not null && chatterUserId == setup.BotUserId)
       {
         return;
       }

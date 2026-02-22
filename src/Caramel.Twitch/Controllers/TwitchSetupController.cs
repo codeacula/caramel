@@ -65,14 +65,20 @@ public sealed class TwitchSetupController(
     {
       // Resolve all logins → numeric IDs in parallel
       var botUserIdTask = userResolver.ResolveUserIdAsync(request.BotLogin, cancellationToken);
-      var channelIdsTask = userResolver.ResolveUserIdsAsync(request.ChannelLogins, cancellationToken);
+      var channelLoginsList = request.ChannelLogins.ToList();
+      var channelIdsTask = userResolver.ResolveUserIdsAsync(channelLoginsList, cancellationToken);
 
       await Task.WhenAll(botUserIdTask, channelIdsTask);
 
       var botUserId = botUserIdTask.Result;
       var channelIds = channelIdsTask.Result;
 
-      var channels = request.ChannelLogins
+      if (channelIds.Count != channelLoginsList.Count)
+      {
+        return BadRequest("One or more channel logins could not be resolved.");
+      }
+
+      var channels = channelLoginsList
         .Zip(channelIds, (login, id) => new TwitchChannel { UserId = id, Login = login })
         .ToList();
 

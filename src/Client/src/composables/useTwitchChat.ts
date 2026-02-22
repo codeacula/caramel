@@ -107,14 +107,14 @@ export function useTwitchChat() {
             break;
 
           case "auth_status":
-            if (typeof envelope.authorized === "boolean") {
-              isAuthorized.value = envelope.authorized;
+            if (typeof envelope.data?.authorized === "boolean") {
+              isAuthorized.value = envelope.data.authorized;
             }
             break;
 
           case "setup_status":
-            if (typeof envelope.configured === "boolean") {
-              isSetupConfigured.value = envelope.configured;
+            if (typeof envelope.data?.configured === "boolean") {
+              isSetupConfigured.value = envelope.data.configured;
             }
             break;
 

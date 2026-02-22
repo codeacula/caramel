@@ -27,8 +27,13 @@ public sealed class TwitchTokenManager
     _logger = logger;
     _accessToken = config.AccessToken;
     _refreshToken = config.RefreshToken;
-    // Assume initial token from config is valid for 1 hour
-    _expiresAt = DateTime.UtcNow.AddHours(1);
+
+    // If we have an initial token, assume it is valid for 1 hour.
+    // Otherwise, set to MinValue to force a refresh attempt/error if refresh token exists,
+    // or to signal that OAuth is needed.
+    _expiresAt = !string.IsNullOrWhiteSpace(_accessToken)
+      ? DateTime.UtcNow.AddHours(1)
+      : DateTime.MinValue;
   }
 
   /// <summary>
@@ -38,7 +43,7 @@ public sealed class TwitchTokenManager
   {
     lock (_lock)
     {
-      if (_accessToken != null && DateTime.UtcNow.AddSeconds(RefreshThresholdSeconds) < _expiresAt)
+      if (!string.IsNullOrWhiteSpace(_accessToken) && DateTime.UtcNow.AddSeconds(RefreshThresholdSeconds) < _expiresAt)
       {
         return _accessToken;
       }
