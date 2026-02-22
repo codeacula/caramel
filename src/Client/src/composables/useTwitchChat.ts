@@ -15,12 +15,10 @@ export interface TwitchChatMessage {
 /** WebSocket envelope – every frame from the server has a `type` discriminator. */
 interface WsEnvelope {
   type: string;
-  // chat_message
-  data?: TwitchChatMessage;
-  // auth_status
-  authorized?: boolean;
-  // setup_status
-  configured?: boolean;
+  data?: TwitchChatMessage & {
+    authorized?: boolean;
+    configured?: boolean;
+  };
 }
 
 const MAX_MESSAGES = 200;
