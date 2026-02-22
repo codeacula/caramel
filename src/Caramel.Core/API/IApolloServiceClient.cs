@@ -4,6 +4,7 @@ using Caramel.Core.ToDos.Requests;
 using Caramel.Core.ToDos.Responses;
 using Caramel.Domain.People.ValueObjects;
 using Caramel.Domain.ToDos.Models;
+using Caramel.Domain.Twitch;
 
 using FluentResults;
 
@@ -18,4 +19,6 @@ public interface ICaramelServiceClient
   Task<Result<string>> GrantAccessAsync(PlatformId adminPlatformId, PlatformId targetPlatformId, CancellationToken cancellationToken = default);
   Task<Result<string>> RevokeAccessAsync(PlatformId adminPlatformId, PlatformId targetPlatformId, CancellationToken cancellationToken = default);
   Task<Result<string>> SendMessageAsync(ProcessMessageRequest request, CancellationToken cancellationToken = default);
+  Task<Result<TwitchSetup?>> GetTwitchSetupAsync(CancellationToken cancellationToken = default);
+  Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default);
 }

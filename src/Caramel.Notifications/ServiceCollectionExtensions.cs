@@ -51,5 +51,26 @@ public static class ServiceCollectionExtensions
     });
     return services;
   }
+
+  /// <summary>
+  /// Registers a Twitch whisper notification channel that resolves both the send delegate and
+  /// the bot user ID lazily from <paramref name="botUserIdFactory"/> and
+  /// <paramref name="whisperSendFactory"/> at the time each notification is dispatched.
+  /// Use this overload when the bot user ID is stored in a runtime-resolved singleton (e.g. ITwitchSetupState)
+  /// rather than being available at startup.
+  /// </summary>
+  public static IServiceCollection AddTwitchNotificationChannel(
+    this IServiceCollection services,
+    Func<IServiceProvider, string?> botUserIdFactory,
+    Func<IServiceProvider, Func<string, string, string, CancellationToken, Task<bool>>> whisperSendFactory)
+  {
+    _ = services.AddScoped<INotificationChannel>(sp =>
+    {
+      var botUserId = botUserIdFactory(sp) ?? string.Empty;
+      var sendDelegate = whisperSendFactory(sp);
+      return new TwitchNotificationChannel(botUserId, sendDelegate);
+    });
+    return services;
+  }
 }
 

@@ -3,6 +3,7 @@ using Caramel.Core.Conversations;
 using Caramel.Core.ToDos.Responses;
 using Caramel.Domain.People.ValueObjects;
 using Caramel.Domain.ToDos.Models;
+using Caramel.Domain.Twitch;
 using Caramel.GRPC.Interceptors;
 using Caramel.GRPC.Service;
 
@@ -208,6 +209,58 @@ public class CaramelGrpcClient : ICaramelGrpcClient, ICaramelServiceClient, IDis
     return grpcResult.IsSuccess
       ? Result.Ok(grpcResult.Data ?? string.Empty)
       : Result.Fail(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
+  }
+
+  public async Task<Result<TwitchSetup?>> GetTwitchSetupAsync(CancellationToken cancellationToken = default)
+  {
+    var grpcResult = await CaramelGrpcService.GetTwitchSetupAsync();
+
+    if (!grpcResult.IsSuccess)
+    {
+      return Result.Fail<TwitchSetup?>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
+    }
+
+    if (grpcResult.Data is null)
+    {
+      return Result.Ok<TwitchSetup?>(null);
+    }
+
+    return Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
+  }
+
+  public async Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default)
+  {
+    var grpcRequest = new Contracts.SaveTwitchSetupRequest
+    {
+      BotUserId = setup.BotUserId,
+      BotLogin = setup.BotLogin,
+      Channels = setup.Channels
+        .Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
+        .ToList()
+    };
+
+    var grpcResult = await CaramelGrpcService.SaveTwitchSetupAsync(grpcRequest);
+
+    if (!grpcResult.IsSuccess || grpcResult.Data is null)
+    {
+      return Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
+    }
+
+    return Result.Ok(MapTwitchSetupToDomain(grpcResult.Data));
+  }
+
+  private static TwitchSetup MapTwitchSetupToDomain(Contracts.TwitchSetupDTO dto)
+  {
+    return new TwitchSetup
+    {
+      BotUserId = dto.BotUserId,
+      BotLogin = dto.BotLogin,
+      Channels = dto.Channels
+        .Select(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
+        .ToList(),
+      ConfiguredOn = DateTimeOffset.UtcNow,
+      UpdatedOn = DateTimeOffset.UtcNow
+    };
   }
 
   private static ToDo MapToDomain(GrpcToDoDTO dto)

@@ -17,6 +17,9 @@ public static class ServiceCollectionExtension
       );
     });
 
+    // Register in-memory Twitch setup state (loaded from DB at runtime)
+    _ = services.AddSingleton<ITwitchSetupState, TwitchSetupState>();
+
     // Register EventSub WebSocket client
     _ = services.AddSingleton<EventSubWebsocketClient>();
 

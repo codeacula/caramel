@@ -2,6 +2,8 @@ namespace Caramel.Twitch;
 
 /// <summary>
 /// Configuration for the Twitch bot integration.
+/// Bot/channel identity (BotUserId, ChannelIds) is stored in the database and
+/// managed via the Twitch setup wizard, not in application config.
 /// </summary>
 public sealed record TwitchConfig
 {
@@ -27,17 +29,7 @@ public sealed record TwitchConfig
   public string? RefreshToken { get; init; }
 
   /// <summary>
-  /// Twitch user ID of the bot account.
-  /// </summary>
-  public required string BotUserId { get; init; }
-
-  /// <summary>
-  /// Comma-separated list of Twitch channel IDs to join and listen to.
-  /// </summary>
-  public required string ChannelIds { get; init; }
-
-  /// <summary>
-  /// OAuth callback URL for the authorization code flow (e.g., http://localhost:5146/auth/callback).
+  /// OAuth callback URL for the authorization code flow (e.g., http://localhost:8080/auth/callback).
   /// </summary>
   public required string OAuthCallbackUrl { get; init; }
 

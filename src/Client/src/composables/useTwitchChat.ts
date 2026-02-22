@@ -12,6 +12,17 @@ export interface TwitchChatMessage {
   timestamp: string;
 }
 
+/** WebSocket envelope – every frame from the server has a `type` discriminator. */
+interface WsEnvelope {
+  type: string;
+  // chat_message
+  data?: TwitchChatMessage;
+  // auth_status
+  authorized?: boolean;
+  // setup_status
+  configured?: boolean;
+}
+
 const MAX_MESSAGES = 200;
 const RECONNECT_DELAY_MS = 3000;
 const MAX_MESSAGE_LENGTH = 500;
@@ -25,6 +36,8 @@ export function useTwitchChat() {
   const errorMessage = ref<string | null>(null);
   const sendStatus = ref<SendStatus>("idle");
   const sendError = ref<string | null>(null);
+  const isAuthorized = ref<boolean>(false);
+  const isSetupConfigured = ref<boolean>(false);
 
   let socket: WebSocket | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -34,6 +47,29 @@ export function useTwitchChat() {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = window.location.host;
     return `${protocol}://${host}/ws/chat`;
+  }
+
+  async function fetchInitialStatus(): Promise<void> {
+    try {
+      const [authResp, setupResp] = await Promise.all([
+        fetch("/auth/status"),
+        fetch("/twitch/setup"),
+      ]);
+      if (authResp.ok) {
+        const authBody = await authResp.json();
+        if (typeof authBody?.authorized === "boolean") {
+          isAuthorized.value = authBody.authorized;
+        }
+      }
+      if (setupResp.ok) {
+        const setupBody = await setupResp.json();
+        if (typeof setupBody?.isConfigured === "boolean") {
+          isSetupConfigured.value = setupBody.isConfigured;
+        }
+      }
+    } catch {
+      // Non-fatal — state remains at defaults
+    }
   }
 
   function connect() {
@@ -58,10 +94,33 @@ export function useTwitchChat() {
 
     socket.onmessage = (event: MessageEvent<string>) => {
       try {
-        const msg = JSON.parse(event.data) as TwitchChatMessage;
-        messages.value.push(msg);
-        if (messages.value.length > MAX_MESSAGES) {
-          messages.value.splice(0, messages.value.length - MAX_MESSAGES);
+        const envelope = JSON.parse(event.data) as WsEnvelope;
+
+        switch (envelope.type) {
+          case "chat_message":
+            if (envelope.data) {
+              messages.value.push(envelope.data);
+              if (messages.value.length > MAX_MESSAGES) {
+                messages.value.splice(0, messages.value.length - MAX_MESSAGES);
+              }
+            }
+            break;
+
+          case "auth_status":
+            if (typeof envelope.authorized === "boolean") {
+              isAuthorized.value = envelope.authorized;
+            }
+            break;
+
+          case "setup_status":
+            if (typeof envelope.configured === "boolean") {
+              isSetupConfigured.value = envelope.configured;
+            }
+            break;
+
+          default:
+            // Unknown envelope type – ignore
+            break;
         }
       } catch {
         // Malformed message – ignore
@@ -169,6 +228,7 @@ export function useTwitchChat() {
 
   onMounted(() => {
     stopped = false;
+    fetchInitialStatus();
     connect();
   });
 
@@ -182,6 +242,8 @@ export function useTwitchChat() {
     errorMessage,
     sendStatus,
     sendError,
+    isAuthorized,
+    isSetupConfigured,
     clearMessages,
     clearSendError,
     disconnect,

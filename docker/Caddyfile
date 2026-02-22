@@ -3,8 +3,12 @@
 # In production: replace :8080 with your domain for automatic HTTPS
 
 :8080 {
-  # Twitch OAuth and chat send endpoints -> Caramel.Twitch
+  # Twitch OAuth, setup, and chat send endpoints -> Caramel.Twitch
   handle /auth/* {
+    reverse_proxy caramel-twitch:5146
+  }
+
+  handle /twitch/* {
     reverse_proxy caramel-twitch:5146
   }
 

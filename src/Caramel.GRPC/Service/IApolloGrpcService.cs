@@ -51,4 +51,10 @@ public interface ICaramelGrpcService
   [OperationContract]
   [RequireSuperAdmin]
   Task<GrpcResult<string>> RevokeAccessAsync(ManageAccessRequest request);
+
+  [OperationContract]
+  Task<GrpcResult<TwitchSetupDTO>> GetTwitchSetupAsync();
+
+  [OperationContract]
+  Task<GrpcResult<TwitchSetupDTO>> SaveTwitchSetupAsync(SaveTwitchSetupRequest request);
 }

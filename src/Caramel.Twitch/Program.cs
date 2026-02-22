@@ -1,5 +1,6 @@
 using System.Text.Json;
 
+using Caramel.Core.API;
 using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
@@ -44,16 +45,19 @@ var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<Tw
 _ = builder.Services.AddSingleton<OAuthStateManager>();
 _ = builder.Services.AddSingleton<TwitchTokenManager>();
 
-// Register Twitch notification channel — sends whispers via the Helix API.
-// The factory overload resolves ITwitchWhisperService lazily from the scoped DI
-// container each time a notification is dispatched, avoiding the pre-build ordering issue.
+// Register Twitch notification channel using ITwitchSetupState for dynamic botUserId resolution.
+// The factory resolves at dispatch time so a missing setup degrades gracefully.
 _ = builder.Services.AddTwitchNotificationChannel(
+  botUserIdFactory: sp =>
+  {
+    var state = sp.GetRequiredService<ITwitchSetupState>();
+    return state.Current?.BotUserId;
+  },
   whisperSendFactory: sp =>
   {
     var svc = sp.GetRequiredService<ITwitchWhisperService>();
     return (botId, recipientId, message, ct) => svc.SendWhisperAsync(botId, recipientId, message, ct);
-  },
-  botUserId: twitchConfig.BotUserId);
+  });
 
 // Register EventSub lifecycle service (EventSubWebsocketClient already registered by AddTwitchServices)
 _ = builder.Services.AddHostedService<EventSubLifecycleService>();
@@ -83,7 +87,7 @@ app.MapGet("/auth/login", () =>
   return Results.Redirect(oauthUrl);
 });
 
-app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactory httpClientFactory, ILogger<Program> callbackLogger, CancellationToken ct) =>
+app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactory httpClientFactory, ITwitchChatBroadcaster broadcaster, ILogger<Program> callbackLogger, CancellationToken ct) =>
 {
   try
   {
@@ -122,6 +126,9 @@ app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactor
     tokenManager.SetTokens(accessToken, refreshToken, expiresIn);
     CaramelTwitchProgramLogs.OAuthSucceeded(callbackLogger);
 
+    // Push auth_status notification to all connected WebSocket clients
+    await broadcaster.PublishSystemMessageAsync("auth_status", new { authorized = true }, ct);
+
     return Results.Content("""
       <!doctype html>
       <html><head><title>Caramel - Authorized</title></head>
@@ -159,16 +166,17 @@ await app.RunAsync();
 
 /// <summary>
 /// Manages the EventSub WebSocket connection lifecycle.
-/// Waits for valid OAuth tokens then connects to Twitch EventSub, subscribes to
-/// channel.chat.message and user.whisper.message events, and wires the handlers.
-/// Event handlers are registered exactly once to prevent duplicate invocations.
-/// Uses a TaskCompletionSource to detect disconnects and re-enter the connect loop.
+/// Waits for valid OAuth tokens, then loads Twitch setup from the database.
+/// Once both tokens and setup are available, connects to Twitch EventSub and subscribes
+/// to channel.chat.message and user.whisper.message events.
+/// Reconnects automatically on disconnect.
 /// </summary>
 internal sealed class EventSubLifecycleService(
   EventSubWebsocketClient eventSubClient,
   TwitchConfig twitchConfig,
   TwitchTokenManager tokenManager,
-  ITwitchUserResolver userResolver,
+  ITwitchSetupState setupState,
+  ICaramelServiceClient serviceClient,
   ChatMessageEventHandler chatHandler,
   WhisperEventHandler whisperHandler,
   IHttpClientFactory httpClientFactory,
@@ -190,9 +198,27 @@ internal sealed class EventSubLifecycleService(
       {
         try
         {
+          // Phase 1: Wait for valid OAuth tokens
           _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
 
-          // Reset the disconnect signal before each connection attempt
+          // Phase 2: Load setup from DB (retry until configured)
+          if (!setupState.IsConfigured)
+          {
+            var setupResult = await serviceClient.GetTwitchSetupAsync(stoppingToken);
+            if (setupResult.IsSuccess && setupResult.Value is not null)
+            {
+              setupState.Update(setupResult.Value);
+              CaramelTwitchProgramLogs.EventSubSetupLoaded(logger, setupResult.Value.BotLogin);
+            }
+            else
+            {
+              CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
+              await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+              continue;
+            }
+          }
+
+          // Phase 3: Connect EventSub
           _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
           CaramelTwitchProgramLogs.EventSubConnecting(logger);
@@ -268,15 +294,18 @@ internal sealed class EventSubLifecycleService(
 
     try
     {
+      var setup = setupState.Current;
+      if (setup is null)
+      {
+        CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
+        return;
+      }
+
       var accessToken = await tokenManager.GetValidAccessTokenAsync();
 
-      // Resolve channel login names/IDs to numeric IDs required by the Helix API.
-      var rawChannelIds = twitchConfig.ChannelIds
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-      var channelIds = await userResolver.ResolveUserIdsAsync(rawChannelIds);
-
-      // Resolve bot user ID (may be a username in config)
-      var botUserId = await userResolver.ResolveUserIdAsync(twitchConfig.BotUserId);
+      // Numeric IDs are stored in setup — no resolver needed
+      var botUserId = setup.BotUserId;
+      var channelIds = setup.Channels.Select(c => c.UserId).ToList();
 
       using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
       httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
@@ -440,6 +469,12 @@ internal static partial class CaramelTwitchProgramLogs
 
   [LoggerMessage(Level = LogLevel.Information, Message = "EventSub waiting for OAuth tokens - visit GET /auth/login")]
   public static partial void EventSubWaitingForOAuth(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "EventSub waiting for Twitch setup - visit POST /twitch/setup to configure")]
+  public static partial void EventSubWaitingForSetup(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "EventSub loaded Twitch setup for bot '{BotLogin}'")]
+  public static partial void EventSubSetupLoaded(ILogger logger, string botLogin);
 
   [LoggerMessage(Level = LogLevel.Error, Message = "EventSub connection error: {Error} - will retry")]
   public static partial void EventSubConnectionError(ILogger logger, string error);

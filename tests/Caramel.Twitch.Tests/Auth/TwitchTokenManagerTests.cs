@@ -10,8 +10,6 @@ public sealed class TwitchTokenManagerTests
     ClientSecret = "test-client-secret",
     AccessToken = "initial-access-token",
     RefreshToken = "initial-refresh-token",
-    BotUserId = "123456",
-    ChannelIds = "123456",
     OAuthCallbackUrl = "http://localhost:5146/auth/callback",
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
@@ -79,8 +77,6 @@ public sealed class TwitchTokenManagerTests
       ClientId = "test-client-id",
       ClientSecret = "test-client-secret",
       AccessToken = "test-token",
-      BotUserId = "123456",
-      ChannelIds = "123456",
       OAuthCallbackUrl = "http://localhost:5146/auth/callback",
       EncryptionKey = Convert.ToBase64String(new byte[32]),
     };
@@ -97,8 +93,6 @@ public sealed class TwitchTokenManagerTests
       ClientId = "test-client-id",
       ClientSecret = "test-client-secret",
       AccessToken = "expired-token",
-      BotUserId = "123456",
-      ChannelIds = "123456",
       OAuthCallbackUrl = "http://localhost:5146/auth/callback",
       EncryptionKey = Convert.ToBase64String(new byte[32]),
     };

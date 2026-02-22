@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { useTwitchChat } from "../composables/useTwitchChat";
+import { useTwitchSetup } from "../composables/useTwitchSetup";
 import type { TwitchChatMessage } from "../composables/useTwitchChat";
 
 const {
@@ -9,11 +10,34 @@ const {
   errorMessage,
   sendStatus,
   sendError,
+  isAuthorized,
+  isSetupConfigured,
   clearMessages,
   clearSendError,
   sendMessage,
   maxMessageLength,
 } = useTwitchChat();
+
+// ── Setup wizard ─────────────────────────────────────────────────────────────
+
+const { requestStatus: setupRequestStatus, errorMessage: setupError, submitSetup } = useTwitchSetup();
+
+const setupBotLogin = ref("");
+const setupChannelLogins = ref("");
+const setupSaving = computed(() => setupRequestStatus.value === "saving");
+
+async function handleSetupSubmit() {
+  const botLogin = setupBotLogin.value.trim();
+  const channelLogins = setupChannelLogins.value
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  if (!botLogin || channelLogins.length === 0) return;
+
+  await submitSetup(botLogin, channelLogins);
+  // isSetupConfigured will be updated via the WebSocket setup_status push
+}
 
 const feedEl = ref<HTMLElement | null>(null);
 const autoScroll = ref(true);
@@ -143,17 +167,58 @@ function scrollToBottom() {
           {{ statusLabel }}
         </span>
 
-        <a href="/auth/login" class="btn btn-auth" target="_blank" rel="noopener noreferrer"> Authorize Twitch </a>
+        <a v-if="!isAuthorized" href="/auth/login" class="btn btn-auth" target="_blank" rel="noopener noreferrer">
+          Authorize Twitch
+        </a>
 
         <button class="btn btn-clear" @click="clearMessages" title="Clear messages">Clear</button>
       </div>
     </div>
 
+    <!-- Setup wizard (shown when not yet configured) -->
+    <div v-if="!isSetupConfigured" class="setup-panel">
+      <h2 class="setup-title">Twitch Setup</h2>
+      <p class="setup-desc">
+        Enter your bot's username and the channel(s) to monitor. Separate multiple channels with commas.
+      </p>
+
+      <div v-if="setupError" class="error-banner" role="alert">⚠ {{ setupError }}</div>
+
+      <form class="setup-form" @submit.prevent="handleSetupSubmit">
+        <label class="setup-label" for="setup-bot-login">Bot username</label>
+        <input
+          id="setup-bot-login"
+          v-model="setupBotLogin"
+          class="setup-input"
+          type="text"
+          placeholder="mybot"
+          :disabled="setupSaving"
+          required
+        />
+
+        <label class="setup-label" for="setup-channels">Channel(s)</label>
+        <input
+          id="setup-channels"
+          v-model="setupChannelLogins"
+          class="setup-input"
+          type="text"
+          placeholder="channel1, channel2"
+          :disabled="setupSaving"
+          required
+        />
+
+        <button class="btn btn-auth setup-submit" type="submit" :disabled="setupSaving || !setupBotLogin.trim() || !setupChannelLogins.trim()">
+          <span v-if="setupSaving">Saving…</span>
+          <span v-else>Save Setup</span>
+        </button>
+      </form>
+    </div>
+
     <!-- WebSocket error banner -->
-    <div v-if="errorMessage" class="error-banner" role="alert">⚠ {{ errorMessage }}</div>
+    <div v-if="isSetupConfigured && errorMessage" class="error-banner" role="alert">⚠ {{ errorMessage }}</div>
 
     <!-- Empty state -->
-    <div v-if="messages.length === 0" class="empty-state">
+    <div v-if="isSetupConfigured && messages.length === 0" class="empty-state">
       <p v-if="status === 'connecting'">Connecting to chat feed…</p>
       <p v-else-if="status === 'connected'">
         Waiting for messages. Make sure the bot is authorized and your channel IDs are configured.
@@ -163,7 +228,7 @@ function scrollToBottom() {
 
     <!-- Message feed -->
     <div
-      v-else
+      v-if="isSetupConfigured && messages.length > 0"
       ref="feedEl"
       class="chat-feed"
       role="log"
@@ -649,6 +714,80 @@ function scrollToBottom() {
   border-top: 1px solid #2a2a2e;
   flex-shrink: 0;
   text-align: right;
+}
+
+/* ── Setup wizard ────────────────────────────────────────────────────────── */
+.setup-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 12px;
+}
+
+.setup-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #efeff1;
+  margin: 0;
+}
+
+.setup-desc {
+  font-size: 13px;
+  color: #6b6b7d;
+  text-align: center;
+  margin: 0;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.setup-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #adadb8;
+}
+
+.setup-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #3a3a40;
+  background: #0e0e10;
+  color: #efeff1;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.setup-input::placeholder {
+  color: #6b6b7d;
+}
+.setup-input:focus {
+  border-color: #9147ff;
+}
+.setup-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.setup-submit {
+  margin-top: 4px;
+  padding: 8px 16px;
+  font-size: 13px;
+  align-self: flex-end;
+}
+.setup-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ── Transitions ─────────────────────────────────────────────────────────── */

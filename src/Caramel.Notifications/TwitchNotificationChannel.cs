@@ -23,7 +23,7 @@ public sealed class TwitchNotificationChannel : INotificationChannel
   /// <param name="sendWhisperAsync">Delegate to send whispers (injected from TwitchLib client).</param>
   public TwitchNotificationChannel(string botUserId, Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync)
   {
-    _botUserId = botUserId ?? throw new ArgumentNullException(nameof(botUserId));
+    _botUserId = botUserId ?? string.Empty;
     _sendWhisperAsync = sendWhisperAsync ?? throw new ArgumentNullException(nameof(sendWhisperAsync));
   }
 
@@ -31,6 +31,11 @@ public sealed class TwitchNotificationChannel : INotificationChannel
   {
     try
     {
+      if (string.IsNullOrWhiteSpace(_botUserId))
+      {
+        return Result.Fail("Twitch bot is not configured yet");
+      }
+
       if (string.IsNullOrWhiteSpace(identifier))
       {
         return Result.Fail("Invalid Twitch recipient user ID");

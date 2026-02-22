@@ -1,6 +1,7 @@
 using Caramel.Application.Conversations;
 using Caramel.Application.People;
 using Caramel.Application.ToDos;
+using Caramel.Application.Twitch;
 using Caramel.Core.People;
 using Caramel.Core.ToDos;
 using Caramel.Domain.Common.Enums;
@@ -309,6 +310,60 @@ public sealed class CaramelGrpcService(
     return revokeResult.IsFailed
       ? (GrpcResult<string>)revokeResult.Errors.Select(e => new GrpcError(e.Message)).ToArray()
       : (GrpcResult<string>)$"Access revoked from {request.TargetUsername}";
+  }
+
+  public async Task<GrpcResult<TwitchSetupDTO>> GetTwitchSetupAsync()
+  {
+    var result = await mediator.Send(new GetTwitchSetupQuery());
+
+    if (result.IsFailed)
+    {
+      return result.Errors.Select(e => new GrpcError(e.Message)).ToArray();
+    }
+
+    if (result.Value is null)
+    {
+      return new GrpcResult<TwitchSetupDTO> { IsSuccess = true, Data = null };
+    }
+
+    var setup = result.Value;
+    return new TwitchSetupDTO
+    {
+      BotUserId = setup.BotUserId,
+      BotLogin = setup.BotLogin,
+      Channels = setup.Channels
+        .Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
+        .ToList()
+    };
+  }
+
+  public async Task<GrpcResult<TwitchSetupDTO>> SaveTwitchSetupAsync(SaveTwitchSetupRequest request)
+  {
+    var command = new SaveTwitchSetupCommand
+    {
+      BotUserId = request.BotUserId,
+      BotLogin = request.BotLogin,
+      Channels = request.Channels
+        .Select(c => (c.UserId, c.Login))
+        .ToList()
+    };
+
+    var result = await mediator.Send(command);
+
+    if (result.IsFailed)
+    {
+      return result.Errors.Select(e => new GrpcError(e.Message)).ToArray();
+    }
+
+    var setup = result.Value;
+    return new TwitchSetupDTO
+    {
+      BotUserId = setup.BotUserId,
+      BotLogin = setup.BotLogin,
+      Channels = setup.Channels
+        .Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
+        .ToList()
+    };
   }
 
   private bool IsSuperAdmin(Platform platform, string platformUserId)

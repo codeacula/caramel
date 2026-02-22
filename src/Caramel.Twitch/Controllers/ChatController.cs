@@ -1,6 +1,7 @@
 using System.Text;
 
 using Caramel.Twitch.Auth;
+using Caramel.Twitch.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +12,7 @@ namespace Caramel.Twitch.Controllers;
 public sealed class ChatController(
   TwitchTokenManager tokenManager,
   TwitchConfig twitchConfig,
+  ITwitchSetupState setupState,
   IHttpClientFactory httpClientFactory,
   ILogger<ChatController> logger) : ControllerBase
 {
@@ -18,6 +20,7 @@ public sealed class ChatController(
 
   /// <summary>
   /// Sends a message to the first configured Twitch channel via the Helix chat API.
+  /// Returns 503 if setup has not been completed yet.
   /// </summary>
   [HttpPost("send")]
   public async Task<IActionResult> SendAsync([FromBody] SendChatMessageRequest request, CancellationToken cancellationToken)
@@ -32,10 +35,14 @@ public sealed class ChatController(
       return BadRequest($"Message exceeds the {MaxMessageLength}-character limit.");
     }
 
-    var channelIds = twitchConfig.ChannelIds
-      .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var setup = setupState.Current;
+    if (setup is null)
+    {
+      ChatControllerLogs.SetupNotConfigured(logger);
+      return StatusCode(503, "Twitch setup has not been completed. Visit /twitch/setup to configure.");
+    }
 
-    var broadcasterId = channelIds.FirstOrDefault();
+    var broadcasterId = setup.Channels.FirstOrDefault()?.UserId;
     if (broadcasterId is null)
     {
       ChatControllerLogs.NoBroadcasterConfigured(logger);
@@ -53,7 +60,7 @@ public sealed class ChatController(
       var body = new
       {
         broadcaster_id = broadcasterId,
-        sender_id = twitchConfig.BotUserId,
+        sender_id = setup.BotUserId,
         message = request.Message,
       };
 
@@ -89,6 +96,9 @@ public sealed record SendChatMessageRequest(string Message);
 /// </summary>
 internal static partial class ChatControllerLogs
 {
+  [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot send chat message: Twitch setup has not been completed")]
+  public static partial void SetupNotConfigured(ILogger logger);
+
   [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot send chat message: no broadcaster channel IDs are configured")]
   public static partial void NoBroadcasterConfigured(ILogger logger);
 

@@ -22,6 +22,10 @@ export default defineConfig({
         target: "http://localhost:5146",
         changeOrigin: true,
       },
+      "/twitch": {
+        target: "http://localhost:5146",
+        changeOrigin: true,
+      },
     },
   },
   build: {

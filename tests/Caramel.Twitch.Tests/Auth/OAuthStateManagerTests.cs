@@ -7,8 +7,6 @@ public sealed class OAuthStateManagerTests
     ClientId = "test-client-id",
     ClientSecret = "test-client-secret",
     AccessToken = "test-token",
-    BotUserId = "123456",
-    ChannelIds = "123456",
     OAuthCallbackUrl = "http://localhost:5146/auth/callback",
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
