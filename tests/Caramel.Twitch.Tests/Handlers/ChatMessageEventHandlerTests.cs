@@ -1,5 +1,12 @@
 using Caramel.Twitch.Services;
+using Caramel.Domain.Twitch;
+using Caramel.Core.ToDos.Requests;
+using Caramel.Core.Conversations;
+using Caramel.Core.People;
+using Caramel.Domain.People;
+using Caramel.Domain.ToDos;
 using Moq;
+using FluentResults;
 
 namespace Caramel.Twitch.Tests.Handlers;
 
@@ -12,13 +19,15 @@ public sealed class ChatMessageEventHandlerTests
     Mock<ICaramelServiceClient>,
     Mock<IPersonCache>,
     Mock<ITwitchChatBroadcaster>,
+    Mock<ITwitchSetupState>,
     Mock<ILogger<ChatMessageEventHandler>>) CreateMocks()
   {
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var personCacheMock = new Mock<IPersonCache>();
     var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var setupStateMock = new Mock<ITwitchSetupState>();
     var loggerMock = new Mock<ILogger<ChatMessageEventHandler>>();
-    return (serviceClientMock, personCacheMock, broadcasterMock, loggerMock);
+    return (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock);
   }
 
   private static Task HandleAsync(
@@ -49,17 +58,28 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithBotSelfMessageReturnsEarly()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
+    
+    setupStateMock.Setup(x => x.Current).Returns(new TwitchSetup 
+    { 
+        BotUserId = "bot_123",
+        BotLogin = "caramel_bot",
+        Channels = new List<TwitchChannel>(),
+        ConfiguredOn = DateTimeOffset.UtcNow,
+        UpdatedOn = DateTimeOffset.UtcNow
+    });
+
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     // Act
     await HandleAsync(
       handler,
-      chatterLogin: "!caramel", // Bot's own login
+      chatterUserId: "bot_123", // Bot's own user ID
       messageText: "!caramel todo test");
 
     // Assert
@@ -72,11 +92,12 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithAccessDeniedReturnsEarly()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     personCacheMock
@@ -96,11 +117,12 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithAccessCheckFailureReturnsEarly()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     personCacheMock
@@ -123,11 +145,12 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithMessageNotDirectedAtBotReturnsEarly(string messageText)
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     personCacheMock
@@ -150,11 +173,12 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithBotCommandPrefixProcessesCommand()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     personCacheMock
@@ -178,11 +202,12 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithMentionPrefixProcessesCommand()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     personCacheMock
@@ -206,11 +231,12 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncAlwaysPublishesToRedisBeforeBotFiltering()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageEventHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
+      setupStateMock.Object,
       loggerMock.Object);
 
     personCacheMock
