@@ -1,6 +1,6 @@
-# Contributing to Apollo
+# Contributing to Caramel
 
-Thanks for your interest in improving Apollo! Below is everything you should need in order to get started contributing.
+Thanks for your interest in improving Caramel! Below is everything you should need in order to get started contributing.
 
 ## Code of Conduct
 
@@ -8,7 +8,7 @@ Read the [Code of Conduct](CODE_OF_CONDUCT.md) to get a feel for how I handle my
 
 ## Reporting Bugs/Features
 
-If you have a security issue, please follow the directions in [SECURITY](SECURITY.md). Otherwise, you can submit bug report and feature requests [here](https://github.com/codeacula/apollo/issues/new).
+If you have a security issue, please follow the directions in [SECURITY](SECURITY.md). Otherwise, you can submit bug report and feature requests [here](https://github.com/codeacula/caramel/issues/new).
 
 ## Further Contact
 
