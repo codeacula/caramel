@@ -26,7 +26,7 @@ using GrpcToDoDTO = Caramel.GRPC.Contracts.ToDoDTO;
 
 namespace Caramel.GRPC.Client;
 
-public class CaramelGrpcClient : ICaramelGrpcClient, ICaramelServiceClient, IDisposable
+public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
 {
   public ICaramelGrpcService CaramelGrpcService { get; }
   private readonly GrpcChannel _channel;

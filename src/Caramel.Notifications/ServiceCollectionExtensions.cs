@@ -3,6 +3,9 @@ using Caramel.Core.Notifications;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+using NetCord;
+using NetCord.Rest;
+
 namespace Caramel.Notifications;
 
 public static class ServiceCollectionExtensions
@@ -18,6 +21,17 @@ public static class ServiceCollectionExtensions
     _ = services.AddScoped<INotificationChannel, DiscordNotificationChannel>();
     _ = services.AddScoped<IPersonNotificationClient, PersonNotificationClient>();
     return services;
+  }
+
+  public static IServiceCollection AddNotificationsWithChannels(this IServiceCollection services, string discordToken)
+  {
+    if (string.IsNullOrWhiteSpace(discordToken))
+    {
+      throw new ArgumentException("Discord token must be configured", nameof(discordToken));
+    }
+
+    _ = services.AddSingleton(new RestClient(new BotToken(discordToken)));
+    return services.AddNotificationsWithChannels();
   }
 
   public static IServiceCollection AddTwitchNotificationChannel(this IServiceCollection services, Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync, string botUserId)

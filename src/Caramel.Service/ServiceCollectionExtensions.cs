@@ -3,9 +3,6 @@ using Caramel.Core.ToDos;
 using Caramel.Notifications;
 using Caramel.Service.Jobs;
 
-using NetCord;
-using NetCord.Rest;
-
 using Quartz;
 
 namespace Caramel.Service;
@@ -44,8 +41,7 @@ public static class ServiceCollectionExtensions
     var discordToken = configuration["Discord:Token"];
     if (!string.IsNullOrWhiteSpace(discordToken))
     {
-      _ = services.AddSingleton(new RestClient(new BotToken(discordToken)));
-      _ = services.AddNotificationsWithChannels();
+      _ = services.AddNotificationsWithChannels(discordToken);
     }
     else
     {
@@ -57,7 +53,7 @@ public static class ServiceCollectionExtensions
     var twitchBotUserId = configuration["Twitch:BotUserId"];
     if (!string.IsNullOrWhiteSpace(twitchAccessToken) && !string.IsNullOrWhiteSpace(twitchBotUserId))
     {
-      // For now, we register a placeholder whisper delegate. 
+      // For now, we register a placeholder whisper delegate.
       // The actual implementation will be in Caramel.Twitch host which will communicate via gRPC.
       // This service is optional and can be replaced with a real TwitchLib client when needed.
       Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync = async (botId, recipientId, message, ct) =>

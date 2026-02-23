@@ -5,7 +5,6 @@ using System.Text.Json;
 
 using Caramel.Cache;
 using Caramel.Core.Twitch;
-using Caramel.GRPC;
 
 using StackExchange.Redis;
 
@@ -17,8 +16,7 @@ string redisConnectionString = configuration.GetConnectionString("Redis")
 
 _ = webAppBuilder.Services.AddControllers();
 _ = webAppBuilder.Services
-  .AddCacheServices(redisConnectionString)
-  .AddGrpcClientServices();
+  .AddCacheServices(redisConnectionString);
 
 // WebSocket connection registry -- shared between the endpoint and the background broadcaster
 var socketRegistry = new ConcurrentDictionary<string, WebSocket>();
