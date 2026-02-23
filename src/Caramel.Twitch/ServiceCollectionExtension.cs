@@ -1,7 +1,3 @@
-using Caramel.Twitch.Services;
-
-using TwitchLib.EventSub.Websockets;
-
 namespace Caramel.Twitch;
 
 public static class ServiceCollectionExtension

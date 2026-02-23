@@ -331,9 +331,7 @@ public sealed class CaramelGrpcService(
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = setup.Channels
-        .Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
-        .ToList()
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
     };
   }
 
@@ -344,8 +342,7 @@ public sealed class CaramelGrpcService(
       BotUserId = request.BotUserId,
       BotLogin = request.BotLogin,
       Channels = request.Channels
-        .Select(c => (c.UserId, c.Login))
-        .ToList()
+        .ConvertAll(c => (c.UserId, c.Login))
     };
 
     var result = await mediator.Send(command);
@@ -360,9 +357,7 @@ public sealed class CaramelGrpcService(
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = setup.Channels
-        .Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
-        .ToList()
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
     };
   }
 

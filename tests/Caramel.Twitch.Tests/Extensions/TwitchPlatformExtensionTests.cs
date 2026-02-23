@@ -13,9 +13,9 @@ public sealed class TwitchPlatformExtensionTests
     var result = TwitchPlatformExtension.GetTwitchPlatformId(username, userId);
 
     // Assert
-    result.Username.Should().Be(username);
-    result.PlatformUserId.Should().Be(userId);
-    result.Platform.Should().Be(Platform.Twitch);
+    _ = result.Username.Should().Be(username);
+    _ = result.PlatformUserId.Should().Be(userId);
+    _ = result.Platform.Should().Be(Platform.Twitch);
   }
 
   [Fact]
@@ -25,8 +25,8 @@ public sealed class TwitchPlatformExtensionTests
     var result = TwitchPlatformExtension.GetTwitchPlatformId("user", "123");
 
     // Assert
-    result.Platform.Should().Be(Platform.Twitch);
-    result.Platform.Should().NotBe(Platform.Discord);
-    result.Platform.Should().NotBe(Platform.Web);
+    _ = result.Platform.Should().Be(Platform.Twitch);
+    _ = result.Platform.Should().NotBe(Platform.Discord);
+    _ = result.Platform.Should().NotBe(Platform.Web);
   }
 }

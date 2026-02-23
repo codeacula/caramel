@@ -9,23 +9,17 @@ namespace Caramel.Notifications;
 /// Sends notifications via Twitch whispers (private messages).
 /// Note: This requires the bot to have verified status and appropriate OAuth scopes (user:manage:whispers).
 /// </summary>
-public sealed class TwitchNotificationChannel : INotificationChannel
+/// <remarks>
+/// Initializes a new instance of TwitchNotificationChannel.
+/// </remarks>
+/// <param name="botUserId">The Twitch user ID of the bot account.</param>
+/// <param name="sendWhisperAsync">Delegate to send whispers (injected from TwitchLib client).</param>
+public sealed class TwitchNotificationChannel(string botUserId, Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync) : INotificationChannel
 {
-  private readonly string _botUserId;
-  private readonly Func<string, string, string, CancellationToken, Task<bool>> _sendWhisperAsync;
+  private readonly string _botUserId = botUserId ?? string.Empty;
+  private readonly Func<string, string, string, CancellationToken, Task<bool>> _sendWhisperAsync = sendWhisperAsync ?? throw new ArgumentNullException(nameof(sendWhisperAsync));
 
   public NotificationChannelType ChannelType => NotificationChannelType.Twitch;
-
-  /// <summary>
-  /// Initializes a new instance of TwitchNotificationChannel.
-  /// </summary>
-  /// <param name="botUserId">The Twitch user ID of the bot account.</param>
-  /// <param name="sendWhisperAsync">Delegate to send whispers (injected from TwitchLib client).</param>
-  public TwitchNotificationChannel(string botUserId, Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync)
-  {
-    _botUserId = botUserId ?? string.Empty;
-    _sendWhisperAsync = sendWhisperAsync ?? throw new ArgumentNullException(nameof(sendWhisperAsync));
-  }
 
   public async Task<Result> SendAsync(string identifier, Notification notification, CancellationToken cancellationToken = default)
   {
@@ -49,12 +43,7 @@ public sealed class TwitchNotificationChannel : INotificationChannel
       // Send whisper from bot to recipient
       var success = await _sendWhisperAsync(_botUserId, identifier, notification.Content, cancellationToken);
 
-      if (!success)
-      {
-        return Result.Fail("Failed to send Twitch whisper (bot may lack verified status or scopes)");
-      }
-
-      return Result.Ok();
+      return !success ? Result.Fail("Failed to send Twitch whisper (bot may lack verified status or scopes)") : Result.Ok();
     }
     catch (Exception ex)
     {

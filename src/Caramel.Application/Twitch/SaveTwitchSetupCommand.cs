@@ -3,8 +3,6 @@ using Caramel.Domain.Twitch;
 
 using FluentResults;
 
-using MediatR;
-
 namespace Caramel.Application.Twitch;
 
 public sealed record SaveTwitchSetupCommand : IRequest<Result<TwitchSetup>>
@@ -26,9 +24,7 @@ public sealed class SaveTwitchSetupCommandHandler(ITwitchSetupStore store) : IRe
       {
         BotUserId = request.BotUserId,
         BotLogin = request.BotLogin,
-        Channels = request.Channels
-          .Select(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
-          .ToList(),
+        Channels = [.. request.Channels.Select(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })],
         ConfiguredOn = now,
         UpdatedOn = now,
       };

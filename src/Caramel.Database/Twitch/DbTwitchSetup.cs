@@ -1,4 +1,5 @@
 using Caramel.Database.Twitch.Events;
+
 using JasperFx.Events;
 
 namespace Caramel.Database.Twitch;
@@ -47,16 +48,15 @@ public sealed record DbTwitchSetup
   /// <summary>
   /// Creates a new DbTwitchSetup from the initial event.
   /// </summary>
+  /// <param name="ev"></param>
   public static DbTwitchSetup Create(IEvent<TwitchSetupCreatedEvent> ev)
   {
     return new DbTwitchSetup
     {
-      Id = DbTwitchSetup.WellKnownId,
+      Id = WellKnownId,
       BotUserId = ev.Data.BotUserId,
       BotLogin = ev.Data.BotLogin,
-      Channels = ev.Data.Channels
-        .Select(c => new DbTwitchChannel { UserId = c.UserId, Login = c.Login })
-        .ToList(),
+      Channels = [.. ev.Data.Channels.Select(c => new DbTwitchChannel { UserId = c.UserId, Login = c.Login })],
       CreatedOn = ev.Data.CreatedOn,
       UpdatedOn = ev.Data.CreatedOn,
     };
@@ -65,15 +65,15 @@ public sealed record DbTwitchSetup
   /// <summary>
   /// Applies a TwitchSetupUpdatedEvent to the current state.
   /// </summary>
+  /// <param name="ev"></param>
+  /// <param name="current"></param>
   public static DbTwitchSetup Apply(IEvent<TwitchSetupUpdatedEvent> ev, DbTwitchSetup current)
   {
     return current with
     {
       BotUserId = ev.Data.BotUserId,
       BotLogin = ev.Data.BotLogin,
-      Channels = ev.Data.Channels
-        .Select(c => new DbTwitchChannel { UserId = c.UserId, Login = c.Login })
-        .ToList(),
+      Channels = [.. ev.Data.Channels.Select(c => new DbTwitchChannel { UserId = c.UserId, Login = c.Login })],
       UpdatedOn = ev.Data.CreatedOn,
     };
   }
@@ -81,6 +81,7 @@ public sealed record DbTwitchSetup
   /// <summary>
   /// Explicit conversion from DbTwitchSetup to domain model TwitchSetup.
   /// </summary>
+  /// <param name="db"></param>
   public static explicit operator Domain.Twitch.TwitchSetup(DbTwitchSetup db)
   {
     return new Domain.Twitch.TwitchSetup
@@ -88,8 +89,8 @@ public sealed record DbTwitchSetup
       BotUserId = db.BotUserId,
       BotLogin = db.BotLogin,
       Channels = db.Channels
-        .Select(c => new Domain.Twitch.TwitchChannel { UserId = c.UserId, Login = c.Login })
-        .ToList(),
+        .ConvertAll(c => new Domain.Twitch.TwitchChannel { UserId = c.UserId, Login = c.Login })
+,
       ConfiguredOn = db.CreatedOn,
       UpdatedOn = db.UpdatedOn,
     };

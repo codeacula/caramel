@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 using Caramel.Twitch.Auth;
 
 namespace Caramel.Twitch.Services;
@@ -14,11 +12,15 @@ public interface ITwitchUserResolver
   /// If the input is already numeric, it is returned as-is.
   /// Results are cached in-memory for the lifetime of the service.
   /// </summary>
+  /// <param name="loginOrId"></param>
+  /// <param name="cancellationToken"></param>
   Task<string> ResolveUserIdAsync(string loginOrId, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Resolves multiple logins/IDs in a single batch call.
   /// </summary>
+  /// <param name="loginsOrIds"></param>
+  /// <param name="cancellationToken"></param>
   Task<IReadOnlyList<string>> ResolveUserIdsAsync(IEnumerable<string> loginsOrIds, CancellationToken cancellationToken = default);
 }
 
@@ -26,6 +28,10 @@ public interface ITwitchUserResolver
 /// Resolves Twitch usernames to numeric user IDs via the Helix "Get Users" API.
 /// Caches results in-memory so that repeated lookups for the same user avoid extra API calls.
 /// </summary>
+/// <param name="httpClientFactory"></param>
+/// <param name="twitchConfig"></param>
+/// <param name="tokenManager"></param>
+/// <param name="logger"></param>
 public sealed class TwitchUserResolver(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
@@ -56,7 +62,7 @@ public sealed class TwitchUserResolver(
 
     // Resolve via Helix API
     var resolved = await FetchUserIdAsync(loginOrId, cancellationToken);
-    _cache.TryAdd(loginOrId, resolved);
+    _ = _cache.TryAdd(loginOrId, resolved);
     return resolved;
   }
 
@@ -130,7 +136,7 @@ public sealed class TwitchUserResolver(
       var id = user.GetProperty("id").GetString()!;
       var login = user.GetProperty("login").GetString()!;
 
-      _cache.TryAdd(login, id);
+      _ = _cache.TryAdd(login, id);
       results.Add(id);
 
       TwitchUserResolverLogs.UserResolved(logger, login, id);
@@ -140,7 +146,7 @@ public sealed class TwitchUserResolver(
     var resolvedLogins = new HashSet<string>(results.Count);
     foreach (var user in json.RootElement.GetProperty("data").EnumerateArray())
     {
-      resolvedLogins.Add(user.GetProperty("login").GetString()!);
+      _ = resolvedLogins.Add(user.GetProperty("login").GetString()!);
     }
 
     foreach (var login2 in logins)

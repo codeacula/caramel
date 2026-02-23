@@ -1,21 +1,15 @@
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Caramel.Twitch.Auth;
 
 /// <summary>
 /// Manages OAuth state parameters for CSRF protection during the authorization code flow.
 /// </summary>
-public sealed class OAuthStateManager
+/// <param name="config"></param>
+public sealed class OAuthStateManager(TwitchConfig config)
 {
-  private readonly string _encryptionKey;
-  private readonly Dictionary<string, DateTime> _activeStates = new();
+  private readonly Dictionary<string, DateTime> _activeStates = [];
   private readonly TimeSpan _stateTtl = TimeSpan.FromMinutes(10);
-
-  public OAuthStateManager(TwitchConfig config)
-  {
-    _encryptionKey = config.EncryptionKey;
-  }
 
   /// <summary>
   /// Generates a new OAuth state parameter and stores it for validation.
@@ -41,6 +35,7 @@ public sealed class OAuthStateManager
   /// <summary>
   /// Validates an OAuth state parameter. Returns true if the state is valid and removes it from the active set.
   /// </summary>
+  /// <param name="state"></param>
   public bool ValidateAndConsumeState(string state)
   {
     lock (_activeStates)
@@ -52,11 +47,11 @@ public sealed class OAuthStateManager
 
       if (DateTime.UtcNow > expiry)
       {
-        _activeStates.Remove(state);
+        _ = _activeStates.Remove(state);
         return false;
       }
 
-      _activeStates.Remove(state);
+      _ = _activeStates.Remove(state);
       return true;
     }
   }
@@ -71,7 +66,7 @@ public sealed class OAuthStateManager
       var now = DateTime.UtcNow;
       foreach (var kvp in _activeStates.Where(x => x.Value <= now).ToList())
       {
-        _activeStates.Remove(kvp.Key);
+        _ = _activeStates.Remove(kvp.Key);
       }
     }
   }

@@ -1,12 +1,5 @@
-using Caramel.Twitch.Services;
 using Caramel.Domain.Twitch;
-using Caramel.Core.ToDos.Requests;
-using Caramel.Core.Conversations;
-using Caramel.Core.People;
-using Caramel.Domain.People;
-using Caramel.Domain.ToDos;
-using Moq;
-using FluentResults;
+using Caramel.Twitch.Services;
 
 namespace Caramel.Twitch.Tests.Handlers;
 
@@ -55,18 +48,18 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithBotSelfMessageReturnsEarly()
+  public async Task HandleAsyncWithBotSelfMessageReturnsEarlyAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    
-    setupStateMock.Setup(x => x.Current).Returns(new TwitchSetup 
-    { 
-        BotUserId = "bot_123",
-        BotLogin = "caramel_bot",
-        Channels = new List<TwitchChannel>(),
-        ConfiguredOn = DateTimeOffset.UtcNow,
-        UpdatedOn = DateTimeOffset.UtcNow
+
+    _ = setupStateMock.Setup(x => x.Current).Returns(new TwitchSetup
+    {
+      BotUserId = "bot_123",
+      BotLogin = "caramel_bot",
+      Channels = [],
+      ConfiguredOn = DateTimeOffset.UtcNow,
+      UpdatedOn = DateTimeOffset.UtcNow
     });
 
     var handler = new ChatMessageEventHandler(
@@ -89,7 +82,7 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithAccessDeniedReturnsEarly()
+  public async Task HandleAsyncWithAccessDeniedReturnsEarlyAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
@@ -100,7 +93,7 @@ public sealed class ChatMessageEventHandlerTests
       setupStateMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(false)));
 
@@ -114,7 +107,7 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithAccessCheckFailureReturnsEarly()
+  public async Task HandleAsyncWithAccessCheckFailureReturnsEarlyAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
@@ -125,7 +118,7 @@ public sealed class ChatMessageEventHandlerTests
       setupStateMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Fail<bool?>("Cache error")));
 
@@ -142,7 +135,7 @@ public sealed class ChatMessageEventHandlerTests
   [InlineData("just a random message")]
   [InlineData("hello everyone")]
   [InlineData("caramel is cool")]
-  public async Task HandleAsyncWithMessageNotDirectedAtBotReturnsEarly(string messageText)
+  public async Task HandleAsyncWithMessageNotDirectedAtBotReturnsEarlyAsync(string messageText)
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
@@ -153,7 +146,7 @@ public sealed class ChatMessageEventHandlerTests
       setupStateMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
@@ -170,7 +163,7 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithBotCommandPrefixProcessesCommand()
+  public async Task HandleAsyncWithBotCommandPrefixProcessesCommandAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
@@ -181,11 +174,11 @@ public sealed class ChatMessageEventHandlerTests
       setupStateMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
-    serviceClientMock
+    _ = serviceClientMock
       .Setup(x => x.CreateToDoAsync(It.IsAny<CreateToDoRequest>(), It.IsAny<CancellationToken>()))
       .Returns(Task.FromResult(Result.Ok(It.IsAny<ToDo>())));
 
@@ -199,7 +192,7 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithMentionPrefixProcessesCommand()
+  public async Task HandleAsyncWithMentionPrefixProcessesCommandAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
@@ -210,11 +203,11 @@ public sealed class ChatMessageEventHandlerTests
       setupStateMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
-    serviceClientMock
+    _ = serviceClientMock
       .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
       .Returns(Task.FromResult(Result.Ok("reply")));
 
@@ -228,7 +221,7 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncAlwaysPublishesToRedisBeforeBotFiltering()
+  public async Task HandleAsyncAlwaysPublishesToRedisBeforeBotFilteringAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
@@ -239,11 +232,11 @@ public sealed class ChatMessageEventHandlerTests
       setupStateMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
-    serviceClientMock
+    _ = serviceClientMock
       .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
       .Returns(Task.FromResult(Result.Ok("reply")));
 

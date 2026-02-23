@@ -11,7 +11,7 @@ public sealed class WhisperEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithValidAccessSendsMessageToService()
+  public async Task HandleAsyncWithValidAccessSendsMessageToServiceAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
@@ -24,13 +24,13 @@ public sealed class WhisperEventHandlerTests
     const string fromUserLogin = "streamer";
     const string messageText = "Hey, can you help?";
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
-    serviceClientMock
+    _ = serviceClientMock
       .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
-      .Returns(Task.FromResult(Result.Ok<string>("processed")));
+      .Returns(Task.FromResult(Result.Ok("processed")));
 
     // Act
     await handler.HandleAsync(fromUserId, fromUserLogin, messageText);
@@ -42,7 +42,7 @@ public sealed class WhisperEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithAccessDeniedReturnsEarly()
+  public async Task HandleAsyncWithAccessDeniedReturnsEarlyAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
@@ -51,7 +51,7 @@ public sealed class WhisperEventHandlerTests
       personCacheMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(false))); // Access denied
 
@@ -65,7 +65,7 @@ public sealed class WhisperEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithAccessCheckFailureReturnsEarly()
+  public async Task HandleAsyncWithAccessCheckFailureReturnsEarlyAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
@@ -74,7 +74,7 @@ public sealed class WhisperEventHandlerTests
       personCacheMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Fail<bool?>("Cache error")));
 
@@ -88,7 +88,7 @@ public sealed class WhisperEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithSuccessfulMessageLogsSuccess()
+  public async Task HandleAsyncWithSuccessfulMessageLogsSuccessAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
@@ -97,13 +97,13 @@ public sealed class WhisperEventHandlerTests
       personCacheMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
-    serviceClientMock
+    _ = serviceClientMock
       .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
-      .Returns(Task.FromResult(Result.Ok<string>("success")));
+      .Returns(Task.FromResult(Result.Ok("success")));
 
     // Act
     await handler.HandleAsync("user_123", "streamer", "message");
@@ -115,7 +115,7 @@ public sealed class WhisperEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithFailedMessageLogsFailure()
+  public async Task HandleAsyncWithFailedMessageLogsFailureAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
@@ -124,11 +124,11 @@ public sealed class WhisperEventHandlerTests
       personCacheMock.Object,
       loggerMock.Object);
 
-    personCacheMock
+    _ = personCacheMock
       .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
       .Returns(Task.FromResult(Result.Ok<bool?>(true)));
 
-    serviceClientMock
+    _ = serviceClientMock
       .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
       .Returns(Task.FromResult(Result.Fail<string>("Processing error")));
 

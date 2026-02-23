@@ -60,6 +60,7 @@ public class UserResolutionInterceptor : Interceptor
     {
       Platform.Discord => NotificationChannelType.Discord,
       Platform.Twitch => NotificationChannelType.Twitch,
+      Platform.Web => null,
       _ => (NotificationChannelType?)null
     };
 

@@ -1,7 +1,6 @@
 using Caramel.Application.People;
 using Caramel.Core.People;
 using Caramel.Domain.Common.Enums;
-using Caramel.Domain.Common.ValueObjects;
 using Caramel.Domain.People.Models;
 using Caramel.Domain.People.ValueObjects;
 
@@ -50,18 +49,18 @@ public class PersonPluginTests
     };
   }
 
-  #endregion
+  #endregion Helper Methods
 
   #region Set Timezone Tests
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithValidIanaIdSucceeds()
+  public async Task SetTimeZoneAsyncWithValidIanaIdSucceedsAsync()
   {
     // Arrange
     SetUp();
     const string timezone = "America/New_York";
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -69,21 +68,21 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    result.Should().Contain("Successfully set your timezone");
-    result.Should().Contain("America/New_York");
+    _ = result.Should().Contain("Successfully set your timezone");
+    _ = result.Should().Contain("America/New_York");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithValidAbbreviationEstSucceeds()
+  public async Task SetTimeZoneAsyncWithValidAbbreviationEstSucceedsAsync()
   {
     // Arrange
     SetUp();
     const string timezone = "EST";
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -91,21 +90,21 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    result.Should().Contain("Successfully set your timezone");
-    result.Should().Contain("America/New_York");
+    _ = result.Should().Contain("Successfully set your timezone");
+    _ = result.Should().Contain("America/New_York");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithValidAbbreviationCstSucceeds()
+  public async Task SetTimeZoneAsyncWithValidAbbreviationCstSucceedsAsync()
   {
     // Arrange
     SetUp();
     const string timezone = "CST";
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -113,15 +112,15 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    result.Should().Contain("Successfully set your timezone");
-    result.Should().Contain("America/Chicago");
+    _ = result.Should().Contain("Successfully set your timezone");
+    _ = result.Should().Contain("America/Chicago");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithInvalidTimezoneFailsGracefully()
+  public async Task SetTimeZoneAsyncWithInvalidTimezoneFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -131,15 +130,15 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    result.Should().Contain("Failed to set timezone");
-    result.Should().Contain("not recognized");
+    _ = result.Should().Contain("Failed to set timezone");
+    _ = result.Should().Contain("not recognized");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(It.IsAny<PersonId>(), It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithNullTimezoneFailsGracefully()
+  public async Task SetTimeZoneAsyncWithNullTimezoneFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -148,15 +147,15 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(null!);
 
     // Assert
-    result.Should().Contain("Failed to set timezone");
-    result.Should().Contain("cannot be empty");
+    _ = result.Should().Contain("Failed to set timezone");
+    _ = result.Should().Contain("cannot be empty");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(It.IsAny<PersonId>(), It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithEmptyTimezoneFailsGracefully()
+  public async Task SetTimeZoneAsyncWithEmptyTimezoneFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -165,15 +164,15 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync("");
 
     // Assert
-    result.Should().Contain("Failed to set timezone");
-    result.Should().Contain("cannot be empty");
+    _ = result.Should().Contain("Failed to set timezone");
+    _ = result.Should().Contain("cannot be empty");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(It.IsAny<PersonId>(), It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithWhitespaceTimezoneFailsGracefully()
+  public async Task SetTimeZoneAsyncWithWhitespaceTimezoneFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -182,21 +181,21 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync("   ");
 
     // Assert
-    result.Should().Contain("Failed to set timezone");
-    result.Should().Contain("cannot be empty");
+    _ = result.Should().Contain("Failed to set timezone");
+    _ = result.Should().Contain("cannot be empty");
     _personStoreMock.Verify(
       ps => ps.SetTimeZoneAsync(It.IsAny<PersonId>(), It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithStoreFailureReturnsFail()
+  public async Task SetTimeZoneAsyncWithStoreFailureReturnsFailAsync()
   {
     // Arrange
     SetUp();
     const string timezone = "UTC";
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Database error"));
 
@@ -204,18 +203,18 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    result.Should().Contain("Failed to set timezone");
-    result.Should().Contain("Database error");
+    _ = result.Should().Contain("Failed to set timezone");
+    _ = result.Should().Contain("Database error");
   }
 
   [Fact]
-  public async Task SetTimeZoneAsyncWithExceptionReturnsErrorMessage()
+  public async Task SetTimeZoneAsyncWithExceptionReturnsErrorMessageAsync()
   {
     // Arrange
     SetUp();
     const string timezone = "UTC";
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetTimeZoneAsync(_personId, It.IsAny<PersonTimeZoneId>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("System error"));
 
@@ -223,23 +222,23 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    result.Should().Contain("Error setting timezone");
-    result.Should().Contain("System error");
+    _ = result.Should().Contain("Error setting timezone");
+    _ = result.Should().Contain("System error");
   }
 
-  #endregion
+  #endregion Set Timezone Tests
 
   #region Get Timezone Tests
 
   [Fact]
-  public async Task GetTimeZoneAsyncWithCustomTimezoneReturnsCustomValue()
+  public async Task GetTimeZoneAsyncWithCustomTimezoneReturnsCustomValueAsync()
   {
     // Arrange
     SetUp();
-    PersonTimeZoneId.TryParse("Europe/London", out var customTimeZone, out _);
+    _ = PersonTimeZoneId.TryParse("Europe/London", out var customTimeZone, out _);
     var person = CreateValidPerson(_personId.Value, customTimeZone);
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
 
@@ -247,21 +246,21 @@ public class PersonPluginTests
     var result = await _sut.GetTimeZoneAsync();
 
     // Assert
-    result.Should().Contain("Your timezone is set to");
-    result.Should().Contain("Europe/London");
+    _ = result.Should().Contain("Your timezone is set to");
+    _ = result.Should().Contain("Europe/London");
     _personStoreMock.Verify(
       ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task GetTimeZoneAsyncWithoutCustomTimezoneReturnsDefault()
+  public async Task GetTimeZoneAsyncWithoutCustomTimezoneReturnsDefaultAsync()
   {
     // Arrange
     SetUp();
     var person = CreateValidPerson(_personId.Value, null);
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
 
@@ -269,17 +268,17 @@ public class PersonPluginTests
     var result = await _sut.GetTimeZoneAsync();
 
     // Assert
-    result.Should().Contain("You are currently using the default timezone");
-    result.Should().Contain(_personConfig.DefaultTimeZoneId);
+    _ = result.Should().Contain("You are currently using the default timezone");
+    _ = result.Should().Contain(_personConfig.DefaultTimeZoneId);
   }
 
   [Fact]
-  public async Task GetTimeZoneAsyncWithStoreFailureReturnsFail()
+  public async Task GetTimeZoneAsyncWithStoreFailureReturnsFailAsync()
   {
     // Arrange
     SetUp();
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Person not found"));
 
@@ -287,17 +286,17 @@ public class PersonPluginTests
     var result = await _sut.GetTimeZoneAsync();
 
     // Assert
-    result.Should().Contain("Failed to retrieve timezone");
-    result.Should().Contain("Person not found");
+    _ = result.Should().Contain("Failed to retrieve timezone");
+    _ = result.Should().Contain("Person not found");
   }
 
   [Fact]
-  public async Task GetTimeZoneAsyncWithExceptionReturnsErrorMessage()
+  public async Task GetTimeZoneAsyncWithExceptionReturnsErrorMessageAsync()
   {
     // Arrange
     SetUp();
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
@@ -305,22 +304,22 @@ public class PersonPluginTests
     var result = await _sut.GetTimeZoneAsync();
 
     // Assert
-    result.Should().Contain("Error retrieving timezone");
-    result.Should().Contain("Database connection failed");
+    _ = result.Should().Contain("Error retrieving timezone");
+    _ = result.Should().Contain("Database connection failed");
   }
 
-  #endregion
+  #endregion Get Timezone Tests
 
   #region Set Daily Task Count Tests
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithValidCountOneSucceeds()
+  public async Task SetDailyTaskCountAsyncWithValidCountOneSucceedsAsync()
   {
     // Arrange
     SetUp();
     const int count = 1;
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -328,21 +327,21 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Successfully set your daily task count");
-    result.Should().Contain("1 tasks");
+    _ = result.Should().Contain("Successfully set your daily task count");
+    _ = result.Should().Contain("1 tasks");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithValidCountTenSucceeds()
+  public async Task SetDailyTaskCountAsyncWithValidCountTenSucceedsAsync()
   {
     // Arrange
     SetUp();
     const int count = 10;
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -350,21 +349,21 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Successfully set your daily task count");
-    result.Should().Contain("10 tasks");
+    _ = result.Should().Contain("Successfully set your daily task count");
+    _ = result.Should().Contain("10 tasks");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithValidCountTwentySucceeds()
+  public async Task SetDailyTaskCountAsyncWithValidCountTwentySucceedsAsync()
   {
     // Arrange
     SetUp();
     const int count = 20;
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -372,15 +371,15 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Successfully set your daily task count");
-    result.Should().Contain("20 tasks");
+    _ = result.Should().Contain("Successfully set your daily task count");
+    _ = result.Should().Contain("20 tasks");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithCountZeroFailsGracefully()
+  public async Task SetDailyTaskCountAsyncWithCountZeroFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -390,15 +389,15 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Failed to set daily task count");
-    result.Should().Contain("between 1 and 20");
+    _ = result.Should().Contain("Failed to set daily task count");
+    _ = result.Should().Contain("between 1 and 20");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(It.IsAny<PersonId>(), It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithCountNegativeFailsGracefully()
+  public async Task SetDailyTaskCountAsyncWithCountNegativeFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -408,15 +407,15 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Failed to set daily task count");
-    result.Should().Contain("between 1 and 20");
+    _ = result.Should().Contain("Failed to set daily task count");
+    _ = result.Should().Contain("between 1 and 20");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(It.IsAny<PersonId>(), It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithCountTwentyOneFailsGracefully()
+  public async Task SetDailyTaskCountAsyncWithCountTwentyOneFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -426,15 +425,15 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Failed to set daily task count");
-    result.Should().Contain("between 1 and 20");
+    _ = result.Should().Contain("Failed to set daily task count");
+    _ = result.Should().Contain("between 1 and 20");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(It.IsAny<PersonId>(), It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithCountExceedsMaxFailsGracefully()
+  public async Task SetDailyTaskCountAsyncWithCountExceedsMaxFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
@@ -444,21 +443,21 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Failed to set daily task count");
-    result.Should().Contain("between 1 and 20");
+    _ = result.Should().Contain("Failed to set daily task count");
+    _ = result.Should().Contain("between 1 and 20");
     _personStoreMock.Verify(
       ps => ps.SetDailyTaskCountAsync(It.IsAny<PersonId>(), It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()),
       Times.Never);
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithStoreFailureReturnsFail()
+  public async Task SetDailyTaskCountAsyncWithStoreFailureReturnsFailAsync()
   {
     // Arrange
     SetUp();
     const int count = 5;
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Database error"));
 
@@ -466,18 +465,18 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Failed to set daily task count");
-    result.Should().Contain("Database error");
+    _ = result.Should().Contain("Failed to set daily task count");
+    _ = result.Should().Contain("Database error");
   }
 
   [Fact]
-  public async Task SetDailyTaskCountAsyncWithExceptionReturnsErrorMessage()
+  public async Task SetDailyTaskCountAsyncWithExceptionReturnsErrorMessageAsync()
   {
     // Arrange
     SetUp();
     const int count = 5;
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.SetDailyTaskCountAsync(_personId, It.IsAny<DailyTaskCount>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("System error"));
 
@@ -485,23 +484,23 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    result.Should().Contain("Error setting daily task count");
-    result.Should().Contain("System error");
+    _ = result.Should().Contain("Error setting daily task count");
+    _ = result.Should().Contain("System error");
   }
 
-  #endregion
+  #endregion Set Daily Task Count Tests
 
   #region Get Daily Task Count Tests
 
   [Fact]
-  public async Task GetDailyTaskCountAsyncWithCustomCountReturnsCustomValue()
+  public async Task GetDailyTaskCountAsyncWithCustomCountReturnsCustomValueAsync()
   {
     // Arrange
     SetUp();
     var customCount = new DailyTaskCount(15);
     var person = CreateValidPerson(_personId.Value, null, customCount);
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
 
@@ -509,21 +508,21 @@ public class PersonPluginTests
     var result = await _sut.GetDailyTaskCountAsync();
 
     // Assert
-    result.Should().Contain("Your daily task count is set to");
-    result.Should().Contain("15 tasks per day");
+    _ = result.Should().Contain("Your daily task count is set to");
+    _ = result.Should().Contain("15 tasks per day");
     _personStoreMock.Verify(
       ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()),
       Times.Once);
   }
 
   [Fact]
-  public async Task GetDailyTaskCountAsyncWithoutCustomCountReturnsDefault()
+  public async Task GetDailyTaskCountAsyncWithoutCustomCountReturnsDefaultAsync()
   {
     // Arrange
     SetUp();
     var person = CreateValidPerson(_personId.Value, null, null);
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
 
@@ -531,17 +530,17 @@ public class PersonPluginTests
     var result = await _sut.GetDailyTaskCountAsync();
 
     // Assert
-    result.Should().Contain("You are currently using the default daily task count");
-    result.Should().Contain("5 tasks per day");
+    _ = result.Should().Contain("You are currently using the default daily task count");
+    _ = result.Should().Contain("5 tasks per day");
   }
 
   [Fact]
-  public async Task GetDailyTaskCountAsyncWithStoreFailureReturnsFail()
+  public async Task GetDailyTaskCountAsyncWithStoreFailureReturnsFailAsync()
   {
     // Arrange
     SetUp();
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Person not found"));
 
@@ -549,17 +548,17 @@ public class PersonPluginTests
     var result = await _sut.GetDailyTaskCountAsync();
 
     // Assert
-    result.Should().Contain("Failed to retrieve daily task count");
-    result.Should().Contain("Person not found");
+    _ = result.Should().Contain("Failed to retrieve daily task count");
+    _ = result.Should().Contain("Person not found");
   }
 
   [Fact]
-  public async Task GetDailyTaskCountAsyncWithExceptionReturnsErrorMessage()
+  public async Task GetDailyTaskCountAsyncWithExceptionReturnsErrorMessageAsync()
   {
     // Arrange
     SetUp();
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
@@ -567,9 +566,9 @@ public class PersonPluginTests
     var result = await _sut.GetDailyTaskCountAsync();
 
     // Assert
-    result.Should().Contain("Error retrieving daily task count");
-    result.Should().Contain("Database connection failed");
+    _ = result.Should().Contain("Error retrieving daily task count");
+    _ = result.Should().Contain("Database connection failed");
   }
 
-  #endregion
+  #endregion Get Daily Task Count Tests
 }

@@ -1,8 +1,6 @@
 using Caramel.Core.Twitch;
 using Caramel.Twitch.Services;
 
-using Microsoft.Extensions.Logging;
-
 using StackExchange.Redis;
 
 namespace Caramel.Twitch.Tests.Services;
@@ -15,21 +13,23 @@ public sealed class TwitchChatBroadcasterTests
 
   public TwitchChatBroadcasterTests()
   {
-    _redis.Setup(r => r.GetSubscriber(It.IsAny<object>())).Returns(_subscriber.Object);
-    _subscriber
+    _ = _redis.Setup(r => r.GetSubscriber(It.IsAny<object>())).Returns(_subscriber.Object);
+    _ = _subscriber
       .Setup(s => s.PublishAsync(It.IsAny<RedisChannel>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
       .ReturnsAsync(1L);
   }
 
-  private TwitchChatBroadcaster CreateBroadcaster() =>
-    new(_redis.Object, _logger.Object);
+  private TwitchChatBroadcaster CreateBroadcaster()
+  {
+    return new(_redis.Object, _logger.Object);
+  }
 
   // -----------------------------------------------------------------------
   // PublishAsync
   // -----------------------------------------------------------------------
 
   [Fact]
-  public async Task PublishAsync_PublishesToCorrectRedisChannel()
+  public async Task PublishAsyncPublishesToCorrectRedisChannelAsync()
   {
     var broadcaster = CreateBroadcaster();
 
@@ -44,27 +44,27 @@ public sealed class TwitchChatBroadcasterTests
   }
 
   [Fact]
-  public async Task PublishAsync_SerializesEnvelopeWithChatMessageType()
+  public async Task PublishAsyncSerializesEnvelopeWithChatMessageTypeAsync()
   {
     var broadcaster = CreateBroadcaster();
     string? capturedPayload = null;
 
-    _subscriber
+    _ = _subscriber
       .Setup(s => s.PublishAsync(It.IsAny<RedisChannel>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
       .Callback<RedisChannel, RedisValue, CommandFlags>((_, v, _) => capturedPayload = v.ToString())
       .ReturnsAsync(1L);
 
     await broadcaster.PublishAsync("msg1", "bid", "streamer", "uid", "viewer", "Viewer", "hello", "#FF0000");
 
-    capturedPayload.Should().NotBeNull();
-    capturedPayload!.Should().Contain("\"type\"");
-    capturedPayload.Should().Contain("chat_message");
+    _ = capturedPayload.Should().NotBeNull();
+    _ = capturedPayload!.Should().Contain("\"type\"");
+    _ = capturedPayload.Should().Contain("chat_message");
   }
 
   [Fact]
-  public async Task PublishAsync_DoesNotThrow_WhenRedisThrows()
+  public async Task PublishAsyncDoesNotThrowWhenRedisThrowsAsync()
   {
-    _subscriber
+    _ = _subscriber
       .Setup(s => s.PublishAsync(It.IsAny<RedisChannel>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
       .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Redis down"));
 
@@ -72,7 +72,7 @@ public sealed class TwitchChatBroadcasterTests
 
     var act = async () => await broadcaster.PublishAsync("msg1", "bid", "streamer", "uid", "viewer", "Viewer", "hello", "#FF0000");
 
-    await act.Should().NotThrowAsync();
+    _ = await act.Should().NotThrowAsync();
   }
 
   // -----------------------------------------------------------------------
@@ -80,7 +80,7 @@ public sealed class TwitchChatBroadcasterTests
   // -----------------------------------------------------------------------
 
   [Fact]
-  public async Task PublishSystemMessageAsync_PublishesToCorrectRedisChannel()
+  public async Task PublishSystemMessageAsyncPublishesToCorrectRedisChannelAsync()
   {
     var broadcaster = CreateBroadcaster();
 
@@ -95,27 +95,27 @@ public sealed class TwitchChatBroadcasterTests
   }
 
   [Fact]
-  public async Task PublishSystemMessageAsync_SerializesEnvelopeWithGivenType()
+  public async Task PublishSystemMessageAsyncSerializesEnvelopeWithGivenTypeAsync()
   {
     var broadcaster = CreateBroadcaster();
     string? capturedPayload = null;
 
-    _subscriber
+    _ = _subscriber
       .Setup(s => s.PublishAsync(It.IsAny<RedisChannel>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
       .Callback<RedisChannel, RedisValue, CommandFlags>((_, v, _) => capturedPayload = v.ToString())
       .ReturnsAsync(1L);
 
     await broadcaster.PublishSystemMessageAsync("setup_status", new { configured = true });
 
-    capturedPayload.Should().NotBeNull();
-    capturedPayload!.Should().Contain("\"type\"");
-    capturedPayload.Should().Contain("setup_status");
+    _ = capturedPayload.Should().NotBeNull();
+    _ = capturedPayload!.Should().Contain("\"type\"");
+    _ = capturedPayload.Should().Contain("setup_status");
   }
 
   [Fact]
-  public async Task PublishSystemMessageAsync_DoesNotThrow_WhenRedisThrows()
+  public async Task PublishSystemMessageAsyncDoesNotThrowWhenRedisThrowsAsync()
   {
-    _subscriber
+    _ = _subscriber
       .Setup(s => s.PublishAsync(It.IsAny<RedisChannel>(), It.IsAny<RedisValue>(), It.IsAny<CommandFlags>()))
       .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Redis down"));
 
@@ -123,6 +123,6 @@ public sealed class TwitchChatBroadcasterTests
 
     var act = async () => await broadcaster.PublishSystemMessageAsync("setup_status", new { configured = true });
 
-    await act.Should().NotThrowAsync();
+    _ = await act.Should().NotThrowAsync();
   }
 }

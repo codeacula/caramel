@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.Json;
 
 using Caramel.Cache;
 using Caramel.Core.Twitch;
@@ -96,6 +95,9 @@ await app.RunAsync();
 /// Hosted service that subscribes to the Redis pub/sub channel for Twitch chat messages
 /// and broadcasts each payload to every connected WebSocket client.
 /// </summary>
+/// <param name="redis"></param>
+/// <param name="registry"></param>
+/// <param name="logger"></param>
 internal sealed class TwitchChatRelayService(
   IConnectionMultiplexer redis,
   ConcurrentDictionary<string, WebSocket> registry,

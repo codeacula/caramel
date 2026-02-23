@@ -86,19 +86,19 @@ public class ToDoPluginTests
     return new DailyPlan(tasks, "Test rationale", totalActive);
   }
 
-  #endregion
+  #endregion Helper Methods
 
   #region CreateToDo Tests (10 tests)
 
   [Fact]
-  public async Task CreateToDoAsyncWithValidDescriptionOnlySucceeds()
+  public async Task CreateToDoAsyncWithValidDescriptionOnlySucceedsAsync()
   {
     // Arrange
     SetUp();
     const string description = "Buy groceries";
     var expectedToDo = CreateValidToDo(description: description);
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(expectedToDo));
 
@@ -106,14 +106,14 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description);
 
     // Assert
-    result.Should().Contain("Successfully created todo");
-    result.Should().Contain("Buy groceries");
-    result.Should().NotContain("reminder");
+    _ = result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("Buy groceries");
+    _ = result.Should().NotContain("reminder");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithValidFuzzyReminderTimeSucceeds()
+  public async Task CreateToDoAsyncWithValidFuzzyReminderTimeSucceedsAsync()
   {
     // Arrange
     SetUp();
@@ -121,11 +121,11 @@ public class ToDoPluginTests
     var reminderTime = DateTime.UtcNow.AddHours(2);
     var expectedToDo = CreateValidToDo(description: description);
 
-    _fuzzyTimeParserMock
+    _ = _fuzzyTimeParserMock
       .Setup(ftp => ftp.TryParseFuzzyTime("in 2 hours", It.IsAny<DateTime>()))
       .Returns(Result.Ok(reminderTime));
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(expectedToDo));
 
@@ -133,14 +133,14 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, "in 2 hours");
 
     // Assert
-    result.Should().Contain("Successfully created todo");
-    result.Should().Contain("reminder");
-    result.Should().Contain("Call dentist");
+    _ = result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("reminder");
+    _ = result.Should().Contain("Call dentist");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithValidIso8601ReminderSucceeds()
+  public async Task CreateToDoAsyncWithValidIso8601ReminderSucceedsAsync()
   {
     // Arrange
     SetUp();
@@ -148,11 +148,11 @@ public class ToDoPluginTests
     const string isoDate = "2025-12-31T10:00:00";
     var expectedToDo = CreateValidToDo(description: description);
 
-    _fuzzyTimeParserMock
+    _ = _fuzzyTimeParserMock
       .Setup(ftp => ftp.TryParseFuzzyTime(isoDate, It.IsAny<DateTime>()))
       .Returns(Result.Fail("Not fuzzy"));
 
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new Person
       {
@@ -166,7 +166,7 @@ public class ToDoPluginTests
         UpdatedOn = new UpdatedOn(DateTime.UtcNow)
       }));
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(expectedToDo));
 
@@ -174,13 +174,13 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, isoDate);
 
     // Assert
-    result.Should().Contain("Successfully created todo");
-    result.Should().Contain("Pay bills");
+    _ = result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("Pay bills");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithPrioritiesAndLevelsSucceeds()
+  public async Task CreateToDoAsyncWithPrioritiesAndLevelsSucceedsAsync()
   {
     // Arrange
     SetUp();
@@ -192,7 +192,7 @@ public class ToDoPluginTests
       interest: Level.Blue
     );
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(expectedToDo));
 
@@ -200,20 +200,20 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, null, "red", "yellow", "blue");
 
     // Assert
-    result.Should().Contain("Successfully created todo");
-    result.Should().Contain("Important meeting");
+    _ = result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("Important meeting");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithColorEmojiLevelsSucceeds()
+  public async Task CreateToDoAsyncWithColorEmojiLevelsSucceedsAsync()
   {
     // Arrange
     SetUp();
     const string description = "Emoji test";
     var expectedToDo = CreateValidToDo(description: description);
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(expectedToDo));
 
@@ -221,19 +221,19 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, null, "🔵", "🟢", "🟡");
 
     // Assert
-    result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("Successfully created todo");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithNumberLevelsSucceeds()
+  public async Task CreateToDoAsyncWithNumberLevelsSucceedsAsync()
   {
     // Arrange
     SetUp();
     const string description = "Number levels";
     var expectedToDo = CreateValidToDo(description: description);
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(expectedToDo));
 
@@ -241,12 +241,12 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, null, "2", "1", "0");
 
     // Assert
-    result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("Successfully created todo");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithEmptyDescriptionReturnsFailed()
+  public async Task CreateToDoAsyncWithEmptyDescriptionReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -255,18 +255,18 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync("");
 
     // Assert
-    result.Should().Contain("Error creating todo");
+    _ = result.Should().Contain("Error creating todo");
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithInvalidReminderFormatReturnsFailed()
+  public async Task CreateToDoAsyncWithInvalidReminderFormatReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     const string description = "Test";
     const string invalidDate = "not a valid date at all";
 
-    _fuzzyTimeParserMock
+    _ = _fuzzyTimeParserMock
       .Setup(ftp => ftp.TryParseFuzzyTime(invalidDate, It.IsAny<DateTime>()))
       .Returns(Result.Fail("Invalid fuzzy time"));
 
@@ -274,19 +274,19 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, invalidDate);
 
     // Assert
-    result.Should().Contain("Failed to create todo");
-    result.Should().Contain("Invalid reminder format");
+    _ = result.Should().Contain("Failed to create todo");
+    _ = result.Should().Contain("Invalid reminder format");
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWithInvalidPriorityLevelReturnsFailed()
+  public async Task CreateToDoAsyncWithInvalidPriorityLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     const string description = "Test";
     const string invalidLevel = "purple";
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(CreateValidToDo(description: description)));
 
@@ -294,17 +294,17 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description, null, invalidLevel);
 
     // Assert
-    result.Should().Contain("Successfully created todo");
+    _ = result.Should().Contain("Successfully created todo");
   }
 
   [Fact]
-  public async Task CreateToDoAsyncWhenMediatorFailsReturnsFailed()
+  public async Task CreateToDoAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     const string description = "Test";
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CreateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Store error"));
 
@@ -312,23 +312,23 @@ public class ToDoPluginTests
     var result = await _sut.CreateToDoAsync(description);
 
     // Assert
-    result.Should().Contain("Failed to create todo");
-    result.Should().Contain("Store error");
+    _ = result.Should().Contain("Failed to create todo");
+    _ = result.Should().Contain("Store error");
   }
 
-  #endregion
+  #endregion CreateToDo Tests (10 tests)
 
   #region UpdateToDo Tests (8 tests)
 
   [Fact]
-  public async Task UpdateToDoAsyncWithValidIdAndDescriptionSucceeds()
+  public async Task UpdateToDoAsyncWithValidIdAndDescriptionSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
     const string newDescription = "Updated task";
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -336,13 +336,13 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(todoId.ToString(), newDescription);
 
     // Assert
-    result.Should().Contain("Successfully updated the todo");
-    result.Should().Contain(newDescription);
+    _ = result.Should().Contain("Successfully updated the todo");
+    _ = result.Should().Contain(newDescription);
     _mediatorMock.Verify(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task UpdateToDoAsyncWithInvalidGuidFormatReturnsFailed()
+  public async Task UpdateToDoAsyncWithInvalidGuidFormatReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -352,19 +352,19 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(invalidId, "New description");
 
     // Assert
-    result.Should().Contain("Failed to update todo");
-    result.Should().Contain("Invalid todo ID format");
+    _ = result.Should().Contain("Failed to update todo");
+    _ = result.Should().Contain("Invalid todo ID format");
     _mediatorMock.Verify(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task UpdateToDoAsyncWithEmptyDescriptionSucceeds()
+  public async Task UpdateToDoAsyncWithEmptyDescriptionSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -372,18 +372,18 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(todoId.ToString(), "");
 
     // Assert
-    result.Should().Contain("Successfully updated the todo");
+    _ = result.Should().Contain("Successfully updated the todo");
     _mediatorMock.Verify(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task UpdateToDoAsyncWhenMediatorFailsReturnsFailed()
+  public async Task UpdateToDoAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Todo not found"));
 
@@ -391,18 +391,18 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(todoId.ToString(), "New description");
 
     // Assert
-    result.Should().Contain("Failed to update todo");
-    result.Should().Contain("Todo not found");
+    _ = result.Should().Contain("Failed to update todo");
+    _ = result.Should().Contain("Todo not found");
   }
 
   [Fact]
-  public async Task UpdateToDoAsyncWhenExceptionThrownReturnsError()
+  public async Task UpdateToDoAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("Database error"));
 
@@ -410,18 +410,18 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(todoId.ToString(), "New description");
 
     // Assert
-    result.Should().Contain("Error updating todo");
-    result.Should().Contain("Database error");
+    _ = result.Should().Contain("Error updating todo");
+    _ = result.Should().Contain("Database error");
   }
 
   [Fact]
-  public async Task UpdateToDoAsyncWithGuidInUppercaseSucceeds()
+  public async Task UpdateToDoAsyncWithGuidInUppercaseSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid().ToString().ToUpperInvariant();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -429,18 +429,18 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(todoId, "New description");
 
     // Assert
-    result.Should().Contain("Successfully updated the todo");
+    _ = result.Should().Contain("Successfully updated the todo");
     _mediatorMock.Verify(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task UpdateToDoAsyncWithWhitespaceDescriptionSucceeds()
+  public async Task UpdateToDoAsyncWithWhitespaceDescriptionSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid().ToString();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -448,22 +448,22 @@ public class ToDoPluginTests
     var result = await _sut.UpdateToDoAsync(todoId, "   ");
 
     // Assert
-    result.Should().Contain("Successfully updated the todo");
+    _ = result.Should().Contain("Successfully updated the todo");
     _mediatorMock.Verify(m => m.Send(It.IsAny<UpdateToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
-  #endregion
+  #endregion UpdateToDo Tests (8 tests)
 
   #region CompleteToDo Tests (6 tests)
 
   [Fact]
-  public async Task CompleteToDoAsyncWithValidIdSucceeds()
+  public async Task CompleteToDoAsyncWithValidIdSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CompleteToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -471,12 +471,12 @@ public class ToDoPluginTests
     var result = await _sut.CompleteToDoAsync(todoId.ToString());
 
     // Assert
-    result.Should().Contain("Successfully marked the todo as completed");
+    _ = result.Should().Contain("Successfully marked the todo as completed");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CompleteToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CompleteToDoAsyncWithInvalidIdFormatReturnsFailed()
+  public async Task CompleteToDoAsyncWithInvalidIdFormatReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -485,19 +485,19 @@ public class ToDoPluginTests
     var result = await _sut.CompleteToDoAsync("invalid-guid");
 
     // Assert
-    result.Should().Contain("Failed to complete todo");
-    result.Should().Contain("Invalid todo ID format");
+    _ = result.Should().Contain("Failed to complete todo");
+    _ = result.Should().Contain("Invalid todo ID format");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CompleteToDoCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task CompleteToDoAsyncWhenMediatorFailsReturnsFailed()
+  public async Task CompleteToDoAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CompleteToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Todo not found"));
 
@@ -505,18 +505,18 @@ public class ToDoPluginTests
     var result = await _sut.CompleteToDoAsync(todoId.ToString());
 
     // Assert
-    result.Should().Contain("Failed to complete todo");
-    result.Should().Contain("Todo not found");
+    _ = result.Should().Contain("Failed to complete todo");
+    _ = result.Should().Contain("Todo not found");
   }
 
   [Fact]
-  public async Task CompleteToDoAsyncWhenExceptionThrownReturnsError()
+  public async Task CompleteToDoAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<CompleteToDoCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new TimeoutException("Database timeout"));
 
@@ -524,12 +524,12 @@ public class ToDoPluginTests
     var result = await _sut.CompleteToDoAsync(todoId.ToString());
 
     // Assert
-    result.Should().Contain("Error completing todo");
-    result.Should().Contain("Database timeout");
+    _ = result.Should().Contain("Error completing todo");
+    _ = result.Should().Contain("Database timeout");
   }
 
   [Fact]
-  public async Task CompleteToDoAsyncWithEmptyIdReturnsFailed()
+  public async Task CompleteToDoAsyncWithEmptyIdReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -538,21 +538,21 @@ public class ToDoPluginTests
     var result = await _sut.CompleteToDoAsync("");
 
     // Assert
-    result.Should().Contain("Failed to complete todo");
+    _ = result.Should().Contain("Failed to complete todo");
   }
 
-  #endregion
+  #endregion CompleteToDo Tests (6 tests)
 
   #region DeleteToDo Tests (6 tests)
 
   [Fact]
-  public async Task DeleteToDoAsyncWithValidIdSucceeds()
+  public async Task DeleteToDoAsyncWithValidIdSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<DeleteToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -560,12 +560,12 @@ public class ToDoPluginTests
     var result = await _sut.DeleteToDoAsync(todoId.ToString());
 
     // Assert
-    result.Should().Contain("Successfully deleted the todo");
+    _ = result.Should().Contain("Successfully deleted the todo");
     _mediatorMock.Verify(m => m.Send(It.IsAny<DeleteToDoCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task DeleteToDoAsyncWithInvalidIdFormatReturnsFailed()
+  public async Task DeleteToDoAsyncWithInvalidIdFormatReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -574,19 +574,19 @@ public class ToDoPluginTests
     var result = await _sut.DeleteToDoAsync("not-a-valid-guid");
 
     // Assert
-    result.Should().Contain("Failed to delete todo");
-    result.Should().Contain("Invalid todo ID format");
+    _ = result.Should().Contain("Failed to delete todo");
+    _ = result.Should().Contain("Invalid todo ID format");
     _mediatorMock.Verify(m => m.Send(It.IsAny<DeleteToDoCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task DeleteToDoAsyncWhenMediatorFailsReturnsFailed()
+  public async Task DeleteToDoAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<DeleteToDoCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Todo already deleted"));
 
@@ -594,31 +594,31 @@ public class ToDoPluginTests
     var result = await _sut.DeleteToDoAsync(todoId.ToString());
 
     // Assert
-    result.Should().Contain("Failed to delete todo");
-    result.Should().Contain("Todo already deleted");
+    _ = result.Should().Contain("Failed to delete todo");
+    _ = result.Should().Contain("Todo already deleted");
   }
 
   [Fact]
-  public async Task DeleteToDoAsyncWhenExceptionThrownReturnsError()
+  public async Task DeleteToDoAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<DeleteToDoCommand>(), It.IsAny<CancellationToken>()))
-      .ThrowsAsync(new NullReferenceException("Null reference"));
+      .ThrowsAsync(new InvalidOperationException("Null reference"));
 
     // Act
     var result = await _sut.DeleteToDoAsync(todoId.ToString());
 
     // Assert
-    result.Should().Contain("Error deleting todo");
-    result.Should().Contain("Null reference");
+    _ = result.Should().Contain("Error deleting todo");
+    _ = result.Should().Contain("Null reference");
   }
 
   [Fact]
-  public async Task DeleteToDoAsyncWithEmptyIdReturnsFailed()
+  public async Task DeleteToDoAsyncWithEmptyIdReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -627,21 +627,21 @@ public class ToDoPluginTests
     var result = await _sut.DeleteToDoAsync("");
 
     // Assert
-    result.Should().Contain("Failed to delete todo");
+    _ = result.Should().Contain("Failed to delete todo");
   }
 
-  #endregion
+  #endregion DeleteToDo Tests (6 tests)
 
   #region SetPriority Tests (6 tests)
 
   [Fact]
-  public async Task SetPriorityAsyncWithValidBlueSucceeds()
+  public async Task SetPriorityAsyncWithValidBlueSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoPriorityCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -649,19 +649,19 @@ public class ToDoPluginTests
     var result = await _sut.SetPriorityAsync(todoId.ToString(), "blue");
 
     // Assert
-    result.Should().Contain("Successfully set priority");
-    result.Should().Contain("🔵");
+    _ = result.Should().Contain("Successfully set priority");
+    _ = result.Should().Contain("🔵");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetToDoPriorityCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task SetPriorityAsyncWithValidRedSucceeds()
+  public async Task SetPriorityAsyncWithValidRedSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoPriorityCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -669,12 +669,12 @@ public class ToDoPluginTests
     var result = await _sut.SetPriorityAsync(todoId.ToString(), "red");
 
     // Assert
-    result.Should().Contain("Successfully set priority");
-    result.Should().Contain("🔴");
+    _ = result.Should().Contain("Successfully set priority");
+    _ = result.Should().Contain("🔴");
   }
 
   [Fact]
-  public async Task SetPriorityAsyncWithInvalidTodoIdReturnsFailed()
+  public async Task SetPriorityAsyncWithInvalidTodoIdReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -683,13 +683,13 @@ public class ToDoPluginTests
     var result = await _sut.SetPriorityAsync("invalid-id", "blue");
 
     // Assert
-    result.Should().Contain("Failed to set priority");
-    result.Should().Contain("Invalid todo ID format");
+    _ = result.Should().Contain("Failed to set priority");
+    _ = result.Should().Contain("Invalid todo ID format");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetToDoPriorityCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task SetPriorityAsyncWithInvalidLevelReturnsFailed()
+  public async Task SetPriorityAsyncWithInvalidLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -699,18 +699,18 @@ public class ToDoPluginTests
     var result = await _sut.SetPriorityAsync(todoId.ToString(), "invalid");
 
     // Assert
-    result.Should().Contain("Failed to set priority");
-    result.Should().Contain("Invalid level");
+    _ = result.Should().Contain("Failed to set priority");
+    _ = result.Should().Contain("Invalid level");
   }
 
   [Fact]
-  public async Task SetPriorityAsyncWhenMediatorFailsReturnsFailed()
+  public async Task SetPriorityAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoPriorityCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Todo not found"));
 
@@ -718,18 +718,18 @@ public class ToDoPluginTests
     var result = await _sut.SetPriorityAsync(todoId.ToString(), "green");
 
     // Assert
-    result.Should().Contain("Failed to set priority");
-    result.Should().Contain("Todo not found");
+    _ = result.Should().Contain("Failed to set priority");
+    _ = result.Should().Contain("Todo not found");
   }
 
   [Fact]
-  public async Task SetPriorityAsyncWhenExceptionThrownReturnsError()
+  public async Task SetPriorityAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoPriorityCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("Invalid state"));
 
@@ -737,22 +737,22 @@ public class ToDoPluginTests
     var result = await _sut.SetPriorityAsync(todoId.ToString(), "yellow");
 
     // Assert
-    result.Should().Contain("Error setting priority");
-    result.Should().Contain("Invalid state");
+    _ = result.Should().Contain("Error setting priority");
+    _ = result.Should().Contain("Invalid state");
   }
 
-  #endregion
+  #endregion SetPriority Tests (6 tests)
 
   #region SetEnergy Tests (6 tests)
 
   [Fact]
-  public async Task SetEnergyAsyncWithValidGreenSucceeds()
+  public async Task SetEnergyAsyncWithValidGreenSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoEnergyCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -760,19 +760,19 @@ public class ToDoPluginTests
     var result = await _sut.SetEnergyAsync(todoId.ToString(), "green");
 
     // Assert
-    result.Should().Contain("Successfully set energy");
-    result.Should().Contain("🟢");
+    _ = result.Should().Contain("Successfully set energy");
+    _ = result.Should().Contain("🟢");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetToDoEnergyCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task SetEnergyAsyncWithValidYellowSucceeds()
+  public async Task SetEnergyAsyncWithValidYellowSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoEnergyCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -780,12 +780,12 @@ public class ToDoPluginTests
     var result = await _sut.SetEnergyAsync(todoId.ToString(), "yellow");
 
     // Assert
-    result.Should().Contain("Successfully set energy");
-    result.Should().Contain("🟡");
+    _ = result.Should().Contain("Successfully set energy");
+    _ = result.Should().Contain("🟡");
   }
 
   [Fact]
-  public async Task SetEnergyAsyncWithInvalidTodoIdReturnsFailed()
+  public async Task SetEnergyAsyncWithInvalidTodoIdReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -794,13 +794,13 @@ public class ToDoPluginTests
     var result = await _sut.SetEnergyAsync("bad-id", "green");
 
     // Assert
-    result.Should().Contain("Failed to set energy");
-    result.Should().Contain("Invalid todo ID format");
+    _ = result.Should().Contain("Failed to set energy");
+    _ = result.Should().Contain("Invalid todo ID format");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetToDoEnergyCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task SetEnergyAsyncWithInvalidLevelReturnsFailed()
+  public async Task SetEnergyAsyncWithInvalidLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -810,18 +810,18 @@ public class ToDoPluginTests
     var result = await _sut.SetEnergyAsync(todoId.ToString(), "orange");
 
     // Assert
-    result.Should().Contain("Failed to set energy");
-    result.Should().Contain("Invalid level");
+    _ = result.Should().Contain("Failed to set energy");
+    _ = result.Should().Contain("Invalid level");
   }
 
   [Fact]
-  public async Task SetEnergyAsyncWhenMediatorFailsReturnsFailed()
+  public async Task SetEnergyAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoEnergyCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Store error"));
 
@@ -829,18 +829,18 @@ public class ToDoPluginTests
     var result = await _sut.SetEnergyAsync(todoId.ToString(), "blue");
 
     // Assert
-    result.Should().Contain("Failed to set energy");
-    result.Should().Contain("Store error");
+    _ = result.Should().Contain("Failed to set energy");
+    _ = result.Should().Contain("Store error");
   }
 
   [Fact]
-  public async Task SetEnergyAsyncWhenExceptionThrownReturnsError()
+  public async Task SetEnergyAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoEnergyCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new ArgumentException("Invalid argument"));
 
@@ -848,22 +848,22 @@ public class ToDoPluginTests
     var result = await _sut.SetEnergyAsync(todoId.ToString(), "red");
 
     // Assert
-    result.Should().Contain("Error setting energy");
-    result.Should().Contain("Invalid argument");
+    _ = result.Should().Contain("Error setting energy");
+    _ = result.Should().Contain("Invalid argument");
   }
 
-  #endregion
+  #endregion SetEnergy Tests (6 tests)
 
   #region SetInterest Tests (6 tests)
 
   [Fact]
-  public async Task SetInterestAsyncWithValidBlueSucceeds()
+  public async Task SetInterestAsyncWithValidBlueSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoInterestCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -871,19 +871,19 @@ public class ToDoPluginTests
     var result = await _sut.SetInterestAsync(todoId.ToString(), "blue");
 
     // Assert
-    result.Should().Contain("Successfully set interest");
-    result.Should().Contain("🔵");
+    _ = result.Should().Contain("Successfully set interest");
+    _ = result.Should().Contain("🔵");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetToDoInterestCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task SetInterestAsyncWithValidRedSucceeds()
+  public async Task SetInterestAsyncWithValidRedSucceedsAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoInterestCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
@@ -891,12 +891,12 @@ public class ToDoPluginTests
     var result = await _sut.SetInterestAsync(todoId.ToString(), "red");
 
     // Assert
-    result.Should().Contain("Successfully set interest");
-    result.Should().Contain("🔴");
+    _ = result.Should().Contain("Successfully set interest");
+    _ = result.Should().Contain("🔴");
   }
 
   [Fact]
-  public async Task SetInterestAsyncWithInvalidTodoIdReturnsFailed()
+  public async Task SetInterestAsyncWithInvalidTodoIdReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -905,13 +905,13 @@ public class ToDoPluginTests
     var result = await _sut.SetInterestAsync("not-a-guid", "green");
 
     // Assert
-    result.Should().Contain("Failed to set interest");
-    result.Should().Contain("Invalid todo ID format");
+    _ = result.Should().Contain("Failed to set interest");
+    _ = result.Should().Contain("Invalid todo ID format");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetToDoInterestCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task SetInterestAsyncWithInvalidLevelReturnsFailed()
+  public async Task SetInterestAsyncWithInvalidLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -921,18 +921,18 @@ public class ToDoPluginTests
     var result = await _sut.SetInterestAsync(todoId.ToString(), "purple");
 
     // Assert
-    result.Should().Contain("Failed to set interest");
-    result.Should().Contain("Invalid level");
+    _ = result.Should().Contain("Failed to set interest");
+    _ = result.Should().Contain("Invalid level");
   }
 
   [Fact]
-  public async Task SetInterestAsyncWhenMediatorFailsReturnsFailed()
+  public async Task SetInterestAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoInterestCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Access denied"));
 
@@ -940,18 +940,18 @@ public class ToDoPluginTests
     var result = await _sut.SetInterestAsync(todoId.ToString(), "yellow");
 
     // Assert
-    result.Should().Contain("Failed to set interest");
-    result.Should().Contain("Access denied");
+    _ = result.Should().Contain("Failed to set interest");
+    _ = result.Should().Contain("Access denied");
   }
 
   [Fact]
-  public async Task SetInterestAsyncWhenExceptionThrownReturnsError()
+  public async Task SetInterestAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
     var todoId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetToDoInterestCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new OperationCanceledException("Operation cancelled"));
 
@@ -959,21 +959,21 @@ public class ToDoPluginTests
     var result = await _sut.SetInterestAsync(todoId.ToString(), "green");
 
     // Assert
-    result.Should().Contain("Error setting interest");
-    result.Should().Contain("Operation cancelled");
+    _ = result.Should().Contain("Error setting interest");
+    _ = result.Should().Contain("Operation cancelled");
   }
 
-  #endregion
+  #endregion SetInterest Tests (6 tests)
 
   #region SetAllPriority Tests (6 tests)
 
   [Fact]
-  public async Task SetAllPriorityAsyncWithValidLevelAndAllTodosSucceeds()
+  public async Task SetAllPriorityAsyncWithValidLevelAndAllTodosSucceedsAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(5));
 
@@ -981,22 +981,22 @@ public class ToDoPluginTests
     var result = await _sut.SetAllPriorityAsync("", "blue");
 
     // Assert
-    result.Should().Contain("Successfully set priority");
-    result.Should().Contain("🔵");
-    result.Should().Contain("5");
-    result.Should().Contain("active todos");
+    _ = result.Should().Contain("Successfully set priority");
+    _ = result.Should().Contain("🔵");
+    _ = result.Should().Contain("5");
+    _ = result.Should().Contain("active todos");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task SetAllPriorityAsyncWithSpecificTodoIdsSucceeds()
+  public async Task SetAllPriorityAsyncWithSpecificTodoIdsSucceedsAsync()
   {
     // Arrange
     SetUp();
     var id1 = Guid.NewGuid();
     var id2 = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(2));
 
@@ -1004,14 +1004,14 @@ public class ToDoPluginTests
     var result = await _sut.SetAllPriorityAsync($"{id1},{id2}", "green");
 
     // Assert
-    result.Should().Contain("Successfully set priority");
-    result.Should().Contain("🟢");
-    result.Should().Contain("2");
+    _ = result.Should().Contain("Successfully set priority");
+    _ = result.Should().Contain("🟢");
+    _ = result.Should().Contain("2");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task SetAllPriorityAsyncWithInvalidLevelReturnsFailed()
+  public async Task SetAllPriorityAsyncWithInvalidLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -1020,18 +1020,18 @@ public class ToDoPluginTests
     var result = await _sut.SetAllPriorityAsync("", "invalid");
 
     // Assert
-    result.Should().Contain("Failed to set priority");
-    result.Should().Contain("Invalid level");
+    _ = result.Should().Contain("Failed to set priority");
+    _ = result.Should().Contain("Invalid level");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task SetAllPriorityAsyncWithAllKeywordSucceeds()
+  public async Task SetAllPriorityAsyncWithAllKeywordSucceedsAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(10));
 
@@ -1039,19 +1039,19 @@ public class ToDoPluginTests
     var result = await _sut.SetAllPriorityAsync("all", "yellow");
 
     // Assert
-    result.Should().Contain("Successfully set priority");
-    result.Should().Contain("🟡");
-    result.Should().Contain("10");
+    _ = result.Should().Contain("Successfully set priority");
+    _ = result.Should().Contain("🟡");
+    _ = result.Should().Contain("10");
     _mediatorMock.Verify(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task SetAllPriorityAsyncWhenMediatorFailsReturnsFailed()
+  public async Task SetAllPriorityAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("No todos found"));
 
@@ -1059,17 +1059,17 @@ public class ToDoPluginTests
     var result = await _sut.SetAllPriorityAsync("", "red");
 
     // Assert
-    result.Should().Contain("Failed to set priority");
-    result.Should().Contain("No todos found");
+    _ = result.Should().Contain("Failed to set priority");
+    _ = result.Should().Contain("No todos found");
   }
 
   [Fact]
-  public async Task SetAllPriorityAsyncWhenExceptionThrownReturnsError()
+  public async Task SetAllPriorityAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("Sequence contains no elements"));
 
@@ -1077,21 +1077,21 @@ public class ToDoPluginTests
     var result = await _sut.SetAllPriorityAsync("", "blue");
 
     // Assert
-    result.Should().Contain("Error setting priority");
-    result.Should().Contain("Sequence contains no elements");
+    _ = result.Should().Contain("Error setting priority");
+    _ = result.Should().Contain("Sequence contains no elements");
   }
 
-  #endregion
+  #endregion SetAllPriority Tests (6 tests)
 
   #region SetAllEnergy Tests (6 tests)
 
   [Fact]
-  public async Task SetAllEnergyAsyncWithValidLevelAndAllTodosSucceeds()
+  public async Task SetAllEnergyAsyncWithValidLevelAndAllTodosSucceedsAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(3));
 
@@ -1099,20 +1099,20 @@ public class ToDoPluginTests
     var result = await _sut.SetAllEnergyAsync("", "green");
 
     // Assert
-    result.Should().Contain("Successfully set energy");
-    result.Should().Contain("🟢");
-    result.Should().Contain("3");
-    result.Should().Contain("active todos");
+    _ = result.Should().Contain("Successfully set energy");
+    _ = result.Should().Contain("🟢");
+    _ = result.Should().Contain("3");
+    _ = result.Should().Contain("active todos");
   }
 
   [Fact]
-  public async Task SetAllEnergyAsyncWithSpecificTodoIdsSucceeds()
+  public async Task SetAllEnergyAsyncWithSpecificTodoIdsSucceedsAsync()
   {
     // Arrange
     SetUp();
     var id1 = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(1));
 
@@ -1120,12 +1120,12 @@ public class ToDoPluginTests
     var result = await _sut.SetAllEnergyAsync(id1.ToString(), "yellow");
 
     // Assert
-    result.Should().Contain("Successfully set energy");
-    result.Should().Contain("🟡");
+    _ = result.Should().Contain("Successfully set energy");
+    _ = result.Should().Contain("🟡");
   }
 
   [Fact]
-  public async Task SetAllEnergyAsyncWithInvalidLevelReturnsFailed()
+  public async Task SetAllEnergyAsyncWithInvalidLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -1134,17 +1134,17 @@ public class ToDoPluginTests
     var result = await _sut.SetAllEnergyAsync("", "pink");
 
     // Assert
-    result.Should().Contain("Failed to set energy");
-    result.Should().Contain("Invalid level");
+    _ = result.Should().Contain("Failed to set energy");
+    _ = result.Should().Contain("Invalid level");
   }
 
   [Fact]
-  public async Task SetAllEnergyAsyncWithEmptyTodoIdsListSucceeds()
+  public async Task SetAllEnergyAsyncWithEmptyTodoIdsListSucceedsAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(7));
 
@@ -1152,17 +1152,17 @@ public class ToDoPluginTests
     var result = await _sut.SetAllEnergyAsync("", "blue");
 
     // Assert
-    result.Should().Contain("Successfully set energy");
-    result.Should().Contain("7");
+    _ = result.Should().Contain("Successfully set energy");
+    _ = result.Should().Contain("7");
   }
 
   [Fact]
-  public async Task SetAllEnergyAsyncWhenMediatorFailsReturnsFailed()
+  public async Task SetAllEnergyAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Database error"));
 
@@ -1170,39 +1170,39 @@ public class ToDoPluginTests
     var result = await _sut.SetAllEnergyAsync("", "red");
 
     // Assert
-    result.Should().Contain("Failed to set energy");
-    result.Should().Contain("Database error");
+    _ = result.Should().Contain("Failed to set energy");
+    _ = result.Should().Contain("Database error");
   }
 
   [Fact]
-  public async Task SetAllEnergyAsyncWhenExceptionThrownReturnsError()
+  public async Task SetAllEnergyAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
-      .ThrowsAsync(new OutOfMemoryException("Out of memory"));
+      .ThrowsAsync(new InvalidOperationException("Out of memory"));
 
     // Act
     var result = await _sut.SetAllEnergyAsync("", "green");
 
     // Assert
-    result.Should().Contain("Error setting energy");
-    result.Should().Contain("Out of memory");
+    _ = result.Should().Contain("Error setting energy");
+    _ = result.Should().Contain("Out of memory");
   }
 
-  #endregion
+  #endregion SetAllEnergy Tests (6 tests)
 
   #region SetAllInterest Tests (6 tests)
 
   [Fact]
-  public async Task SetAllInterestAsyncWithValidLevelAndAllTodosSucceeds()
+  public async Task SetAllInterestAsyncWithValidLevelAndAllTodosSucceedsAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(4));
 
@@ -1210,21 +1210,21 @@ public class ToDoPluginTests
     var result = await _sut.SetAllInterestAsync("", "yellow");
 
     // Assert
-    result.Should().Contain("Successfully set interest");
-    result.Should().Contain("🟡");
-    result.Should().Contain("4");
-    result.Should().Contain("active todos");
+    _ = result.Should().Contain("Successfully set interest");
+    _ = result.Should().Contain("🟡");
+    _ = result.Should().Contain("4");
+    _ = result.Should().Contain("active todos");
   }
 
   [Fact]
-  public async Task SetAllInterestAsyncWithSpecificTodoIdsSucceeds()
+  public async Task SetAllInterestAsyncWithSpecificTodoIdsSucceedsAsync()
   {
     // Arrange
     SetUp();
     var id1 = Guid.NewGuid();
     var id2 = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(2));
 
@@ -1232,13 +1232,13 @@ public class ToDoPluginTests
     var result = await _sut.SetAllInterestAsync($"{id1},{id2}", "blue");
 
     // Assert
-    result.Should().Contain("Successfully set interest");
-    result.Should().Contain("🔵");
-    result.Should().Contain("2");
+    _ = result.Should().Contain("Successfully set interest");
+    _ = result.Should().Contain("🔵");
+    _ = result.Should().Contain("2");
   }
 
   [Fact]
-  public async Task SetAllInterestAsyncWithInvalidLevelReturnsFailed()
+  public async Task SetAllInterestAsyncWithInvalidLevelReturnsFailedAsync()
   {
     // Arrange
     SetUp();
@@ -1247,18 +1247,18 @@ public class ToDoPluginTests
     var result = await _sut.SetAllInterestAsync("", "silver");
 
     // Assert
-    result.Should().Contain("Failed to set interest");
-    result.Should().Contain("Invalid level");
+    _ = result.Should().Contain("Failed to set interest");
+    _ = result.Should().Contain("Invalid level");
   }
 
   [Fact]
-  public async Task SetAllInterestAsyncWithInvalidIdInListSkipsIt()
+  public async Task SetAllInterestAsyncWithInvalidIdInListSkipsItAsync()
   {
     // Arrange
     SetUp();
     var validId = Guid.NewGuid();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(1));
 
@@ -1266,18 +1266,18 @@ public class ToDoPluginTests
     var result = await _sut.SetAllInterestAsync($"{validId},invalid-id,not-a-guid", "red");
 
     // Assert
-    result.Should().Contain("Successfully set interest");
-    result.Should().Contain("🔴");
-    result.Should().Contain("1");
+    _ = result.Should().Contain("Successfully set interest");
+    _ = result.Should().Contain("🔴");
+    _ = result.Should().Contain("1");
   }
 
   [Fact]
-  public async Task SetAllInterestAsyncWhenMediatorFailsReturnsFailed()
+  public async Task SetAllInterestAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Unauthorized"));
 
@@ -1285,34 +1285,34 @@ public class ToDoPluginTests
     var result = await _sut.SetAllInterestAsync("", "green");
 
     // Assert
-    result.Should().Contain("Failed to set interest");
-    result.Should().Contain("Unauthorized");
+    _ = result.Should().Contain("Failed to set interest");
+    _ = result.Should().Contain("Unauthorized");
   }
 
   [Fact]
-  public async Task SetAllInterestAsyncWhenExceptionThrownReturnsError()
+  public async Task SetAllInterestAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<SetAllToDosAttributeCommand>(), It.IsAny<CancellationToken>()))
-      .ThrowsAsync(new StackOverflowException("Stack overflow"));
+      .ThrowsAsync(new InvalidOperationException("Stack overflow"));
 
     // Act
     var result = await _sut.SetAllInterestAsync("", "yellow");
 
     // Assert
-    result.Should().Contain("Error setting interest");
-    result.Should().Contain("Stack overflow");
+    _ = result.Should().Contain("Error setting interest");
+    _ = result.Should().Contain("Stack overflow");
   }
 
-  #endregion
+  #endregion SetAllInterest Tests (6 tests)
 
   #region ListToDos Tests (3 tests)
 
   [Fact]
-  public async Task ListToDosAsyncWithMultipleTodosSucceeds()
+  public async Task ListToDosAsyncWithMultipleTodosSucceedsAsync()
   {
     // Arrange
     SetUp();
@@ -1323,7 +1323,7 @@ public class ToDoPluginTests
       CreateValidToDo(description: "Task 3")
     };
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetToDosByPersonIdQuery>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok((IEnumerable<ToDo>)todos));
 
@@ -1331,22 +1331,22 @@ public class ToDoPluginTests
     var result = await _sut.ListToDosAsync();
 
     // Assert
-    result.Should().Contain("Here are your active todos");
-    result.Should().Contain("Task 1");
-    result.Should().Contain("Task 2");
-    result.Should().Contain("Task 3");
-    result.Should().Contain("P = Priority");
+    _ = result.Should().Contain("Here are your active todos");
+    _ = result.Should().Contain("Task 1");
+    _ = result.Should().Contain("Task 2");
+    _ = result.Should().Contain("Task 3");
+    _ = result.Should().Contain("P = Priority");
     _mediatorMock.Verify(m => m.Send(It.IsAny<GetToDosByPersonIdQuery>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task ListToDosAsyncWithNoTodosReturnsEmptyMessage()
+  public async Task ListToDosAsyncWithNoTodosReturnsEmptyMessageAsync()
   {
     // Arrange
     SetUp();
     var emptyList = new List<ToDo>();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetToDosByPersonIdQuery>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok((IEnumerable<ToDo>)emptyList));
 
@@ -1354,17 +1354,17 @@ public class ToDoPluginTests
     var result = await _sut.ListToDosAsync();
 
     // Assert
-    result.Should().Contain("You currently have no active todos");
+    _ = result.Should().Contain("You currently have no active todos");
     _mediatorMock.Verify(m => m.Send(It.IsAny<GetToDosByPersonIdQuery>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task ListToDosAsyncWhenMediatorFailsReturnsFailed()
+  public async Task ListToDosAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetToDosByPersonIdQuery>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Query error"));
 
@@ -1372,22 +1372,22 @@ public class ToDoPluginTests
     var result = await _sut.ListToDosAsync();
 
     // Assert
-    result.Should().Contain("Failed to retrieve todos");
-    result.Should().Contain("Query error");
+    _ = result.Should().Contain("Failed to retrieve todos");
+    _ = result.Should().Contain("Query error");
   }
 
-  #endregion
+  #endregion ListToDos Tests (3 tests)
 
   #region GenerateDailyPlan Tests (4 tests)
 
   [Fact]
-  public async Task GenerateDailyPlanAsyncWithValidPlanSucceeds()
+  public async Task GenerateDailyPlanAsyncWithValidPlanSucceedsAsync()
   {
     // Arrange
     SetUp();
     var dailyPlan = CreateValidDailyPlan(taskCount: 3, totalActive: 10);
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetDailyPlanQuery>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(dailyPlan));
 
@@ -1395,23 +1395,23 @@ public class ToDoPluginTests
     var result = await _sut.GenerateDailyPlanAsync();
 
     // Assert
-    result.Should().Contain("Here's your suggested daily plan");
-    result.Should().Contain("Task 1");
-    result.Should().Contain("Task 2");
-    result.Should().Contain("Task 3");
-    result.Should().Contain("Test rationale");
-    result.Should().Contain("Showing 3 of 10");
+    _ = result.Should().Contain("Here's your suggested daily plan");
+    _ = result.Should().Contain("Task 1");
+    _ = result.Should().Contain("Task 2");
+    _ = result.Should().Contain("Task 3");
+    _ = result.Should().Contain("Test rationale");
+    _ = result.Should().Contain("Showing 3 of 10");
     _mediatorMock.Verify(m => m.Send(It.IsAny<GetDailyPlanQuery>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task GenerateDailyPlanAsyncWithEmptyTasksReturnsRationale()
+  public async Task GenerateDailyPlanAsyncWithEmptyTasksReturnsRationaleAsync()
   {
     // Arrange
     SetUp();
     var emptyPlan = CreateValidDailyPlan(taskCount: 0, totalActive: 0);
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetDailyPlanQuery>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(emptyPlan));
 
@@ -1419,18 +1419,18 @@ public class ToDoPluginTests
     var result = await _sut.GenerateDailyPlanAsync();
 
     // Assert
-    result.Should().Contain("Test rationale");
-    result.Should().NotContain("Here's your suggested daily plan");
-    result.Should().NotContain("Showing");
+    _ = result.Should().Contain("Test rationale");
+    _ = result.Should().NotContain("Here's your suggested daily plan");
+    _ = result.Should().NotContain("Showing");
   }
 
   [Fact]
-  public async Task GenerateDailyPlanAsyncWhenMediatorFailsReturnsFailed()
+  public async Task GenerateDailyPlanAsyncWhenMediatorFailsReturnsFailedAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetDailyPlanQuery>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Plan generation error"));
 
@@ -1438,17 +1438,17 @@ public class ToDoPluginTests
     var result = await _sut.GenerateDailyPlanAsync();
 
     // Assert
-    result.Should().Contain("Failed to generate daily plan");
-    result.Should().Contain("Plan generation error");
+    _ = result.Should().Contain("Failed to generate daily plan");
+    _ = result.Should().Contain("Plan generation error");
   }
 
   [Fact]
-  public async Task GenerateDailyPlanAsyncWhenExceptionThrownReturnsError()
+  public async Task GenerateDailyPlanAsyncWhenExceptionThrownReturnsErrorAsync()
   {
     // Arrange
     SetUp();
 
-    _mediatorMock
+    _ = _mediatorMock
       .Setup(m => m.Send(It.IsAny<GetDailyPlanQuery>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("AI service unavailable"));
 
@@ -1456,9 +1456,9 @@ public class ToDoPluginTests
     var result = await _sut.GenerateDailyPlanAsync();
 
     // Assert
-    result.Should().Contain("Error generating daily plan");
-    result.Should().Contain("AI service unavailable");
+    _ = result.Should().Contain("Error generating daily plan");
+    _ = result.Should().Contain("AI service unavailable");
   }
 
-  #endregion
+  #endregion GenerateDailyPlan Tests (4 tests)
 }

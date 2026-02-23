@@ -1,11 +1,15 @@
 using Caramel.Twitch.Extensions;
-using Caramel.Twitch.Services;
 
 namespace Caramel.Twitch.Handlers;
 
 /// <summary>
 /// Handles incoming chat messages from Twitch EventSub channel.chat.message events.
 /// </summary>
+/// <param name="caramelServiceClient"></param>
+/// <param name="personCache"></param>
+/// <param name="broadcaster"></param>
+/// <param name="setupState"></param>
+/// <param name="logger"></param>
 public sealed class ChatMessageEventHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
@@ -21,6 +25,15 @@ public sealed class ChatMessageEventHandler(
   /// Broadcasts the message to the Redis pub/sub channel for UI display before
   /// applying any bot-directed filtering.
   /// </summary>
+  /// <param name="broadcasterUserId"></param>
+  /// <param name="broadcasterLogin"></param>
+  /// <param name="chatterUserId"></param>
+  /// <param name="chatterLogin"></param>
+  /// <param name="chatterDisplayName"></param>
+  /// <param name="messageId"></param>
+  /// <param name="messageText"></param>
+  /// <param name="color"></param>
+  /// <param name="cancellationToken"></param>
   public async Task HandleAsync(
     string broadcasterUserId,
     string broadcasterLogin,
@@ -62,7 +75,7 @@ public sealed class ChatMessageEventHandler(
       var accessResult = await personCache.GetAccessAsync(platformId);
       if (accessResult.IsFailed)
       {
-        CaramelTwitchLogs.AccessCheckFailed(logger, chatterLogin, accessResult.Errors.First().Message);
+        CaramelTwitchLogs.AccessCheckFailed(logger, chatterLogin, accessResult.Errors[0].Message);
         return;
       }
 
@@ -98,7 +111,7 @@ public sealed class ChatMessageEventHandler(
     }
   }
 
-  private bool TryParseQuickCommand(string messageText, out string commandType, out string commandContent)
+  private static bool TryParseQuickCommand(string messageText, out string commandType, out string commandContent)
   {
     commandType = string.Empty;
     commandContent = string.Empty;
@@ -161,7 +174,7 @@ public sealed class ChatMessageEventHandler(
       }
       else
       {
-        CaramelTwitchLogs.ToDoCreationFailed(logger, platformId.Username, result.Errors.First().Message);
+        CaramelTwitchLogs.ToDoCreationFailed(logger, platformId.Username, result.Errors[0].Message);
       }
     }
     else if (commandType == "remind")
@@ -180,7 +193,7 @@ public sealed class ChatMessageEventHandler(
       }
       else
       {
-        CaramelTwitchLogs.ReminderCreationFailed(logger, platformId.Username, result.Errors.First().Message);
+        CaramelTwitchLogs.ReminderCreationFailed(logger, platformId.Username, result.Errors[0].Message);
       }
     }
   }
@@ -201,7 +214,7 @@ public sealed class ChatMessageEventHandler(
     var result = await caramelServiceClient.SendMessageAsync(request, cancellationToken);
     if (result.IsFailed)
     {
-      CaramelTwitchLogs.MessageProcessingFailed(logger, platformId.Username, result.Errors.First().Message);
+      CaramelTwitchLogs.MessageProcessingFailed(logger, platformId.Username, result.Errors[0].Message);
     }
   }
 }

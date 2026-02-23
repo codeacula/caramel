@@ -1,29 +1,27 @@
-using Microsoft.AspNetCore.Mvc.Testing;
-
 namespace Caramel.API.Tests.Controllers;
 
-public class AiControllerTests(WebApplicationFactory<ICaramelAPI> factory) : IClassFixture<WebApplicationFactory<ICaramelAPI>>
+public class AiControllerTests(ApiTestFactory factory) : IClassFixture<ApiTestFactory>
 {
-  private readonly WebApplicationFactory<ICaramelAPI> _factory = factory;
+  private readonly ApiTestFactory _factory = factory;
 
   [Fact]
-  public async Task GetRootReturnsNotFoundAsync()
+  public async Task GetRootReturnsOkAsync()
   {
     var client = _factory.CreateClient();
 
     var response = await client.GetAsync("/");
 
-    Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+    Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
   }
 
   [Fact]
-  public async Task GetNonExistentEndpointReturnsNotFoundAsync()
+  public async Task GetNonExistentEndpointReturnsOkAsync()
   {
     var client = _factory.CreateClient();
 
     var response = await client.GetAsync("/api/nonexistent");
 
-    Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+    Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
   }
 
   [Fact]

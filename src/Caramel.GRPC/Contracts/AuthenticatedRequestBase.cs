@@ -17,5 +17,8 @@ public abstract record AuthenticatedRequestBase : IAuthenticatedRequest
   [DataMember(Order = 103)]
   public required string Username { get; init; }
 
-  public PlatformId ToPlatformId() => new(Username, PlatformUserId, Platform);
+  public PlatformId ToPlatformId()
+  {
+    return new(Username, PlatformUserId, Platform);
+  }
 }

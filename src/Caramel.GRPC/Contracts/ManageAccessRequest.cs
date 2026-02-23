@@ -47,6 +47,13 @@ public sealed record ManageAccessRequest : IAuthenticatedRequest
   [DataMember(Order = 6)]
   public required string TargetUsername { get; init; }
 
-  public PlatformId ToAdminPlatformId() => new(AdminUsername, AdminPlatformUserId, AdminPlatform);
-  public PlatformId ToTargetPlatformId() => new(TargetUsername, TargetPlatformUserId, TargetPlatform);
+  public PlatformId ToAdminPlatformId()
+  {
+    return new(AdminUsername, AdminPlatformUserId, AdminPlatform);
+  }
+
+  public PlatformId ToTargetPlatformId()
+  {
+    return new(TargetUsername, TargetPlatformUserId, TargetPlatform);
+  }
 }

@@ -150,14 +150,17 @@ public sealed class GetDailyPlanQueryHandler(
     return sb.ToString();
   }
 
-  private static string LevelToEmoji(Level level) => level switch
+  private static string LevelToEmoji(Level level)
   {
-    Level.Blue => "🔵",
-    Level.Green => "🟢",
-    Level.Yellow => "🟡",
-    Level.Red => "🔴",
-    _ => "⚪"
-  };
+    return level switch
+    {
+      Level.Blue => "🔵",
+      Level.Green => "🟢",
+      Level.Yellow => "🟡",
+      Level.Red => "🔴",
+      _ => "⚪"
+    };
+  }
 
   private static Result<(List<DailyPlanItem> Tasks, string Rationale)> ParseAIResponse(string jsonContent, List<ToDo> allTodos)
   {

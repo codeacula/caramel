@@ -14,11 +14,14 @@ public sealed class GetTwitchSetupQueryHandlerTests
 {
   private readonly Mock<ITwitchSetupStore> _store = new();
 
-  private GetTwitchSetupQueryHandler CreateHandler() =>
-    new(_store.Object);
+  private GetTwitchSetupQueryHandler CreateHandler()
+  {
+    return new(_store.Object);
+  }
 
-  private static TwitchSetup MakeSetup() =>
-    new()
+  private static TwitchSetup MakeSetup()
+  {
+    return new()
     {
       BotUserId = "111",
       BotLogin = "caramel_bot",
@@ -26,47 +29,48 @@ public sealed class GetTwitchSetupQueryHandlerTests
       ConfiguredOn = DateTimeOffset.UtcNow,
       UpdatedOn = DateTimeOffset.UtcNow,
     };
+  }
 
   [Fact]
-  public async Task Handle_ReturnsOkNull_WhenStoreReturnsNull()
+  public async Task HandleReturnsOkNullWhenStoreReturnsNullAsync()
   {
-    _store
+    _ = _store
       .Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(null));
 
     var handler = CreateHandler();
     var result = await handler.Handle(new GetTwitchSetupQuery(), CancellationToken.None);
 
-    result.IsSuccess.Should().BeTrue();
-    result.Value.Should().BeNull();
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = result.Value.Should().BeNull();
   }
 
   [Fact]
-  public async Task Handle_ReturnsOkSetup_WhenStoreReturnsSetup()
+  public async Task HandleReturnsOkSetupWhenStoreReturnsSetupAsync()
   {
     var setup = MakeSetup();
-    _store
+    _ = _store
       .Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(setup));
 
     var handler = CreateHandler();
     var result = await handler.Handle(new GetTwitchSetupQuery(), CancellationToken.None);
 
-    result.IsSuccess.Should().BeTrue();
-    result.Value.Should().BeSameAs(setup);
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = result.Value.Should().BeSameAs(setup);
   }
 
   [Fact]
-  public async Task Handle_ReturnsFail_WhenStoreThrows()
+  public async Task HandleReturnsFailWhenStoreThrowsAsync()
   {
-    _store
+    _ = _store
       .Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("connection lost"));
 
     var handler = CreateHandler();
     var result = await handler.Handle(new GetTwitchSetupQuery(), CancellationToken.None);
 
-    result.IsFailed.Should().BeTrue();
-    result.Errors.Should().ContainSingle(e => e.Message == "connection lost");
+    _ = result.IsFailed.Should().BeTrue();
+    _ = result.Errors.Should().ContainSingle(e => e.Message == "connection lost");
   }
 }

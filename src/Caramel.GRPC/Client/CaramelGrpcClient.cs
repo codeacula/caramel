@@ -220,12 +220,7 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
       return Result.Fail<TwitchSetup?>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
     }
 
-    if (grpcResult.Data is null)
-    {
-      return Result.Ok<TwitchSetup?>(null);
-    }
-
-    return Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
+    return grpcResult.Data is null ? Result.Ok<TwitchSetup?>(null) : Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
   }
 
   public async Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default)
@@ -234,19 +229,14 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = setup.Channels
-        .Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
-        .ToList()
+      Channels = [.. setup.Channels.Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
     };
 
     var grpcResult = await CaramelGrpcService.SaveTwitchSetupAsync(grpcRequest);
 
-    if (!grpcResult.IsSuccess || grpcResult.Data is null)
-    {
-      return Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
-    }
-
-    return Result.Ok(MapTwitchSetupToDomain(grpcResult.Data));
+    return !grpcResult.IsSuccess || grpcResult.Data is null
+      ? Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
+      : Result.Ok(MapTwitchSetupToDomain(grpcResult.Data));
   }
 
   private static TwitchSetup MapTwitchSetupToDomain(Contracts.TwitchSetupDTO dto)
@@ -256,8 +246,8 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
       BotUserId = dto.BotUserId,
       BotLogin = dto.BotLogin,
       Channels = dto.Channels
-        .Select(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
-        .ToList(),
+        .ConvertAll(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
+,
       ConfiguredOn = DateTimeOffset.UtcNow,
       UpdatedOn = DateTimeOffset.UtcNow
     };
