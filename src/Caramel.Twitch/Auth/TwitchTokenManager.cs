@@ -13,9 +13,6 @@ public sealed class TwitchTokenManager
   private string _accessToken;
   private string? _refreshToken;
   private DateTime _expiresAt = DateTime.MinValue;
-  /// <summary>
-  /// Refresh if expires within 5 minutes
-  /// </summary>
   private const int RefreshThresholdSeconds = 300;
 
   public TwitchTokenManager(TwitchConfig config, IHttpClientFactory httpClientFactory, ILogger<TwitchTokenManager> logger)
@@ -34,11 +31,6 @@ public sealed class TwitchTokenManager
       : DateTime.MinValue;
   }
 
-  /// <summary>
-  /// Gets a valid access token, refreshing if necessary.
-  /// </summary>
-  /// <param name="cancellationToken"></param>
-  /// <exception cref="InvalidOperationException"></exception>
   public async Task<string> GetValidAccessTokenAsync(CancellationToken cancellationToken = default)
   {
     lock (_lock)
@@ -62,13 +54,6 @@ public sealed class TwitchTokenManager
     }
   }
 
-  /// <summary>
-  /// Updates the tokens after a successful OAuth exchange (authorization code flow or refresh).
-  /// Sets expiry time based on Twitch's typical 1-hour expiration.
-  /// </summary>
-  /// <param name="accessToken"></param>
-  /// <param name="refreshToken"></param>
-  /// <param name="expiresInSeconds"></param>
   public void SetTokens(string accessToken, string? refreshToken = null, int expiresInSeconds = 3600)
   {
     lock (_lock)
@@ -85,12 +70,6 @@ public sealed class TwitchTokenManager
     TwitchTokenManagerLogs.TokensUpdated(_logger, expiresInSeconds);
   }
 
-  /// <summary>
-  /// Refreshes the access token using the refresh token.
-  /// Throws if refresh fails (invalid refresh token, network error, etc).
-  /// </summary>
-  /// <param name="cancellationToken"></param>
-  /// <exception cref="InvalidOperationException"></exception>
   private async Task RefreshAccessTokenAsync(CancellationToken cancellationToken)
   {
     TwitchTokenManagerLogs.RefreshingToken(_logger);
@@ -130,9 +109,6 @@ public sealed class TwitchTokenManager
     SetTokens(accessToken, refreshToken, expiresIn);
   }
 
-  /// <summary>
-  /// Returns the current access token without validation (for read-only checks).
-  /// </summary>
   public string GetCurrentAccessToken()
   {
     lock (_lock)
@@ -141,9 +117,6 @@ public sealed class TwitchTokenManager
     }
   }
 
-  /// <summary>
-  /// Returns true if a refresh token exists and tokens can be refreshed.
-  /// </summary>
   public bool CanRefresh()
   {
     lock (_lock)
@@ -153,9 +126,6 @@ public sealed class TwitchTokenManager
   }
 }
 
-/// <summary>
-/// Structured logging for <see cref="TwitchTokenManager"/>.
-/// </summary>
 internal static partial class TwitchTokenManagerLogs
 {
   [LoggerMessage(Level = LogLevel.Information, Message = "Refreshing Twitch OAuth access token")]

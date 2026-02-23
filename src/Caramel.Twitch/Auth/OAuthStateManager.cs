@@ -2,19 +2,11 @@ using System.Security.Cryptography;
 
 namespace Caramel.Twitch.Auth;
 
-/// <summary>
-/// Manages OAuth state parameters for CSRF protection during the authorization code flow.
-/// </summary>
-/// <param name="config"></param>
-public sealed class OAuthStateManager(TwitchConfig config)
+public sealed class OAuthStateManager()
 {
   private readonly Dictionary<string, DateTime> _activeStates = [];
   private readonly TimeSpan _stateTtl = TimeSpan.FromMinutes(10);
 
-  /// <summary>
-  /// Generates a new OAuth state parameter and stores it for validation.
-  /// State parameters are valid for 10 minutes.
-  /// </summary>
   public string GenerateState()
   {
     var randomBytes = new byte[32];
@@ -32,10 +24,6 @@ public sealed class OAuthStateManager(TwitchConfig config)
     return state;
   }
 
-  /// <summary>
-  /// Validates an OAuth state parameter. Returns true if the state is valid and removes it from the active set.
-  /// </summary>
-  /// <param name="state"></param>
   public bool ValidateAndConsumeState(string state)
   {
     lock (_activeStates)
@@ -56,9 +44,6 @@ public sealed class OAuthStateManager(TwitchConfig config)
     }
   }
 
-  /// <summary>
-  /// Removes expired state parameters (called periodically for cleanup).
-  /// </summary>
   public void CleanupExpiredStates()
   {
     lock (_activeStates)

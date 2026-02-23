@@ -1,11 +1,9 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using System.Text;
+
+using Caramel.API.Services;
 
 using Caramel.Cache;
-using Caramel.Core.Twitch;
-
-using StackExchange.Redis;
 
 WebApplicationBuilder webAppBuilder = WebApplication.CreateBuilder(args);
 var configuration = webAppBuilder.Configuration;
@@ -88,80 +86,6 @@ app.Map("/ws/chat", async (HttpContext context, ConcurrentDictionary<string, Web
 app.MapFallbackToFile("index.html");
 
 await app.RunAsync();
-
-// ---------------------------------------------------------------------------
-
-/// <summary>
-/// Hosted service that subscribes to the Redis pub/sub channel for Twitch chat messages
-/// and broadcasts each payload to every connected WebSocket client.
-/// </summary>
-/// <param name="redis"></param>
-/// <param name="registry"></param>
-/// <param name="logger"></param>
-internal sealed class TwitchChatRelayService(
-  IConnectionMultiplexer redis,
-  ConcurrentDictionary<string, WebSocket> registry,
-  ILogger<TwitchChatRelayService> logger) : BackgroundService
-{
-  protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-  {
-    var subscriber = redis.GetSubscriber();
-
-    await subscriber.SubscribeAsync(
-      RedisChannel.Literal(TwitchChatMessage.RedisChannel),
-      (_, value) => OnRedisMessage(value));
-
-    TwitchChatRelayLogs.Subscribed(logger, TwitchChatMessage.RedisChannel);
-
-    // Keep the service alive until the host shuts down
-    await Task.Delay(Timeout.Infinite, stoppingToken);
-  }
-
-  private void OnRedisMessage(RedisValue value)
-  {
-    if (!value.HasValue)
-    {
-      return;
-    }
-
-    var payload = Encoding.UTF8.GetBytes(value.ToString());
-
-    // Fan-out: send to every connected WebSocket client
-    foreach (var (id, socket) in registry)
-    {
-      if (socket.State != WebSocketState.Open)
-      {
-        _ = registry.TryRemove(id, out _);
-        continue;
-      }
-
-      _ = BroadcastAsync(id, socket, payload);
-    }
-  }
-
-  private async Task BroadcastAsync(string id, WebSocket socket, byte[] payload)
-  {
-    try
-    {
-      await socket.SendAsync(
-        new ArraySegment<byte>(payload),
-        WebSocketMessageType.Text,
-        endOfMessage: true,
-        CancellationToken.None);
-    }
-    catch (Exception ex)
-    {
-      TwitchChatRelayLogs.BroadcastFailed(logger, id, ex.Message);
-      _ = registry.TryRemove(id, out _);
-    }
-  }
-
-  public override async Task StopAsync(CancellationToken cancellationToken)
-  {
-    TwitchChatRelayLogs.Stopping(logger);
-    await base.StopAsync(cancellationToken);
-  }
-}
 
 /// <summary>
 /// Structured log messages for <see cref="TwitchChatRelayService"/>.
