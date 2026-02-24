@@ -12,13 +12,33 @@ export interface TwitchChatMessage {
   timestamp: string;
 }
 
+export interface TwitchChannelPointRedeem {
+  redemptionId: string;
+  broadcasterLogin: string;
+  broadcasterUserId: string;
+  redeemerUserId: string;
+  redeemerLogin: string;
+  redeemerDisplayName: string;
+  rewardId: string;
+  rewardTitle: string;
+  rewardCost: number;
+  userInput: string;
+  redeemedAt: string;
+}
+
+/** A feed item is either a chat message or a channel point redemption. */
+export type FeedItem =
+  | { kind: "chat"; data: TwitchChatMessage }
+  | { kind: "redeem"; data: TwitchChannelPointRedeem };
+
 /** WebSocket envelope – every frame from the server has a `type` discriminator. */
 interface WsEnvelope {
   type: string;
-  data?: TwitchChatMessage & {
-    authorized?: boolean;
-    configured?: boolean;
-  };
+  data?: TwitchChatMessage &
+    TwitchChannelPointRedeem & {
+      authorized?: boolean;
+      configured?: boolean;
+    };
 }
 
 const MAX_MESSAGES = 200;
@@ -30,6 +50,7 @@ export type SendStatus = "idle" | "sending" | "error";
 
 export function useTwitchChat() {
   const messages = ref<TwitchChatMessage[]>([]);
+  const feedItems = ref<FeedItem[]>([]);
   const status = ref<ConnectionStatus>("disconnected");
   const errorMessage = ref<string | null>(null);
   const sendStatus = ref<SendStatus>("idle");
@@ -97,9 +118,24 @@ export function useTwitchChat() {
         switch (envelope.type) {
           case "chat_message":
             if (envelope.data) {
-              messages.value.push(envelope.data);
+              const msg = envelope.data as unknown as TwitchChatMessage;
+              messages.value.push(msg);
+              feedItems.value.push({ kind: "chat", data: msg });
+              if (feedItems.value.length > MAX_MESSAGES) {
+                feedItems.value.splice(0, feedItems.value.length - MAX_MESSAGES);
+              }
               if (messages.value.length > MAX_MESSAGES) {
                 messages.value.splice(0, messages.value.length - MAX_MESSAGES);
+              }
+            }
+            break;
+
+          case "channel_point_redeem":
+            if (envelope.data) {
+              const redeem = envelope.data as unknown as TwitchChannelPointRedeem;
+              feedItems.value.push({ kind: "redeem", data: redeem });
+              if (feedItems.value.length > MAX_MESSAGES) {
+                feedItems.value.splice(0, feedItems.value.length - MAX_MESSAGES);
               }
             }
             break;
@@ -167,6 +203,7 @@ export function useTwitchChat() {
 
   function clearMessages() {
     messages.value = [];
+    feedItems.value = [];
   }
 
   async function sendMessage(text: string): Promise<boolean> {
@@ -236,6 +273,7 @@ export function useTwitchChat() {
 
   return {
     messages,
+    feedItems,
     status,
     errorMessage,
     sendStatus,

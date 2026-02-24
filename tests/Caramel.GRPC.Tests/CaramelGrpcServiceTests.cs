@@ -1,4 +1,5 @@
 using Caramel.Application.ToDos.Models;
+using Caramel.Core.OBS;
 using Caramel.Core.People;
 using Caramel.Core.ToDos;
 using Caramel.GRPC.Context;
@@ -45,7 +46,8 @@ public sealed class CaramelGrpcServiceTests
       Mock.Of<IFuzzyTimeParser>(),
       TimeProvider.System,
       new SuperAdminConfig(),
-      userContext.Object
+      userContext.Object,
+      Mock.Of<IOBSStatusProvider>()
     );
 
     var request = new GetDailyPlanRequest { Username = "user", PlatformUserId = "1", Platform = Domain.Common.Enums.Platform.Discord };

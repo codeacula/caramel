@@ -1,5 +1,6 @@
 using Caramel.Core.API;
 using Caramel.Core.Conversations;
+using Caramel.Core.OBS;
 using Caramel.Core.ToDos.Responses;
 using Caramel.Domain.People.ValueObjects;
 using Caramel.Domain.ToDos.Models;
@@ -26,7 +27,7 @@ using GrpcToDoDTO = Caramel.GRPC.Contracts.ToDoDTO;
 
 namespace Caramel.GRPC.Client;
 
-public class CaramelGrpcClient : ICaramelGrpcClient, ICaramelServiceClient, IDisposable
+public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
 {
   public ICaramelGrpcService CaramelGrpcService { get; }
   private readonly GrpcChannel _channel;
@@ -220,12 +221,7 @@ public class CaramelGrpcClient : ICaramelGrpcClient, ICaramelServiceClient, IDis
       return Result.Fail<TwitchSetup?>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
     }
 
-    if (grpcResult.Data is null)
-    {
-      return Result.Ok<TwitchSetup?>(null);
-    }
-
-    return Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
+    return grpcResult.Data is null ? Result.Ok<TwitchSetup?>(null) : Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
   }
 
   public async Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default)
@@ -234,19 +230,38 @@ public class CaramelGrpcClient : ICaramelGrpcClient, ICaramelServiceClient, IDis
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = setup.Channels
-        .Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
-        .ToList()
+      Channels = [.. setup.Channels.Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
     };
 
     var grpcResult = await CaramelGrpcService.SaveTwitchSetupAsync(grpcRequest);
 
+    return !grpcResult.IsSuccess || grpcResult.Data is null
+      ? Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
+      : Result.Ok(MapTwitchSetupToDomain(grpcResult.Data));
+  }
+
+  public async Task<Result<OBSStatus>> GetOBSStatusAsync(CancellationToken cancellationToken = default)
+  {
+    var grpcResult = await CaramelGrpcService.GetOBSStatusAsync();
     if (!grpcResult.IsSuccess || grpcResult.Data is null)
     {
-      return Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
+      return Result.Fail<OBSStatus>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
     }
 
-    return Result.Ok(MapTwitchSetupToDomain(grpcResult.Data));
+    return Result.Ok(new OBSStatus
+    {
+      IsConnected = grpcResult.Data.IsConnected,
+      CurrentScene = grpcResult.Data.CurrentScene
+    });
+  }
+
+  public async Task<Result<string>> SetOBSSceneAsync(string sceneName, CancellationToken cancellationToken = default)
+  {
+    var grpcRequest = new Contracts.SetOBSSceneRequest { SceneName = sceneName };
+    var grpcResult = await CaramelGrpcService.SetOBSSceneAsync(grpcRequest);
+    return grpcResult.IsSuccess
+      ? Result.Ok(grpcResult.Data ?? string.Empty)
+      : Result.Fail(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
   }
 
   private static TwitchSetup MapTwitchSetupToDomain(Contracts.TwitchSetupDTO dto)
@@ -256,8 +271,8 @@ public class CaramelGrpcClient : ICaramelGrpcClient, ICaramelServiceClient, IDis
       BotUserId = dto.BotUserId,
       BotLogin = dto.BotLogin,
       Channels = dto.Channels
-        .Select(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
-        .ToList(),
+        .ConvertAll(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
+,
       ConfiguredOn = DateTimeOffset.UtcNow,
       UpdatedOn = DateTimeOffset.UtcNow
     };

@@ -1,6 +1,8 @@
 using Caramel.Core.Twitch;
 using Caramel.Database.Twitch.Events;
+
 using FluentResults;
+
 using Marten;
 
 namespace Caramel.Database.Twitch;
@@ -8,6 +10,7 @@ namespace Caramel.Database.Twitch;
 /// <summary>
 /// Store for persisting and retrieving Twitch setup configuration using Marten event sourcing.
 /// </summary>
+/// <param name="session"></param>
 public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupStore
 {
   /// <inheritdoc/>
@@ -54,7 +57,7 @@ public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupSto
           CreatedOn = now,
         };
 
-        session.Events.StartStream<DbTwitchSetup>(DbTwitchSetup.WellKnownId, createEvent);
+        _ = session.Events.StartStream<DbTwitchSetup>(DbTwitchSetup.WellKnownId, createEvent);
       }
       else
       {
@@ -68,7 +71,7 @@ public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupSto
           CreatedOn = now,
         };
 
-        session.Events.Append(DbTwitchSetup.WellKnownId, updateEvent);
+        _ = session.Events.Append(DbTwitchSetup.WellKnownId, updateEvent);
       }
 
       await session.SaveChangesAsync(cancellationToken);

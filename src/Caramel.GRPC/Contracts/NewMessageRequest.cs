@@ -20,5 +20,8 @@ public sealed record NewMessageRequest : IAuthenticatedRequest
   [DataMember(Order = 4)]
   public required string Content { get; init; }
 
-  public PlatformId ToPlatformId() => new(Username, PlatformUserId, Platform);
+  public PlatformId ToPlatformId()
+  {
+    return new(Username, PlatformUserId, Platform);
+  }
 }

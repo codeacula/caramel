@@ -55,12 +55,15 @@ public class DailyPlanComponent : ComponentContainerProperties
     Components = components;
   }
 
-  private static string LevelToEmoji(Level level) => level switch
+  private static string LevelToEmoji(Level level)
   {
-    Level.Blue => "🔵",
-    Level.Green => "🟢",
-    Level.Yellow => "🟡",
-    Level.Red => "🔴",
-    _ => "⚪"
-  };
+    return level switch
+    {
+      Level.Blue => "🔵",
+      Level.Green => "🟢",
+      Level.Yellow => "🟡",
+      Level.Red => "🔴",
+      _ => "⚪"
+    };
+  }
 }

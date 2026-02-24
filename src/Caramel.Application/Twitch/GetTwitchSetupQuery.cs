@@ -3,8 +3,6 @@ using Caramel.Domain.Twitch;
 
 using FluentResults;
 
-using MediatR;
-
 namespace Caramel.Application.Twitch;
 
 public sealed record GetTwitchSetupQuery : IRequest<Result<TwitchSetup?>>;

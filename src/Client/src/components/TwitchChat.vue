@@ -5,7 +5,7 @@ import { useTwitchSetup } from "../composables/useTwitchSetup";
 import type { TwitchChatMessage } from "../composables/useTwitchChat";
 
 const {
-  messages,
+  feedItems,
   status,
   errorMessage,
   sendStatus,
@@ -130,7 +130,7 @@ function onScroll() {
 }
 
 watch(
-  messages,
+  feedItems,
   () => {
     if (!autoScroll.value) return;
     nextTick(() => {
@@ -149,9 +149,9 @@ function scrollToBottom() {
 </script>
 
 <template>
-  <div class="chat-panel">
+  <aside class="chat-panel">
     <!-- Header -->
-    <div class="chat-header">
+    <header class="chat-header">
       <div class="chat-title">
         <svg class="twitch-icon" viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -173,7 +173,7 @@ function scrollToBottom() {
 
         <button class="btn btn-clear" @click="clearMessages" title="Clear messages">Clear</button>
       </div>
-    </div>
+    </header>
 
     <!-- Setup wizard (shown when not yet configured) -->
     <div v-if="!isSetupConfigured" class="setup-panel">
@@ -218,7 +218,7 @@ function scrollToBottom() {
     <div v-if="isSetupConfigured && errorMessage" class="error-banner" role="alert">⚠ {{ errorMessage }}</div>
 
     <!-- Empty state -->
-    <div v-if="isSetupConfigured && messages.length === 0" class="empty-state">
+    <div v-if="isSetupConfigured && feedItems.length === 0" class="empty-state">
       <p v-if="status === 'connecting'">Connecting to chat feed…</p>
       <p v-else-if="status === 'connected'">
         Waiting for messages. Make sure the bot is authorized and your channel IDs are configured.
@@ -228,28 +228,44 @@ function scrollToBottom() {
 
     <!-- Message feed -->
     <div
-      v-if="isSetupConfigured && messages.length > 0"
+      v-if="isSetupConfigured && feedItems.length > 0"
       ref="feedEl"
       class="chat-feed"
       role="log"
       aria-live="polite"
-      aria-label="Twitch chat messages"
+      aria-label="Twitch chat feed"
       @scroll="onScroll"
     >
-      <div v-for="msg in messages" :key="msg.messageId" class="chat-message">
-        <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
-        <span class="msg-username" :style="usernameStyle(msg)" :title="`#${msg.broadcasterLogin}`">{{
-          msg.chatterDisplayName
-        }}</span>
-        <span class="msg-colon" aria-hidden="true">:</span>
-        <span class="msg-text">{{ msg.messageText }}</span>
-      </div>
+      <template v-for="item in feedItems" :key="item.kind === 'chat' ? item.data.messageId : item.data.redemptionId">
+        <!-- Chat message row -->
+        <div v-if="item.kind === 'chat'" class="chat-message">
+          <span class="msg-time">{{ formatTime(item.data.timestamp) }}</span>
+          <span class="msg-username" :style="usernameStyle(item.data)" :title="`#${item.data.broadcasterLogin}`">{{
+            item.data.chatterDisplayName
+          }}</span>
+          <span class="msg-colon" aria-hidden="true">:</span>
+          <span class="msg-text">{{ item.data.messageText }}</span>
+        </div>
+
+        <!-- Channel point redeem row -->
+        <div v-else-if="item.kind === 'redeem'" class="chat-redeem">
+          <span class="msg-time">{{ formatTime(item.data.redeemedAt) }}</span>
+          <svg class="redeem-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+          </svg>
+          <span class="redeem-username">{{ item.data.redeemerDisplayName }}</span>
+          <span class="redeem-sep" aria-hidden="true">redeemed</span>
+          <span class="redeem-title">{{ item.data.rewardTitle }}</span>
+          <span v-if="item.data.userInput" class="redeem-input">— {{ item.data.userInput }}</span>
+          <span class="redeem-cost">{{ item.data.rewardCost.toLocaleString() }} pts</span>
+        </div>
+      </template>
     </div>
 
     <!-- Scroll-to-bottom button -->
     <Transition name="fade">
       <button
-        v-if="!autoScroll && messages.length > 0"
+        v-if="!autoScroll && feedItems.length > 0"
         class="scroll-btn"
         @click="scrollToBottom"
         aria-label="Scroll to latest messages"
@@ -298,8 +314,8 @@ function scrollToBottom() {
     </div>
 
     <!-- Footer -->
-    <div class="chat-footer">{{ messages.length }} message{{ messages.length !== 1 ? "s" : "" }}</div>
-  </div>
+    <footer class="chat-footer">{{ feedItems.length }} event{{ feedItems.length !== 1 ? "s" : "" }}</footer>
+  </aside>
 </template>
 
 <style scoped>
@@ -307,15 +323,15 @@ function scrollToBottom() {
 .chat-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  background: #0e0e10;
-  color: #efeff1;
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
-  font-size: 14px;
-  border-radius: 8px;
+  block-size: 100%;
+  min-block-size: 0;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid #2a2a2e;
+  border: 1px solid var(--border-color);
   position: relative;
 }
 
@@ -324,10 +340,12 @@ function scrollToBottom() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  background: #18181b;
-  border-bottom: 1px solid #2a2a2e;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: color-mix(in srgb, var(--surface-color) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-block-end: 1px solid var(--border-color);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -335,23 +353,23 @@ function scrollToBottom() {
 .chat-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   font-weight: 600;
-  font-size: 15px;
-  color: #bf94ff;
+  font-size: var(--text-base);
+  color: var(--accent-primary);
 }
 
 .twitch-icon {
-  width: 18px;
-  height: 18px;
-  fill: #bf94ff;
+  inline-size: 18px;
+  block-size: 18px;
+  fill: var(--accent-primary);
   flex-shrink: 0;
 }
 
 .chat-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   flex-wrap: wrap;
 }
 
@@ -359,59 +377,59 @@ function scrollToBottom() {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 12px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
 .status-dot {
-  width: 7px;
-  height: 7px;
+  inline-size: 7px;
+  block-size: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .status-live {
-  background: rgba(0, 200, 80, 0.15);
-  color: #00c850;
-  border: 1px solid rgba(0, 200, 80, 0.3);
+  background: var(--success-bg);
+  color: var(--success-color);
+  border: 1px solid color-mix(in srgb, var(--success-color) 30%, transparent);
 }
 .status-live .status-dot {
-  background: #00c850;
-  box-shadow: 0 0 5px #00c850;
+  background: var(--success-color);
+  box-shadow: 0 0 5px var(--success-color);
   animation: pulse 1.8s ease-in-out infinite;
 }
 
 .status-connecting {
-  background: rgba(255, 180, 0, 0.12);
-  color: #ffb400;
-  border: 1px solid rgba(255, 180, 0, 0.3);
+  background: var(--warning-bg);
+  color: var(--warning-color);
+  border: 1px solid color-mix(in srgb, var(--warning-color) 30%, transparent);
 }
 .status-connecting .status-dot {
-  background: #ffb400;
+  background: var(--warning-color);
   animation: pulse 1s ease-in-out infinite;
 }
 
 .status-disconnected {
-  background: rgba(150, 150, 160, 0.1);
-  color: #909096;
-  border: 1px solid rgba(150, 150, 160, 0.2);
+  background: var(--info-bg);
+  color: var(--info-color);
+  border: 1px solid color-mix(in srgb, var(--info-color) 20%, transparent);
 }
 .status-disconnected .status-dot {
-  background: #909096;
+  background: var(--info-color);
 }
 
 .status-error {
-  background: rgba(255, 80, 80, 0.12);
-  color: #ff5050;
-  border: 1px solid rgba(255, 80, 80, 0.25);
+  background: var(--error-bg);
+  color: var(--error-color);
+  border: 1px solid color-mix(in srgb, var(--error-color) 25%, transparent);
 }
 .status-error .status-dot {
-  background: #ff5050;
+  background: var(--error-color);
 }
 
 @keyframes pulse {
@@ -426,46 +444,44 @@ function scrollToBottom() {
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
-  padding: 4px 12px;
-  border-radius: 5px;
-  font-size: 12px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
   text-decoration: none;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
   white-space: nowrap;
 }
 
 .btn-auth {
-  background: #9147ff;
+  background: var(--accent-secondary);
   color: #fff;
-  border-color: #9147ff;
+  border-color: var(--accent-secondary);
 }
 .btn-auth:hover {
-  background: #a970ff;
-  border-color: #a970ff;
+  background: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
 }
 
 .btn-clear {
   background: transparent;
-  color: #adadb8;
-  border-color: #3a3a40;
+  color: var(--text-secondary);
+  border-color: var(--border-color-hover);
 }
 .btn-clear:hover {
-  background: #2a2a2e;
-  color: #efeff1;
+  background: var(--border-color);
+  color: var(--text-primary);
 }
 
 /* ── Error banners ───────────────────────────────────────────────────────── */
 .error-banner {
-  padding: 8px 14px;
-  background: rgba(255, 80, 80, 0.1);
-  color: #ff8080;
-  border-bottom: 1px solid rgba(255, 80, 80, 0.2);
-  font-size: 13px;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--error-bg);
+  color: var(--error-color);
+  border-block-end: 1px solid color-mix(in srgb, var(--error-color) 25%, transparent);
+  font-size: var(--text-sm);
   flex-shrink: 0;
 }
 
@@ -473,21 +489,21 @@ function scrollToBottom() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 6px 14px;
-  background: rgba(255, 140, 0, 0.1);
-  color: #ffaa40;
-  border-top: 1px solid rgba(255, 140, 0, 0.2);
-  font-size: 12px;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--warning-bg);
+  color: var(--warning-color);
+  border-block-start: 1px solid color-mix(in srgb, var(--warning-color) 20%, transparent);
+  font-size: var(--text-xs);
   flex-shrink: 0;
 }
 
 .send-error-dismiss {
   background: transparent;
   border: none;
-  color: #ffaa40;
+  color: var(--warning-color);
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1;
   padding: 0 2px;
   flex-shrink: 0;
@@ -504,10 +520,10 @@ function scrollToBottom() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 24px;
+  padding: var(--space-xl) var(--space-xl);
   text-align: center;
-  color: #6b6b7d;
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 
@@ -515,43 +531,103 @@ function scrollToBottom() {
 .chat-feed {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0;
-  min-height: 0;
+  padding: var(--space-sm) 0;
+  min-block-size: 0;
   scroll-behavior: smooth;
 }
 
 .chat-feed::-webkit-scrollbar {
-  width: 6px;
+  inline-size: 6px;
 }
 .chat-feed::-webkit-scrollbar-track {
   background: transparent;
 }
 .chat-feed::-webkit-scrollbar-thumb {
-  background: #3a3a40;
-  border-radius: 3px;
+  background: var(--border-color-hover);
+  border-radius: var(--radius-sm);
 }
 .chat-feed::-webkit-scrollbar-thumb:hover {
-  background: #52525e;
+  background: var(--text-muted);
 }
 
 /* ── Message rows ────────────────────────────────────────────────────────── */
 .chat-message {
   display: flex;
   align-items: baseline;
-  padding: 3px 14px;
+  padding: var(--space-xs) var(--space-md);
   line-height: 1.55;
   word-break: break-word;
-  transition: background 0.1s;
+  transition: background var(--transition-fast);
 }
 .chat-message:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+/* ── Redeem rows ─────────────────────────────────────────────────────────── */
+.chat-redeem {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 5px;
+  padding: var(--space-xs) var(--space-md);
+  line-height: 1.55;
+  word-break: break-word;
+  background: color-mix(in srgb, var(--accent-secondary) 8%, transparent);
+  border-inline-start: 2px solid var(--accent-secondary);
+  transition: background var(--transition-fast);
+}
+.chat-redeem:hover {
+  background: color-mix(in srgb, var(--accent-secondary) 14%, transparent);
+}
+
+.redeem-icon {
+  inline-size: 13px;
+  block-size: 13px;
+  fill: var(--accent-secondary);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.redeem-username {
+  font-weight: 700;
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+}
+
+.redeem-sep {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+.redeem-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.redeem-input {
+  color: var(--text-secondary);
+  font-style: italic;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.redeem-cost {
+  margin-inline-start: auto;
+  color: var(--accent-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .msg-time {
-  color: #6b6b7d;
-  font-size: 11px;
+  color: var(--text-muted);
+  font-size: clamp(0.65rem, 0.7vw, 0.75rem);
   flex-shrink: 0;
-  margin-right: 8px;
+  margin-inline-end: 8px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -562,13 +638,13 @@ function scrollToBottom() {
 }
 
 .msg-colon {
-  color: #adadb8;
+  color: var(--text-secondary);
   margin: 0 5px 0 1px;
   flex-shrink: 0;
 }
 
 .msg-text {
-  color: #efeff1;
+  color: var(--text-primary);
   flex: 1;
 }
 
@@ -578,12 +654,12 @@ function scrollToBottom() {
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
-  background: #9147ff;
+  background: var(--accent-secondary);
   color: #fff;
   border: none;
   padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
@@ -593,7 +669,7 @@ function scrollToBottom() {
   z-index: 10;
 }
 .scroll-btn:hover {
-  background: #a970ff;
+  background: var(--accent-primary-hover);
   transform: translateX(-50%) translateY(-1px);
 }
 
@@ -601,10 +677,10 @@ function scrollToBottom() {
 .send-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: #18181b;
-  border-top: 1px solid #2a2a2e;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 10px;
+  background: var(--surface-color);
+  border-block-start: 1px solid var(--border-color);
   flex-shrink: 0;
 }
 
@@ -616,22 +692,22 @@ function scrollToBottom() {
 }
 
 .send-input {
-  width: 100%;
+  inline-size: 100%;
   padding: 7px 44px 7px 12px;
-  border-radius: 6px;
-  border: 1px solid #3a3a40;
-  background: #0e0e10;
-  color: #efeff1;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color-hover);
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast);
 }
 .send-input::placeholder {
-  color: #6b6b7d;
+  color: var(--text-muted);
 }
 .send-input:focus {
-  border-color: #9147ff;
+  border-color: var(--accent-secondary);
 }
 .send-input:disabled {
   opacity: 0.4;
@@ -641,30 +717,30 @@ function scrollToBottom() {
 .char-count {
   position: absolute;
   right: 10px;
-  font-size: 11px;
+  font-size: clamp(0.65rem, 0.7vw, 0.75rem);
   font-variant-numeric: tabular-nums;
-  color: #6b6b7d;
+  color: var(--text-muted);
   pointer-events: none;
   user-select: none;
   transition: color 0.15s;
 }
 .char-warn {
-  color: #ffb400;
+  color: var(--warning-color);
 }
 .char-over {
-  color: #ff5050;
+  color: var(--error-color);
 }
 
 .send-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  inline-size: 36px;
+  block-size: 36px;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #9147ff;
+  background: var(--accent-secondary);
   color: #fff;
   cursor: pointer;
   transition:
@@ -673,7 +749,7 @@ function scrollToBottom() {
     transform 0.1s;
 }
 .send-btn:hover:not(:disabled) {
-  background: #a970ff;
+  background: var(--accent-primary-hover);
   transform: scale(1.05);
 }
 .send-btn:disabled {
@@ -683,16 +759,16 @@ function scrollToBottom() {
 }
 
 .send-icon {
-  width: 18px;
-  height: 18px;
+  inline-size: 18px;
+  block-size: 18px;
   fill: currentColor;
 }
 
 /* Spinner for the sending state */
 .send-spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  inline-size: 16px;
+  block-size: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: #fff;
   border-radius: 50%;
@@ -708,10 +784,10 @@ function scrollToBottom() {
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .chat-footer {
   padding: 4px 14px;
-  font-size: 11px;
-  color: #6b6b7d;
-  background: #18181b;
-  border-top: 1px solid #2a2a2e;
+  font-size: clamp(0.65rem, 0.7vw, 0.75rem);
+  color: var(--text-muted);
+  background: var(--surface-color);
+  border-block-start: 1px solid var(--border-color);
   flex-shrink: 0;
   text-align: right;
 }
@@ -723,56 +799,56 @@ function scrollToBottom() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px 24px;
-  gap: 12px;
+  padding: var(--space-xl) var(--space-xl);
+  gap: var(--space-md);
 }
 
 .setup-title {
   font-size: 16px;
   font-weight: 700;
-  color: #efeff1;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .setup-desc {
-  font-size: 13px;
-  color: #6b6b7d;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
   text-align: center;
   margin: 0;
-  max-width: 360px;
+  max-inline-size: 360px;
   line-height: 1.5;
 }
 
 .setup-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  max-width: 360px;
+  gap: var(--space-sm);
+  inline-size: 100%;
+  max-inline-size: 360px;
 }
 
 .setup-label {
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: 600;
-  color: #adadb8;
+  color: var(--text-secondary);
 }
 
 .setup-input {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #3a3a40;
-  background: #0e0e10;
-  color: #efeff1;
-  font-size: 13px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color-hover);
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color var(--transition-fast);
 }
 .setup-input::placeholder {
-  color: #6b6b7d;
+  color: var(--text-muted);
 }
 .setup-input:focus {
-  border-color: #9147ff;
+  border-color: var(--accent-secondary);
 }
 .setup-input:disabled {
   opacity: 0.4;
@@ -780,9 +856,9 @@ function scrollToBottom() {
 }
 
 .setup-submit {
-  margin-top: 4px;
-  padding: 8px 16px;
-  font-size: 13px;
+  margin-block-start: 4px;
+  padding: var(--space-sm) 16px;
+  font-size: var(--text-sm);
   align-self: flex-end;
 }
 .setup-submit:disabled {
@@ -793,7 +869,7 @@ function scrollToBottom() {
 /* ── Transitions ─────────────────────────────────────────────────────────── */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-normal);
 }
 .fade-enter-from,
 .fade-leave-to {

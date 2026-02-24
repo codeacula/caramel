@@ -1,7 +1,6 @@
 using System.Text;
 
 using Caramel.Twitch.Auth;
-using Caramel.Twitch.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,6 +21,8 @@ public sealed class ChatController(
   /// Sends a message to the first configured Twitch channel via the Helix chat API.
   /// Returns 503 if setup has not been completed yet.
   /// </summary>
+  /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   [HttpPost("send")]
   public async Task<IActionResult> SendAsync([FromBody] SendChatMessageRequest request, CancellationToken cancellationToken)
   {
@@ -89,6 +90,7 @@ public sealed class ChatController(
 /// <summary>
 /// Request body for <see cref="ChatController.SendAsync"/>.
 /// </summary>
+/// <param name="Message"></param>
 public sealed record SendChatMessageRequest(string Message);
 
 /// <summary>

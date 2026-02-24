@@ -29,15 +29,21 @@ public sealed record AIRequestResult
     return !HasToolCalls ? "None" : string.Join("\n", ToolCalls.Select(tc => $"- {tc.ToSummary()}"));
   }
 
-  public static AIRequestResult Failure(string errorMessage) => new()
+  public static AIRequestResult Failure(string errorMessage)
   {
-    Success = false,
-    ErrorMessage = errorMessage
-  };
+    return new()
+    {
+      Success = false,
+      ErrorMessage = errorMessage
+    };
+  }
 
-  public static AIRequestResult SuccessWithContent(string content) => new()
+  public static AIRequestResult SuccessWithContent(string content)
   {
-    Success = true,
-    Content = content
-  };
+    return new()
+    {
+      Success = true,
+      Content = content
+    };
+  }
 }

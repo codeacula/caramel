@@ -1,8 +1,3 @@
-using System.Text.Json;
-
-using Microsoft.Extensions.Http;
-using Microsoft.Extensions.Logging;
-
 namespace Caramel.Twitch.Auth;
 
 /// <summary>
@@ -14,11 +9,11 @@ public sealed class TwitchTokenManager
   private readonly TwitchConfig _config;
   private readonly IHttpClientFactory _httpClientFactory;
   private readonly ILogger<TwitchTokenManager> _logger;
-  private readonly object _lock = new();
+  private readonly Lock _lock = new();
   private string _accessToken;
   private string? _refreshToken;
   private DateTime _expiresAt = DateTime.MinValue;
-  private const int RefreshThresholdSeconds = 300; // Refresh if expires within 5 minutes
+  private const int RefreshThresholdSeconds = 300;
 
   public TwitchTokenManager(TwitchConfig config, IHttpClientFactory httpClientFactory, ILogger<TwitchTokenManager> logger)
   {
@@ -36,9 +31,6 @@ public sealed class TwitchTokenManager
       : DateTime.MinValue;
   }
 
-  /// <summary>
-  /// Gets a valid access token, refreshing if necessary.
-  /// </summary>
   public async Task<string> GetValidAccessTokenAsync(CancellationToken cancellationToken = default)
   {
     lock (_lock)
@@ -62,10 +54,6 @@ public sealed class TwitchTokenManager
     }
   }
 
-  /// <summary>
-  /// Updates the tokens after a successful OAuth exchange (authorization code flow or refresh).
-  /// Sets expiry time based on Twitch's typical 1-hour expiration.
-  /// </summary>
   public void SetTokens(string accessToken, string? refreshToken = null, int expiresInSeconds = 3600)
   {
     lock (_lock)
@@ -82,22 +70,18 @@ public sealed class TwitchTokenManager
     TwitchTokenManagerLogs.TokensUpdated(_logger, expiresInSeconds);
   }
 
-  /// <summary>
-  /// Refreshes the access token using the refresh token.
-  /// Throws if refresh fails (invalid refresh token, network error, etc).
-  /// </summary>
   private async Task RefreshAccessTokenAsync(CancellationToken cancellationToken)
   {
     TwitchTokenManagerLogs.RefreshingToken(_logger);
 
     using var httpClient = _httpClientFactory.CreateClient("TwitchHelix");
-    var requestBody = new FormUrlEncodedContent(new[]
-    {
+    var requestBody = new FormUrlEncodedContent(
+    [
       new KeyValuePair<string, string>("client_id", _config.ClientId),
       new KeyValuePair<string, string>("client_secret", _config.ClientSecret),
       new KeyValuePair<string, string>("grant_type", "refresh_token"),
       new KeyValuePair<string, string>("refresh_token", _refreshToken ?? string.Empty),
-    });
+    ]);
 
     var response = await httpClient.PostAsync(
       "https://id.twitch.tv/oauth2/token",
@@ -125,9 +109,6 @@ public sealed class TwitchTokenManager
     SetTokens(accessToken, refreshToken, expiresIn);
   }
 
-  /// <summary>
-  /// Returns the current access token without validation (for read-only checks).
-  /// </summary>
   public string GetCurrentAccessToken()
   {
     lock (_lock)
@@ -136,9 +117,6 @@ public sealed class TwitchTokenManager
     }
   }
 
-  /// <summary>
-  /// Returns true if a refresh token exists and tokens can be refreshed.
-  /// </summary>
   public bool CanRefresh()
   {
     lock (_lock)
@@ -148,9 +126,6 @@ public sealed class TwitchTokenManager
   }
 }
 
-/// <summary>
-/// Structured logging for <see cref="TwitchTokenManager"/>.
-/// </summary>
 internal static partial class TwitchTokenManagerLogs
 {
   [LoggerMessage(Level = LogLevel.Information, Message = "Refreshing Twitch OAuth access token")]

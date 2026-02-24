@@ -1,13 +1,13 @@
+using System.Globalization;
+
 using Caramel.Application.Reminders;
 using Caramel.Application.ToDos;
-using Caramel.Core;
 using Caramel.Core.People;
 using Caramel.Core.ToDos;
 using Caramel.Domain.Common.Enums;
 using Caramel.Domain.People.Models;
 using Caramel.Domain.People.ValueObjects;
 using Caramel.Domain.ToDos.Models;
-using Caramel.Domain.ToDos.ValueObjects;
 
 using FluentAssertions;
 
@@ -52,7 +52,7 @@ public class RemindersPluginTests
     PersonTimeZoneId? tzId = null;
     if (timeZoneId is not null)
     {
-      PersonTimeZoneId.TryParse(timeZoneId, out var tz, out _);
+      _ = PersonTimeZoneId.TryParse(timeZoneId, out var tz, out _);
       tzId = tz;
     }
 
@@ -69,242 +69,241 @@ public class RemindersPluginTests
     };
   }
 
-  #endregion
+  #endregion Helper Methods
 
   #region Create Reminder Tests
 
   [Fact]
-  public async Task CreateReminderAsyncWithFuzzyTimeSucceeds()
+  public async Task CreateReminderAsyncWithFuzzyTimeSucceedsAsync()
   {
     // Arrange
     SetUp();
-    var reminderMessage = "Take a break";
-    var reminderTime = "in 10 minutes";
+    const string reminderMessage = "Take a break";
+    const string reminderTime = "in 10 minutes";
     var now = DateTime.UtcNow;
     var expectedTime = now.AddMinutes(10);
     var command = new CreateReminderCommand(_personId, reminderMessage, expectedTime);
     var reminder = new Reminder { Id = new(Guid.NewGuid()), PersonId = _personId, Details = new(reminderMessage) };
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(now));
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(now));
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
       .Returns(Result.Ok(expectedTime));
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(reminder));
 
     // Act
     var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
 
     // Assert
-    result.Should().Contain("Successfully created reminder");
-    result.Should().Contain(reminderMessage);
+    _ = result.Should().Contain("Successfully created reminder");
+    _ = result.Should().Contain(reminderMessage);
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CreateReminderAsyncWithIsoFormatSucceeds()
+  public async Task CreateReminderAsyncWithIsoFormatSucceedsAsync()
   {
     // Arrange
     SetUp();
-    var reminderMessage = "Remind me";
-    var reminderTime = "2025-12-31T10:00:00";
+    const string reminderMessage = "Remind me";
+    const string reminderTime = "2025-12-31T10:00:00";
     var person = CreateValidPerson(_personId.Value);
     var command = new CreateReminderCommand(_personId, reminderMessage, It.IsAny<DateTime>());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(It.IsAny<string>(), It.IsAny<DateTime>()))
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(It.IsAny<string>(), It.IsAny<DateTime>()))
       .Returns(Result.Fail<DateTime>("Not fuzzy"));
-    _personStoreMock.Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
+    _ = _personStoreMock.Setup(ps => ps.GetAsync(_personId, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new Reminder { Id = new(Guid.NewGuid()), PersonId = _personId, Details = new(reminderMessage) }));
 
     // Act
     var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
 
     // Assert
-    result.Should().Contain("Successfully created reminder");
+    _ = result.Should().Contain("Successfully created reminder");
   }
 
   [Fact]
-  public async Task CreateReminderAsyncWithEmptyMessageFailsGracefully()
+  public async Task CreateReminderAsyncWithEmptyMessageFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
-    var reminderMessage = "";
-    var reminderTime = "in 10 minutes";
+    const string reminderMessage = "";
+    const string reminderTime = "in 10 minutes";
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
 
     // Act
     var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
 
     // Assert
-    result.Should().Contain("Error");
+    _ = result.Should().Contain("Error");
   }
 
   [Fact]
-  public async Task CreateReminderAsyncWithNullTimeFailsGracefully()
+  public async Task CreateReminderAsyncWithNullTimeFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
-    var reminderMessage = "Take a break";
-    string? reminderTime = null;
+    const string reminderMessage = "Take a break";
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(It.IsAny<string>(), It.IsAny<DateTime>()))
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(It.IsAny<string>(), It.IsAny<DateTime>()))
       .Returns(Result.Fail<DateTime>("Required"));
 
     // Act
-    var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime ?? "");
+    var result = await _sut.CreateReminderAsync(reminderMessage, "");
 
     // Assert
-    result.Should().Contain("Failed to create reminder");
+    _ = result.Should().Contain("Failed to create reminder");
   }
 
   [Fact]
-  public async Task CreateReminderAsyncWithInvalidTimeFormatFailsGracefully()
+  public async Task CreateReminderAsyncWithInvalidTimeFormatFailsGracefullyAsync()
   {
     // Arrange
     SetUp();
-    var reminderMessage = "Take a break";
-    var reminderTime = "invalid time format that cannot be parsed";
+    const string reminderMessage = "Take a break";
+    const string reminderTime = "invalid time format that cannot be parsed";
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
       .Returns(Result.Fail<DateTime>("Not valid fuzzy"));
 
     // Act
     var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
 
     // Assert
-    result.Should().Contain("Failed to create reminder");
+    _ = result.Should().Contain("Failed to create reminder");
   }
 
   [Fact]
-  public async Task CreateReminderAsyncWithMediatorFailureReturnsFail()
+  public async Task CreateReminderAsyncWithMediatorFailureReturnsFailAsync()
   {
     // Arrange
     SetUp();
-    var reminderMessage = "Take a break";
-    var reminderTime = "in 10 minutes";
+    const string reminderMessage = "Take a break";
+    const string reminderTime = "in 10 minutes";
     var now = DateTime.UtcNow;
     var expectedTime = now.AddMinutes(10);
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(now));
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(now));
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
       .Returns(Result.Ok(expectedTime));
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail<Reminder>("Database error"));
 
     // Act
     var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
 
     // Assert
-    result.Should().Contain("Failed to create reminder");
-    result.Should().Contain("Database error");
+    _ = result.Should().Contain("Failed to create reminder");
+    _ = result.Should().Contain("Database error");
   }
 
-   [Fact]
-   public async Task CreateReminderAsyncWithExceptionReturnsErrorMessage()
-   {
-     // Arrange
-     SetUp();
-     var reminderMessage = "Take a break";
-     var reminderTime = "in 10 minutes";
+  [Fact]
+  public async Task CreateReminderAsyncWithExceptionReturnsErrorMessageAsync()
+  {
+    // Arrange
+    SetUp();
+    const string reminderMessage = "Take a break";
+    const string reminderTime = "in 10 minutes";
 
-     _timeProviderMock.Setup(tp => tp.GetUtcNow()).Throws(new InvalidOperationException("System error"));
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Throws(new InvalidOperationException("System error"));
 
-     // Act
-     var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
+    // Act
+    var result = await _sut.CreateReminderAsync(reminderMessage, reminderTime);
 
-     // Assert
-     result.Should().Contain("Error creating reminder");
-   }
+    // Assert
+    _ = result.Should().Contain("Error creating reminder");
+  }
 
-  #endregion
+  #endregion Create Reminder Tests
 
   #region Cancel Reminder Tests
 
   [Fact]
-  public async Task CancelReminderAsyncWithValidIdSucceeds()
+  public async Task CancelReminderAsyncWithValidIdSucceedsAsync()
   {
     // Arrange
     SetUp();
     var reminderId = Guid.NewGuid().ToString();
 
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
 
     // Act
     var result = await _sut.CancelReminderAsync(reminderId);
 
     // Assert
-    result.Should().Contain("Successfully canceled");
+    _ = result.Should().Contain("Successfully canceled");
     _mediatorMock.Verify(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task CancelReminderAsyncWithInvalidIdFormatFails()
+  public async Task CancelReminderAsyncWithInvalidIdFormatFailsAsync()
   {
     // Arrange
     SetUp();
-    var reminderId = "not-a-guid";
+    const string reminderId = "not-a-guid";
 
     // Act
     var result = await _sut.CancelReminderAsync(reminderId);
 
     // Assert
-    result.Should().Contain("Failed to cancel reminder");
-    result.Should().Contain("Invalid reminder ID format");
+    _ = result.Should().Contain("Failed to cancel reminder");
+    _ = result.Should().Contain("Invalid reminder ID format");
   }
 
   [Fact]
-  public async Task CancelReminderAsyncWithMediatorFailureReturnsFail()
+  public async Task CancelReminderAsyncWithMediatorFailureReturnsFailAsync()
   {
     // Arrange
     SetUp();
     var reminderId = Guid.NewGuid().ToString();
 
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Reminder not found"));
 
     // Act
     var result = await _sut.CancelReminderAsync(reminderId);
 
     // Assert
-    result.Should().Contain("Failed to cancel reminder");
-    result.Should().Contain("Reminder not found");
+    _ = result.Should().Contain("Failed to cancel reminder");
+    _ = result.Should().Contain("Reminder not found");
   }
 
   [Fact]
-  public async Task CancelReminderAsyncWithExceptionReturnsErrorMessage()
+  public async Task CancelReminderAsyncWithExceptionReturnsErrorMessageAsync()
   {
     // Arrange
     SetUp();
     var reminderId = Guid.NewGuid().ToString();
 
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CancelReminderCommand>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("System error"));
 
     // Act
     var result = await _sut.CancelReminderAsync(reminderId);
 
     // Assert
-    result.Should().Contain("Error canceling reminder");
+    _ = result.Should().Contain("Error canceling reminder");
   }
 
-  #endregion
+  #endregion Cancel Reminder Tests
 
   #region Time Zone Tests
 
   [Fact]
-  public async Task CreateReminderAsyncWithCustomTimeZoneConvertsCorrectly()
+  public async Task CreateReminderAsyncWithCustomTimeZoneConvertsCorrectlyAsync()
   {
     // Arrange
     SetUp();
     var personId = Guid.NewGuid();
-    var reminderMessage = "Check the oven";
-    var reminderTime = "2025-12-31T10:00:00"; // Unspecified kind
+    const string reminderMessage = "Check the oven";
+    const string reminderTime = "2025-12-31T10:00:00"; // Unspecified kind
     var person = CreateValidPerson(personId, "America/New_York");
 
     // Need to reinitialize with the new personId for proper timezone lookup
@@ -317,27 +316,27 @@ public class RemindersPluginTests
       new(personId)
     );
 
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(reminderTime, It.IsAny<DateTime>()))
       .Returns(Result.Fail<DateTime>("Not fuzzy"));
-    _personStoreMock.Setup(ps => ps.GetAsync(new(personId), It.IsAny<CancellationToken>()))
+    _ = _personStoreMock.Setup(ps => ps.GetAsync(new(personId), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new Reminder { Id = new(Guid.NewGuid()), PersonId = new(personId), Details = new(reminderMessage) }));
 
     // Act
     var result = await sut.CreateReminderAsync(reminderMessage, reminderTime);
 
     // Assert
-    result.Should().Contain("Successfully created reminder");
+    _ = result.Should().Contain("Successfully created reminder");
     _personStoreMock.Verify(ps => ps.GetAsync(new(personId), It.IsAny<CancellationToken>()), Times.Once);
   }
 
-  #endregion
+  #endregion Time Zone Tests
 
   #region Multiple Reminders Tests
 
   [Fact]
-  public async Task CreateMultipleRemindersInSequenceSucceeds()
+  public async Task CreateMultipleRemindersInSequenceSucceedsAsync()
   {
     // Arrange
     SetUp();
@@ -349,10 +348,14 @@ public class RemindersPluginTests
     };
 
     var now = DateTime.UtcNow;
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(now));
-    _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(It.IsAny<string>(), It.IsAny<DateTime>()))
-      .Returns<string, DateTime>((time, _) => Result.Ok(now.AddMinutes(int.Parse(time.Split()[1]))));
-    _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(now));
+    _ = _fuzzyTimeParserMock.Setup(fp => fp.TryParseFuzzyTime(It.IsAny<string>(), It.IsAny<DateTime>()))
+      .Returns<string, DateTime>((time, _) =>
+      {
+        var minutes = int.Parse(time.Split()[1], CultureInfo.InvariantCulture);
+        return Result.Ok(now.AddMinutes(minutes));
+      });
+    _ = _mediatorMock.Setup(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new Reminder { Id = new(Guid.NewGuid()), PersonId = _personId, Details = new("") }));
 
     // Act
@@ -363,9 +366,9 @@ public class RemindersPluginTests
     }
 
     // Assert
-    results.Should().AllSatisfy(r => r.Should().Contain("Successfully created reminder"));
+    _ = results.Should().AllSatisfy(r => r.Should().Contain("Successfully created reminder"));
     _mediatorMock.Verify(m => m.Send(It.IsAny<CreateReminderCommand>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
   }
 
-  #endregion
+  #endregion Multiple Reminders Tests
 }

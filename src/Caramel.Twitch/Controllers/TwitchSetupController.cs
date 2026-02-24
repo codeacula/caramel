@@ -1,6 +1,4 @@
-using Caramel.Core.API;
 using Caramel.Domain.Twitch;
-using Caramel.Twitch.Services;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,11 +7,16 @@ namespace Caramel.Twitch.Controllers;
 /// <summary>
 /// Request body for <see cref="TwitchSetupController.SaveSetupAsync"/>.
 /// </summary>
+/// <param name="BotLogin"></param>
+/// <param name="ChannelLogins"></param>
 public sealed record SaveTwitchSetupRequest(string BotLogin, IReadOnlyList<string> ChannelLogins);
 
 /// <summary>
-/// Response body for <see cref="TwitchSetupController.GetSetupAsync"/>.
+/// Response body for <see cref="TwitchSetupController.GetSetup"/>.
 /// </summary>
+/// <param name="IsConfigured"></param>
+/// <param name="BotLogin"></param>
+/// <param name="ChannelLogins"></param>
 public sealed record TwitchSetupStatusResponse(bool IsConfigured, string? BotLogin, IReadOnlyList<string>? ChannelLogins);
 
 [ApiController]
@@ -29,7 +32,7 @@ public sealed class TwitchSetupController(
   /// Returns whether Twitch bot + channel setup is configured.
   /// </summary>
   [HttpGet]
-  public IActionResult GetSetupAsync()
+  public IActionResult GetSetup()
   {
     var current = setupState.Current;
 
@@ -46,6 +49,8 @@ public sealed class TwitchSetupController(
   /// Resolves the provided login names to Twitch user IDs via Helix, persists
   /// the configuration via gRPC, and pushes a setup_status WebSocket notification.
   /// </summary>
+  /// <param name="request"></param>
+  /// <param name="cancellationToken"></param>
   [HttpPost]
   public async Task<IActionResult> SaveSetupAsync(
     [FromBody] SaveTwitchSetupRequest request,
@@ -70,8 +75,8 @@ public sealed class TwitchSetupController(
 
       await Task.WhenAll(botUserIdTask, channelIdsTask);
 
-      var botUserId = botUserIdTask.Result;
-      var channelIds = channelIdsTask.Result;
+      var botUserId = await botUserIdTask;
+      var channelIds = await channelIdsTask;
 
       if (channelIds.Count != channelLoginsList.Count)
       {
@@ -106,7 +111,7 @@ public sealed class TwitchSetupController(
 
       TwitchSetupControllerLogs.SetupSaved(logger, request.BotLogin, channels.Count);
       return Ok(new TwitchSetupStatusResponse(true, saveResult.Value.BotLogin,
-        saveResult.Value.Channels.Select(c => c.Login).ToList()));
+        [.. saveResult.Value.Channels.Select(c => c.Login)]));
     }
     catch (InvalidOperationException ex)
     {

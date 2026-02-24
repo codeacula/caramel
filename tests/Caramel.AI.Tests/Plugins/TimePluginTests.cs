@@ -31,6 +31,9 @@ public class TimePluginTests
   {
     private readonly DateTimeOffset _fixedTime = fixedTime;
 
-    public override DateTimeOffset GetUtcNow() => _fixedTime;
+    public override DateTimeOffset GetUtcNow()
+    {
+      return _fixedTime;
+    }
   }
 }

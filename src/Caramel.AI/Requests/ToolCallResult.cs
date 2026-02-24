@@ -11,7 +11,10 @@ public sealed record ToolCallResult
 
   public string FullFunctionName => $"{PluginName}.{FunctionName}";
 
-  public string ToSummary() => Success
+  public string ToSummary()
+  {
+    return Success
     ? $"{FullFunctionName}: {Result}"
     : $"{FullFunctionName}: Failed - {ErrorMessage}";
+  }
 }

@@ -5,6 +5,9 @@ namespace Caramel.Twitch.Handlers;
 /// <summary>
 /// Handles incoming whispers (direct messages) from Twitch EventSub user.whisper.message events.
 /// </summary>
+/// <param name="caramelServiceClient"></param>
+/// <param name="personCache"></param>
+/// <param name="logger"></param>
 public sealed class WhisperEventHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
@@ -13,6 +16,10 @@ public sealed class WhisperEventHandler(
   /// <summary>
   /// Processes an incoming whisper from a Twitch user.
   /// </summary>
+  /// <param name="fromUserId"></param>
+  /// <param name="fromUserLogin"></param>
+  /// <param name="messageText"></param>
+  /// <param name="cancellationToken"></param>
   public async Task HandleAsync(
     string fromUserId,
     string fromUserLogin,
@@ -27,7 +34,7 @@ public sealed class WhisperEventHandler(
       var accessResult = await personCache.GetAccessAsync(platformId);
       if (accessResult.IsFailed)
       {
-        CaramelTwitchWhisperLogs.AccessCheckFailed(logger, fromUserLogin, accessResult.Errors.First().Message);
+        CaramelTwitchWhisperLogs.AccessCheckFailed(logger, fromUserLogin, accessResult.Errors[0].Message);
         return;
       }
 
@@ -53,7 +60,7 @@ public sealed class WhisperEventHandler(
       }
       else
       {
-        CaramelTwitchWhisperLogs.WhisperProcessingFailed(logger, fromUserLogin, result.Errors.First().Message);
+        CaramelTwitchWhisperLogs.WhisperProcessingFailed(logger, fromUserLogin, result.Errors[0].Message);
       }
     }
     catch (Exception ex)

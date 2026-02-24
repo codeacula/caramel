@@ -72,7 +72,7 @@ public class UserResolutionInterceptorTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -92,7 +92,7 @@ public class UserResolutionInterceptorTests
     // Arrange
     const string request = "NotAuthenticated"; // Just a string, doesn't implement IAuthenticatedRequest
     var context = new TestServerCallContext(_httpContext);
-    static Task<string> continuationAsync(string req, ServerCallContext ctx)
+    static Task<string> continuationAsync(string _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -139,7 +139,7 @@ public class UserResolutionInterceptorTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -174,7 +174,7 @@ public class UserResolutionInterceptorTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -217,7 +217,7 @@ public class UserResolutionInterceptorTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -266,7 +266,7 @@ public class UserResolutionInterceptorTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -287,7 +287,7 @@ public class TestServerCallContext : ServerCallContext
   private readonly CancellationToken _cancellationToken;
   private readonly Metadata _responseTrailers;
   private Status _status;
-  private WriteOptions _writeOptions;
+  private WriteOptions? _writeOptions;
   private readonly AuthContext _authContext;
   private readonly IDictionary<object, object> _userState;
 
@@ -316,10 +316,25 @@ public class TestServerCallContext : ServerCallContext
   protected override CancellationToken CancellationTokenCore => _cancellationToken;
   protected override Metadata ResponseTrailersCore => _responseTrailers;
   protected override Status StatusCore { get => _status; set => _status = value; }
-  protected override WriteOptions WriteOptionsCore { get => _writeOptions; set => _writeOptions = value; }
+  protected override WriteOptions? WriteOptionsCore
+  {
+    get => _writeOptions;
+    set => _writeOptions = value;
+  }
   protected override AuthContext AuthContextCore => _authContext;
 
-  protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions options) => null;
-  protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => Task.CompletedTask;
+#pragma warning disable CS8764
+  protected override ContextPropagationToken? CreatePropagationTokenCore(ContextPropagationOptions options)
+  {
+    return null;
+  }
+#pragma warning restore CS8764
+
+  protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders)
+  {
+    return Task.CompletedTask;
+  }
+
   protected override IDictionary<object, object> UserStateCore => _userState;
+
 }

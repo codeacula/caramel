@@ -7,25 +7,37 @@ namespace Caramel.Discord.Modules;
 public class ToDoPriorityInteractionModule : ComponentInteractionModule<StringMenuInteractionContext>
 {
   [ComponentInteraction(ToDoQuickCreateComponent.PrioritySelectCustomId)]
-  public string HandlePriority() => $"Priority noted: {string.Join(", ", Context.SelectedValues)} (updates coming soon).";
+  public string HandlePriority()
+  {
+    return $"Priority noted: {string.Join(", ", Context.SelectedValues)} (updates coming soon).";
+  }
 }
 
 public class ToDoEnergyInteractionModule : ComponentInteractionModule<StringMenuInteractionContext>
 {
   [ComponentInteraction(ToDoQuickCreateComponent.EnergySelectCustomId)]
-  public string HandleEnergy() => $"Energy level noted: {string.Join(", ", Context.SelectedValues)} (updates coming soon).";
+  public string HandleEnergy()
+  {
+    return $"Energy level noted: {string.Join(", ", Context.SelectedValues)} (updates coming soon).";
+  }
 }
 
 public class ToDoInterestInteractionModule : ComponentInteractionModule<StringMenuInteractionContext>
 {
   [ComponentInteraction(ToDoQuickCreateComponent.InterestSelectCustomId)]
-  public string HandleInterest() => $"Interest noted: {string.Join(", ", Context.SelectedValues)} (updates coming soon).";
+  public string HandleInterest()
+  {
+    return $"Interest noted: {string.Join(", ", Context.SelectedValues)} (updates coming soon).";
+  }
 }
 
 public class ToDoReminderInteractionModule : ComponentInteractionModule<ButtonInteractionContext>
 {
   [ComponentInteraction(ToDoQuickCreateComponent.ReminderButtonCustomId)]
-  public string HandleReminderButton() => "Reminder editing is coming soon. For now, reply with a time and I'll log it!";
+  public string HandleReminderButton()
+  {
+    return "Reminder editing is coming soon. For now, reply with a time and I'll log it!";
+  }
 }
 
 public class ToDoEditInteractionModule : ComponentInteractionModule<ButtonInteractionContext>

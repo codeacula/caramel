@@ -106,7 +106,7 @@ public class UserResolutionInterceptorFirstMessageBugTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -156,7 +156,7 @@ public class UserResolutionInterceptorFirstMessageBugTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -216,7 +216,7 @@ public class UserResolutionInterceptorFirstMessageBugTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -274,7 +274,7 @@ public class UserResolutionInterceptorFirstMessageBugTests
 
     var context = new TestServerCallContext(_httpContext);
 
-    static Task<string> continuationAsync(NewMessageRequest req, ServerCallContext ctx)
+    static Task<string> continuationAsync(NewMessageRequest _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }

@@ -1,9 +1,7 @@
-using Caramel.Core.Logging;
 using Caramel.Core.Notifications;
 using Caramel.Core.People;
 using Caramel.Core.ToDos;
 using Caramel.Domain.Common.Enums;
-using Caramel.Domain.Common.ValueObjects;
 using Caramel.Domain.People.Models;
 using Caramel.Domain.People.ValueObjects;
 using Caramel.Domain.ToDos.Models;
@@ -49,7 +47,7 @@ public class ToDoReminderJobTests
 
   #region Helper Methods
 
-  private Reminder CreateValidReminder(PersonId? personId = null, Guid? reminderId = null)
+  private static Reminder CreateValidReminder(PersonId? personId = null, Guid? reminderId = null)
   {
     return new()
     {
@@ -64,7 +62,7 @@ public class ToDoReminderJobTests
     };
   }
 
-  private Person CreateValidPerson(Guid? personId = null)
+  private static Person CreateValidPerson(Guid? personId = null)
   {
     return new()
     {
@@ -82,22 +80,22 @@ public class ToDoReminderJobTests
   {
     var jobKey = new JobKey(jobId);
     var jobDetail = new Mock<IJobDetail>();
-    jobDetail.Setup(j => j.Key).Returns(jobKey);
+    _ = jobDetail.Setup(j => j.Key).Returns(jobKey);
 
     var contextMock = new Mock<IJobExecutionContext>();
-    contextMock.Setup(c => c.JobDetail).Returns(jobDetail.Object);
-    contextMock.Setup(c => c.Scheduler).Returns(_schedulerMock.Object);
-    contextMock.Setup(c => c.CancellationToken).Returns(CancellationToken.None);
+    _ = contextMock.Setup(c => c.JobDetail).Returns(jobDetail.Object);
+    _ = contextMock.Setup(c => c.Scheduler).Returns(_schedulerMock.Object);
+    _ = contextMock.Setup(c => c.CancellationToken).Returns(CancellationToken.None);
 
     return contextMock.Object;
   }
 
-  #endregion
+  #endregion Helper Methods
 
   #region Success Path Tests
 
   [Fact]
-  public async Task ExecuteWithValidReminderSendsNotification()
+  public async Task ExecuteWithValidReminderSendsNotificationAsync()
   {
     // Arrange
     SetUp();
@@ -107,23 +105,23 @@ public class ToDoReminderJobTests
     var person = CreateValidPerson(personId);
     var context = CreateJobContext(reminderId.ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder> { reminder }.AsEnumerable()));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(new(personId), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
-    _messageGeneratorMock
+    _ = _messageGeneratorMock
       .Setup(mg => mg.GenerateReminderMessageAsync(person, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok("Generated reminder message"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _reminderStoreMock
+    _ = _reminderStoreMock
       .Setup(rs => rs.MarkAsSentAsync(reminder.Id, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -137,7 +135,7 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteWithMultipleRemindersGroupsByPerson()
+  public async Task ExecuteWithMultipleRemindersGroupsByPersonAsync()
   {
     // Arrange
     SetUp();
@@ -149,23 +147,23 @@ public class ToDoReminderJobTests
     var person = CreateValidPerson(personId);
     var context = CreateJobContext(reminderId1.ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder> { reminder1, reminder2 }.AsEnumerable()));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(It.IsAny<PersonId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
-    _messageGeneratorMock
+    _ = _messageGeneratorMock
       .Setup(mg => mg.GenerateReminderMessageAsync(person, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok("Generated reminder message"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _reminderStoreMock
+    _ = _reminderStoreMock
       .Setup(rs => rs.MarkAsSentAsync(It.IsAny<ReminderId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -180,17 +178,17 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteWithEmptyReminderListCompletes()
+  public async Task ExecuteWithEmptyReminderListCompletesAsync()
   {
     // Arrange
     SetUp();
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder>().AsEnumerable()));
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -201,12 +199,12 @@ public class ToDoReminderJobTests
     _schedulerMock.Verify(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
-  #endregion
+  #endregion Success Path Tests
 
   #region Failure Handling Tests
 
   [Fact]
-  public async Task ExecuteWithInvalidJobIdLogsError()
+  public async Task ExecuteWithInvalidJobIdLogsErrorAsync()
   {
     // Arrange
     SetUp();
@@ -220,14 +218,14 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteWithReminderStoreFailureSkipsProcessing()
+  public async Task ExecuteWithReminderStoreFailureSkipsProcessingAsync()
   {
     // Arrange
     SetUp();
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail<IEnumerable<Reminder>>("Database error"));
 
@@ -239,7 +237,7 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteWithPersonNotFoundSkipsThatPerson()
+  public async Task ExecuteWithPersonNotFoundSkipsThatPersonAsync()
   {
     // Arrange
     SetUp();
@@ -250,26 +248,26 @@ public class ToDoReminderJobTests
     var person2 = CreateValidPerson(personId2);
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder> { reminder1, reminder2 }.AsEnumerable()));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(new(personId1), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail<Person>("Not found"));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(new(personId2), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person2));
-    _messageGeneratorMock
+    _ = _messageGeneratorMock
       .Setup(mg => mg.GenerateReminderMessageAsync(person2, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok("Message"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person2, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _reminderStoreMock
+    _ = _reminderStoreMock
       .Setup(rs => rs.MarkAsSentAsync(reminder2.Id, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -282,7 +280,7 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteWithMessageGenerationFailureUsesFallback()
+  public async Task ExecuteWithMessageGenerationFailureUsesFallbackAsync()
   {
     // Arrange
     SetUp();
@@ -290,23 +288,23 @@ public class ToDoReminderJobTests
     var person = CreateValidPerson(reminder.PersonId.Value);
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder> { reminder }.AsEnumerable()));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(It.IsAny<PersonId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
-    _messageGeneratorMock
+    _ = _messageGeneratorMock
       .Setup(mg => mg.GenerateReminderMessageAsync(person, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail<string>("AI service error"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _reminderStoreMock
+    _ = _reminderStoreMock
       .Setup(rs => rs.MarkAsSentAsync(reminder.Id, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -318,7 +316,7 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteWithNotificationFailureContinuesToNextPerson()
+  public async Task ExecuteWithNotificationFailureContinuesToNextPersonAsync()
   {
     // Arrange
     SetUp();
@@ -330,29 +328,29 @@ public class ToDoReminderJobTests
     var person2 = CreateValidPerson(personId2);
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder> { reminder1, reminder2 }.AsEnumerable()));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(new(personId1), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person1));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(new(personId2), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person2));
-    _messageGeneratorMock
+    _ = _messageGeneratorMock
       .Setup(mg => mg.GenerateReminderMessageAsync(It.IsAny<Person>(), It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok("Message"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person1, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Send failed"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person2, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _reminderStoreMock
+    _ = _reminderStoreMock
       .Setup(rs => rs.MarkAsSentAsync(reminder2.Id, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -364,7 +362,7 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteDeletesJobAfterProcessing()
+  public async Task ExecuteDeletesJobAfterProcessingAsync()
   {
     // Arrange
     SetUp();
@@ -372,23 +370,23 @@ public class ToDoReminderJobTests
     var person = CreateValidPerson(reminder.PersonId.Value);
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
-    _reminderStoreMock
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Returns(new DateTimeOffset(DateTime.UtcNow));
+    _ = _reminderStoreMock
       .Setup(rs => rs.GetByQuartzJobIdAsync(It.IsAny<QuartzJobId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(new List<Reminder> { reminder }.AsEnumerable()));
-    _personStoreMock
+    _ = _personStoreMock
       .Setup(ps => ps.GetAsync(It.IsAny<PersonId>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(person));
-    _messageGeneratorMock
+    _ = _messageGeneratorMock
       .Setup(mg => mg.GenerateReminderMessageAsync(person, It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok("Message"));
-    _notificationClientMock
+    _ = _notificationClientMock
       .Setup(nc => nc.SendNotificationAsync(person, It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _reminderStoreMock
+    _ = _reminderStoreMock
       .Setup(rs => rs.MarkAsSentAsync(reminder.Id, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok());
-    _schedulerMock
+    _ = _schedulerMock
       .Setup(s => s.DeleteJob(It.IsAny<JobKey>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(true);
 
@@ -400,17 +398,17 @@ public class ToDoReminderJobTests
   }
 
   [Fact]
-  public async Task ExecuteHandlesExceptionGracefully()
+  public async Task ExecuteHandlesExceptionGracefullyAsync()
   {
     // Arrange
     SetUp();
     var context = CreateJobContext(Guid.NewGuid().ToString());
 
-    _timeProviderMock.Setup(tp => tp.GetUtcNow()).Throws<InvalidOperationException>();
+    _ = _timeProviderMock.Setup(tp => tp.GetUtcNow()).Throws<InvalidOperationException>();
 
     // Act & Assert - Should not throw
     await _sut.Execute(context);
   }
 
-  #endregion
+  #endregion Failure Handling Tests
 }

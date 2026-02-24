@@ -3,6 +3,9 @@ using Caramel.Core.Notifications;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+using NetCord;
+using NetCord.Rest;
+
 namespace Caramel.Notifications;
 
 public static class ServiceCollectionExtensions
@@ -18,6 +21,17 @@ public static class ServiceCollectionExtensions
     _ = services.AddScoped<INotificationChannel, DiscordNotificationChannel>();
     _ = services.AddScoped<IPersonNotificationClient, PersonNotificationClient>();
     return services;
+  }
+
+  public static IServiceCollection AddNotificationsWithChannels(this IServiceCollection services, string discordToken)
+  {
+    if (string.IsNullOrWhiteSpace(discordToken))
+    {
+      throw new ArgumentException("Discord token must be configured", nameof(discordToken));
+    }
+
+    _ = services.AddSingleton(new RestClient(new BotToken(discordToken)));
+    return services.AddNotificationsWithChannels();
   }
 
   public static IServiceCollection AddTwitchNotificationChannel(this IServiceCollection services, Func<string, string, string, CancellationToken, Task<bool>> sendWhisperAsync, string botUserId)
@@ -37,6 +51,10 @@ public static class ServiceCollectionExtensions
   /// Use this overload when the whisper sender is itself registered in DI so that the
   /// delegate is always backed by a fully-constructed service instance.
   /// </summary>
+  /// <param name="services"></param>
+  /// <param name="whisperSendFactory"></param>
+  /// <param name="botUserId"></param>
+  /// <exception cref="ArgumentException"></exception>
   public static IServiceCollection AddTwitchNotificationChannel(this IServiceCollection services, Func<IServiceProvider, Func<string, string, string, CancellationToken, Task<bool>>> whisperSendFactory, string botUserId)
   {
     if (string.IsNullOrWhiteSpace(botUserId))
@@ -59,6 +77,9 @@ public static class ServiceCollectionExtensions
   /// Use this overload when the bot user ID is stored in a runtime-resolved singleton (e.g. ITwitchSetupState)
   /// rather than being available at startup.
   /// </summary>
+  /// <param name="services"></param>
+  /// <param name="botUserIdFactory"></param>
+  /// <param name="whisperSendFactory"></param>
   public static IServiceCollection AddTwitchNotificationChannel(
     this IServiceCollection services,
     Func<IServiceProvider, string?> botUserIdFactory,

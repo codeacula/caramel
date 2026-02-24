@@ -48,7 +48,7 @@ public class AuthorizationInterceptorTests
     _ = _userContextMock.Setup(x => x.Person).Returns(person);
 
     var context = new TestServerCallContext(_httpContext);
-    static Task<string> continuationAsync(string req, ServerCallContext ctx)
+    static Task<string> continuationAsync(string _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -73,7 +73,7 @@ public class AuthorizationInterceptorTests
     _ = _userContextMock.Setup(x => x.Person).Returns(person);
 
     var context = new TestServerCallContext(_httpContext);
-    static Task<string> continuationAsync(string req, ServerCallContext ctx)
+    static Task<string> continuationAsync(string _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -98,7 +98,7 @@ public class AuthorizationInterceptorTests
     _ = _userContextMock.Setup(x => x.Person).Returns(person);
 
     var context = new TestServerCallContext(_httpContext);
-    static Task<string> continuationAsync(string req, ServerCallContext ctx)
+    static Task<string> continuationAsync(string _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }
@@ -119,7 +119,7 @@ public class AuthorizationInterceptorTests
     _httpContext.SetEndpoint(endpoint);
 
     var context = new TestServerCallContext(_httpContext);
-    static Task<string> continuationAsync(string req, ServerCallContext ctx)
+    static Task<string> continuationAsync(string _, ServerCallContext __)
     {
       return Task.FromResult("Response");
     }

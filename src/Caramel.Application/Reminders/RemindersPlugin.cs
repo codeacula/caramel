@@ -129,6 +129,7 @@ public sealed class RemindersPlugin(
     {
       DateTimeKind.Unspecified => TimeZoneInfo.ConvertTimeToUtc(parsedDate, timeZoneInfo),
       DateTimeKind.Local => parsedDate.ToUniversalTime(),
+      DateTimeKind.Utc => throw new NotImplementedException(),
       _ => parsedDate
     };
 

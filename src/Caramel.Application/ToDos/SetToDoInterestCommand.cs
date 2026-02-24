@@ -32,13 +32,12 @@ public sealed class SetToDoInterestCommandHandler(IToDoStore toDoStore) : IReque
   private async Task<Result> VerifyOwnershipAsync(ToDoId toDoId, PersonId personId, CancellationToken cancellationToken)
   {
     var todoResult = await toDoStore.GetAsync(toDoId, cancellationToken);
-    if (todoResult.IsFailed)
+    return todoResult switch
     {
-      return Result.Fail("To-Do not found");
-    }
-
-    return todoResult.Value.PersonId.Value != personId.Value
-      ? Result.Fail("You don't have permission to update this to-do")
-      : Result.Ok();
+      { IsFailed: true } => Result.Fail("To-Do not found"),
+      { Value.PersonId.Value: var ownerId } when ownerId != personId.Value =>
+        Result.Fail("You don't have permission to update this to-do"),
+      _ => Result.Ok(),
+    };
   }
 }

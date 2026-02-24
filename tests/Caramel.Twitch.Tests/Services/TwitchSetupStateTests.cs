@@ -5,8 +5,9 @@ namespace Caramel.Twitch.Tests.Services;
 
 public sealed class TwitchSetupStateTests
 {
-  private static TwitchSetup MakeSetup(string botLogin = "caramel_bot") =>
-    new()
+  private static TwitchSetup MakeSetup(string botLogin = "caramel_bot")
+  {
+    return new()
     {
       BotUserId = "111",
       BotLogin = botLogin,
@@ -14,40 +15,41 @@ public sealed class TwitchSetupStateTests
       ConfiguredOn = DateTimeOffset.UtcNow,
       UpdatedOn = DateTimeOffset.UtcNow,
     };
-
-  [Fact]
-  public void IsConfigured_ReturnsFalse_Initially()
-  {
-    var state = new TwitchSetupState();
-    state.IsConfigured.Should().BeFalse();
   }
 
   [Fact]
-  public void Current_ReturnsNull_Initially()
+  public void IsConfiguredReturnsFalseInitially()
   {
     var state = new TwitchSetupState();
-    state.Current.Should().BeNull();
+    _ = state.IsConfigured.Should().BeFalse();
   }
 
   [Fact]
-  public void IsConfigured_ReturnsTrue_AfterUpdate()
+  public void CurrentReturnsNullInitially()
+  {
+    var state = new TwitchSetupState();
+    _ = state.Current.Should().BeNull();
+  }
+
+  [Fact]
+  public void IsConfiguredReturnsTrueAfterUpdate()
   {
     var state = new TwitchSetupState();
     state.Update(MakeSetup());
-    state.IsConfigured.Should().BeTrue();
+    _ = state.IsConfigured.Should().BeTrue();
   }
 
   [Fact]
-  public void Current_ReturnsSetup_AfterUpdate()
+  public void CurrentReturnsSetupAfterUpdate()
   {
     var setup = MakeSetup();
     var state = new TwitchSetupState();
     state.Update(setup);
-    state.Current.Should().BeSameAs(setup);
+    _ = state.Current.Should().BeSameAs(setup);
   }
 
   [Fact]
-  public void Update_ReplacesExistingSetup_WhenCalledTwice()
+  public void UpdateReplacesExistingSetupWhenCalledTwice()
   {
     var first = MakeSetup("bot_v1");
     var second = MakeSetup("bot_v2");
@@ -56,7 +58,7 @@ public sealed class TwitchSetupStateTests
     state.Update(first);
     state.Update(second);
 
-    state.Current.Should().BeSameAs(second);
-    state.Current!.BotLogin.Should().Be("bot_v2");
+    _ = state.Current.Should().BeSameAs(second);
+    _ = state.Current!.BotLogin.Should().Be("bot_v2");
   }
 }

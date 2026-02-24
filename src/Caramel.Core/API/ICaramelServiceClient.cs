@@ -1,4 +1,5 @@
 using Caramel.Core.Conversations;
+using Caramel.Core.OBS;
 using Caramel.Core.Reminders.Requests;
 using Caramel.Core.ToDos.Requests;
 using Caramel.Core.ToDos.Responses;
@@ -21,4 +22,6 @@ public interface ICaramelServiceClient
   Task<Result<string>> SendMessageAsync(ProcessMessageRequest request, CancellationToken cancellationToken = default);
   Task<Result<TwitchSetup?>> GetTwitchSetupAsync(CancellationToken cancellationToken = default);
   Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default);
+  Task<Result<OBSStatus>> GetOBSStatusAsync(CancellationToken cancellationToken = default);
+  Task<Result<string>> SetOBSSceneAsync(string sceneName, CancellationToken cancellationToken = default);
 }

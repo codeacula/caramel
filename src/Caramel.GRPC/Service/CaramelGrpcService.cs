@@ -2,6 +2,7 @@ using Caramel.Application.Conversations;
 using Caramel.Application.People;
 using Caramel.Application.ToDos;
 using Caramel.Application.Twitch;
+using Caramel.Core.OBS;
 using Caramel.Core.People;
 using Caramel.Core.ToDos;
 using Caramel.Domain.Common.Enums;
@@ -21,7 +22,8 @@ public sealed class CaramelGrpcService(
   IFuzzyTimeParser fuzzyTimeParser,
   TimeProvider timeProvider,
   SuperAdminConfig superAdminConfig,
-  IUserContext userContext
+  IUserContext userContext,
+  IOBSStatusProvider obsStatusProvider
 ) : ICaramelGrpcService
 {
   public async Task<GrpcResult<string>> SendCaramelMessageAsync(NewMessageRequest message)
@@ -331,9 +333,7 @@ public sealed class CaramelGrpcService(
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = setup.Channels
-        .Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
-        .ToList()
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
     };
   }
 
@@ -344,8 +344,7 @@ public sealed class CaramelGrpcService(
       BotUserId = request.BotUserId,
       BotLogin = request.BotLogin,
       Channels = request.Channels
-        .Select(c => (c.UserId, c.Login))
-        .ToList()
+        .ConvertAll(c => (c.UserId, c.Login))
     };
 
     var result = await mediator.Send(command);
@@ -360,9 +359,7 @@ public sealed class CaramelGrpcService(
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = setup.Channels
-        .Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })
-        .ToList()
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
     };
   }
 
@@ -371,5 +368,29 @@ public sealed class CaramelGrpcService(
     return !string.IsNullOrWhiteSpace(superAdminConfig.DiscordUserId)
       && platform == Platform.Discord
       && string.Equals(platformUserId, superAdminConfig.DiscordUserId, StringComparison.OrdinalIgnoreCase);
+  }
+
+  public async Task<GrpcResult<OBSStatusDTO>> GetOBSStatusAsync()
+  {
+    string? currentScene = null;
+    if (obsStatusProvider.IsConnected)
+    {
+      var sceneResult = await obsStatusProvider.GetCurrentProgramSceneAsync();
+      currentScene = sceneResult.IsSuccess ? sceneResult.Value : null;
+    }
+
+    return new OBSStatusDTO
+    {
+      IsConnected = obsStatusProvider.IsConnected,
+      CurrentScene = currentScene
+    };
+  }
+
+  public async Task<GrpcResult<string>> SetOBSSceneAsync(SetOBSSceneRequest request)
+  {
+    var result = await obsStatusProvider.SetCurrentProgramSceneAsync(request.SceneName);
+    return result.IsFailed
+      ? (GrpcResult<string>)result.Errors.Select(e => new GrpcError(e.Message)).ToArray()
+      : (GrpcResult<string>)"Scene switched successfully";
   }
 }

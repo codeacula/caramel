@@ -1,16 +1,9 @@
-using System.Text.Json;
-
-using Caramel.Core.API;
 using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
-using Caramel.Twitch.Handlers;
-using Caramel.Twitch.Services;
 
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.User;
-using TwitchLib.EventSub.Websockets;
-using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +17,8 @@ _ = builder.Configuration.AddUserSecrets<ICaramelTwitch>(optional: true);
 // Logging
 _ = builder.Services.AddLogging(config =>
 {
-  config.AddConsole(options => options.FormatterName = "simple");
-  config.SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information);
+  _ = config.AddConsole(options => options.FormatterName = "simple");
+  _ = config.SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information);
 });
 
 // Register Redis, cache, gRPC, and Twitch-specific services
@@ -75,13 +68,13 @@ app.MapGet("/auth/login", () =>
 {
   var state = stateManager.GenerateState();
 
-  // Request scopes for chat read/write, whispers, and moderation actions
-  const string scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat user:manage:whispers";
+  // Request scopes for chat read/write, whispers, moderation actions, and channel point redemptions
+  const string scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat user:manage:whispers channel:read:redemptions";
 
-  var oauthUrl = $"https://id.twitch.tv/oauth2/authorize?" +
+  var oauthUrl = "https://id.twitch.tv/oauth2/authorize?" +
     $"client_id={Uri.EscapeDataString(twitchConfig.ClientId)}&" +
     $"redirect_uri={Uri.EscapeDataString(twitchConfig.OAuthCallbackUrl)}&" +
-    $"response_type=code&" +
+    "response_type=code&" +
     $"scope={Uri.EscapeDataString(scopes)}&" +
     $"state={Uri.EscapeDataString(state)}";
   return Results.Redirect(oauthUrl);
@@ -98,14 +91,14 @@ app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactor
     }
 
     using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
-    var tokenRequest = new FormUrlEncodedContent(new[]
-    {
+    var tokenRequest = new FormUrlEncodedContent(
+    [
       new KeyValuePair<string, string>("client_id", twitchConfig.ClientId),
       new KeyValuePair<string, string>("client_secret", twitchConfig.ClientSecret),
       new KeyValuePair<string, string>("code", code),
       new KeyValuePair<string, string>("grant_type", "authorization_code"),
       new KeyValuePair<string, string>("redirect_uri", twitchConfig.OAuthCallbackUrl),
-    });
+    ]);
 
     var tokenResponse = await httpClient.PostAsync("https://id.twitch.tv/oauth2/token", tokenRequest, ct);
     if (!tokenResponse.IsSuccessStatusCode)
@@ -171,6 +164,16 @@ await app.RunAsync();
 /// to channel.chat.message and user.whisper.message events.
 /// Reconnects automatically on disconnect.
 /// </summary>
+/// <param name="eventSubClient"></param>
+/// <param name="twitchConfig"></param>
+/// <param name="tokenManager"></param>
+/// <param name="setupState"></param>
+/// <param name="serviceClient"></param>
+/// <param name="chatHandler"></param>
+/// <param name="whisperHandler"></param>
+/// <param name="redeemHandler"></param>
+/// <param name="httpClientFactory"></param>
+/// <param name="logger"></param>
 internal sealed class EventSubLifecycleService(
   EventSubWebsocketClient eventSubClient,
   TwitchConfig twitchConfig,
@@ -179,6 +182,7 @@ internal sealed class EventSubLifecycleService(
   ICaramelServiceClient serviceClient,
   ChatMessageEventHandler chatHandler,
   WhisperEventHandler whisperHandler,
+  ChannelPointRedeemEventHandler redeemHandler,
   IHttpClientFactory httpClientFactory,
   ILogger<EventSubLifecycleService> logger) : BackgroundService
 {
@@ -222,7 +226,7 @@ internal sealed class EventSubLifecycleService(
           _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
           CaramelTwitchProgramLogs.EventSubConnecting(logger);
-          await eventSubClient.ConnectAsync();
+          _ = await eventSubClient.ConnectAsync();
 
           // Wait until either the host is stopping or the WebSocket disconnects
           using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
@@ -280,6 +284,7 @@ internal sealed class EventSubLifecycleService(
     eventSubClient.WebsocketDisconnected += OnWebsocketDisconnectedAsync;
     eventSubClient.ChannelChatMessage += OnChannelChatMessageAsync;
     eventSubClient.UserWhisperMessage += OnUserWhisperMessageAsync;
+    eventSubClient.ChannelPointsCustomRewardRedemptionAdd += OnChannelPointsCustomRewardRedemptionAddAsync;
     _handlersWired = true;
   }
 
@@ -318,6 +323,12 @@ internal sealed class EventSubLifecycleService(
         {
           { "broadcaster_user_id", channelId },
           { "user_id", botUserId },
+        });
+
+        // Subscribe to channel point custom reward redemptions
+        await CreateEventSubSubscriptionAsync(httpClient, "channel.channel_points_custom_reward_redemption.add", "1", new Dictionary<string, string>
+        {
+          { "broadcaster_user_id", channelId },
         });
       }
 
@@ -405,6 +416,24 @@ internal sealed class EventSubLifecycleService(
       evt.FromUserId,
       evt.FromUserLogin,
       evt.Whisper.Text,
+      CancellationToken.None);
+  }
+
+  private async Task OnChannelPointsCustomRewardRedemptionAddAsync(object? sender, ChannelPointsCustomRewardRedemptionArgs args)
+  {
+    var evt = args.Payload.Event;
+    await redeemHandler.HandleAsync(
+      evt.Id,
+      evt.BroadcasterUserId,
+      evt.BroadcasterUserLogin,
+      evt.UserId,
+      evt.UserLogin,
+      evt.UserName,
+      evt.Reward.Id,
+      evt.Reward.Title,
+      evt.Reward.Cost,
+      evt.UserInput,
+      evt.RedeemedAt,
       CancellationToken.None);
   }
 

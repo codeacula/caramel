@@ -57,4 +57,10 @@ public interface ICaramelGrpcService
 
   [OperationContract]
   Task<GrpcResult<TwitchSetupDTO>> SaveTwitchSetupAsync(SaveTwitchSetupRequest request);
+
+  [OperationContract]
+  Task<GrpcResult<OBSStatusDTO>> GetOBSStatusAsync();
+
+  [OperationContract]
+  Task<GrpcResult<string>> SetOBSSceneAsync(SetOBSSceneRequest request);
 }

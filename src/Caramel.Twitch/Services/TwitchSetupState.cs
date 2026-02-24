@@ -18,13 +18,11 @@ public interface ITwitchSetupState
 /// </summary>
 public sealed class TwitchSetupState : ITwitchSetupState
 {
-  private TwitchSetup? _current;
-
-  public TwitchSetup? Current => _current;
-  public bool IsConfigured => _current is not null;
+  public TwitchSetup? Current { get; private set; }
+  public bool IsConfigured => Current is not null;
 
   public void Update(TwitchSetup setup)
   {
-    _current = setup;
+    Current = setup;
   }
 }

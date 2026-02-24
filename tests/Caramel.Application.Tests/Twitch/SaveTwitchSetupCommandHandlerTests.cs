@@ -14,11 +14,14 @@ public sealed class SaveTwitchSetupCommandHandlerTests
 {
   private readonly Mock<ITwitchSetupStore> _store = new();
 
-  private SaveTwitchSetupCommandHandler CreateHandler() =>
-    new(_store.Object);
+  private SaveTwitchSetupCommandHandler CreateHandler()
+  {
+    return new(_store.Object);
+  }
 
-  private static TwitchSetup MakeSetup(string botLogin = "caramel_bot") =>
-    new()
+  private static TwitchSetup MakeSetup(string botLogin = "caramel_bot")
+  {
+    return new()
     {
       BotUserId = "111",
       BotLogin = botLogin,
@@ -26,55 +29,58 @@ public sealed class SaveTwitchSetupCommandHandlerTests
       ConfiguredOn = DateTimeOffset.UtcNow,
       UpdatedOn = DateTimeOffset.UtcNow,
     };
+  }
 
-  private static SaveTwitchSetupCommand MakeCommand(string botLogin = "caramel_bot") =>
-    new()
+  private static SaveTwitchSetupCommand MakeCommand(string botLogin = "caramel_bot")
+  {
+    return new()
     {
       BotUserId = "111",
       BotLogin = botLogin,
       Channels = [("999", "streamer")],
     };
+  }
 
   [Fact]
-  public async Task Handle_ReturnsOkSetup_WhenStoreSaves()
+  public async Task HandleReturnsOkSetupWhenStoreSavesAsync()
   {
     var saved = MakeSetup();
-    _store
+    _ = _store
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(saved));
 
     var handler = CreateHandler();
     var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-    result.IsSuccess.Should().BeTrue();
-    result.Value.Should().BeSameAs(saved);
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = result.Value.Should().BeSameAs(saved);
   }
 
   [Fact]
-  public async Task Handle_ReturnsFail_WhenStoreFails()
+  public async Task HandleReturnsFailWhenStoreFailsAsync()
   {
-    _store
+    _ = _store
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail<TwitchSetup>("DB write failed"));
 
     var handler = CreateHandler();
     var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-    result.IsFailed.Should().BeTrue();
-    result.Errors.Should().ContainSingle(e => e.Message == "DB write failed");
+    _ = result.IsFailed.Should().BeTrue();
+    _ = result.Errors.Should().ContainSingle(e => e.Message == "DB write failed");
   }
 
   [Fact]
-  public async Task Handle_MapsCommandFields_ToTwitchSetup()
+  public async Task HandleMapsCommandFieldsToTwitchSetupAsync()
   {
     TwitchSetup? capturedSetup = null;
-    _store
+    _ = _store
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .Callback<TwitchSetup, CancellationToken>((setup, _) => capturedSetup = setup)
       .ReturnsAsync(Result.Ok(MakeSetup()));
 
     var handler = CreateHandler();
-    await handler.Handle(
+    _ = await handler.Handle(
       new SaveTwitchSetupCommand
       {
         BotUserId = "111",
@@ -83,27 +89,27 @@ public sealed class SaveTwitchSetupCommandHandlerTests
       },
       CancellationToken.None);
 
-    capturedSetup.Should().NotBeNull();
-    capturedSetup!.BotUserId.Should().Be("111");
-    capturedSetup.BotLogin.Should().Be("caramel_bot");
-    capturedSetup.Channels.Should().HaveCount(2);
-    capturedSetup.Channels[0].UserId.Should().Be("999");
-    capturedSetup.Channels[0].Login.Should().Be("streamer");
-    capturedSetup.Channels[1].UserId.Should().Be("888");
-    capturedSetup.Channels[1].Login.Should().Be("other_channel");
+    _ = capturedSetup.Should().NotBeNull();
+    _ = capturedSetup!.BotUserId.Should().Be("111");
+    _ = capturedSetup.BotLogin.Should().Be("caramel_bot");
+    _ = capturedSetup.Channels.Should().HaveCount(2);
+    _ = capturedSetup.Channels[0].UserId.Should().Be("999");
+    _ = capturedSetup.Channels[0].Login.Should().Be("streamer");
+    _ = capturedSetup.Channels[1].UserId.Should().Be("888");
+    _ = capturedSetup.Channels[1].Login.Should().Be("other_channel");
   }
 
   [Fact]
-  public async Task Handle_ReturnsFail_WhenStoreThrows()
+  public async Task HandleReturnsFailWhenStoreThrowsAsync()
   {
-    _store
+    _ = _store
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("connection lost"));
 
     var handler = CreateHandler();
     var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
-    result.IsFailed.Should().BeTrue();
-    result.Errors.Should().ContainSingle(e => e.Message == "connection lost");
+    _ = result.IsFailed.Should().BeTrue();
+    _ = result.Errors.Should().ContainSingle(e => e.Message == "connection lost");
   }
 }

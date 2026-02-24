@@ -24,6 +24,10 @@ public interface ITwitchWhisperService
 /// Sends Twitch whispers via the Helix "Send Whisper" API endpoint.
 /// Requires the bot to have user:manage:whispers scope and Twitch verification.
 /// </summary>
+/// <param name="httpClientFactory"></param>
+/// <param name="twitchConfig"></param>
+/// <param name="tokenManager"></param>
+/// <param name="logger"></param>
 public sealed class TwitchWhisperService(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
