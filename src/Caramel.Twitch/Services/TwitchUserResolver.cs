@@ -22,6 +22,13 @@ public interface ITwitchUserResolver
   /// <param name="loginsOrIds"></param>
   /// <param name="cancellationToken"></param>
   Task<IReadOnlyList<string>> ResolveUserIdsAsync(IEnumerable<string> loginsOrIds, CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Returns the identity (numeric ID and login) of the user who owns the current access token
+  /// by calling <c>GET /helix/users</c> with no parameters.
+  /// </summary>
+  /// <param name="cancellationToken"></param>
+  Task<(string UserId, string Login)> ResolveCurrentUserAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -97,6 +104,42 @@ public sealed class TwitchUserResolver(
     }
 
     return results;
+  }
+
+  /// <inheritdoc/>
+  public async Task<(string UserId, string Login)> ResolveCurrentUserAsync(CancellationToken cancellationToken = default)
+  {
+    var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+
+    using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
+    httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
+    httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+
+    var response = await httpClient.GetAsync("https://api.twitch.tv/helix/users", cancellationToken);
+    if (!response.IsSuccessStatusCode)
+    {
+      var error = await response.Content.ReadAsStringAsync(cancellationToken);
+      throw new InvalidOperationException(
+        $"Twitch Helix 'Get Users' (current user) failed with status {(int)response.StatusCode}: {error}");
+    }
+
+    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+    var json = JsonDocument.Parse(content);
+    var data = json.RootElement.GetProperty("data");
+
+    if (data.GetArrayLength() == 0)
+    {
+      throw new InvalidOperationException("Twitch Helix returned no user data for the current access token.");
+    }
+
+    var user = data[0];
+    var userId = user.GetProperty("id").GetString()!;
+    var login = user.GetProperty("login").GetString()!;
+
+    _ = _cache.TryAdd(login, userId);
+    TwitchUserResolverLogs.UserResolved(logger, login, userId);
+
+    return (userId, login);
   }
 
   private async Task<string> FetchUserIdAsync(string login, CancellationToken cancellationToken)
