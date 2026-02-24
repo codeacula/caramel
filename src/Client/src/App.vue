@@ -1,23 +1,37 @@
 <script setup lang="ts">
 import TwitchChat from "./components/TwitchChat.vue";
+import ControlPanel from "./components/ControlPanel.vue";
 </script>
 
 <template>
   <div class="app-layout">
-    <!-- Main adventure area -->
-    <main class="main-area">
-      <div class="main-placeholder">
-        <div class="placeholder-icon" aria-hidden="true">🎲</div>
-        <h1 class="placeholder-title">Adventure Awaits</h1>
-        <p class="placeholder-body">
-          No adventure is running right now.<br />
-          Use <code>!adventure start</code> in chat to begin.
-        </p>
+    <!-- Left sidebar -->
+    <aside class="left-sidebar">
+      <!-- Placeholder for left sidebar content -->
+    </aside>
+
+    <!-- Center column -->
+    <main class="center-column">
+      <!-- Top 2/3: Main adventure area -->
+      <div class="main-area">
+        <div class="main-placeholder">
+          <div class="placeholder-icon" aria-hidden="true">🎲</div>
+          <h1 class="placeholder-title">Adventure Awaits</h1>
+          <p class="placeholder-body">
+            No adventure is running right now.<br />
+            Use <code>!adventure start</code> in chat to begin.
+          </p>
+        </div>
+      </div>
+
+      <!-- Bottom 1/3: Control Panel -->
+      <div class="control-panel-container">
+        <ControlPanel />
       </div>
     </main>
 
-    <!-- Chat sidebar -->
-    <aside class="chat-sidebar">
+    <!-- Right sidebar (Chat) -->
+    <aside class="right-sidebar">
       <TwitchChat />
     </aside>
   </div>
@@ -31,15 +45,42 @@ import TwitchChat from "./components/TwitchChat.vue";
   gap: 0;
 }
 
-/* ── Main area ────────────────────────────────────────────────────────────── */
-.main-area {
+/* ── Left sidebar ─────────────────────────────────────────────────────────── */
+.left-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #2a2a2e;
+  background: #0e0e10;
+  overflow: hidden;
+}
+
+/* ── Center column ────────────────────────────────────────────────────────── */
+.center-column {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 24px;
   background: #0e0e10;
+}
+
+.main-area {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.control-panel-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 24px;
+  border-top: 1px solid #2a2a2e;
 }
 
 .main-placeholder {
@@ -84,8 +125,8 @@ import TwitchChat from "./components/TwitchChat.vue";
   font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
 }
 
-/* ── Chat sidebar ─────────────────────────────────────────────────────────── */
-.chat-sidebar {
+/* ── Right sidebar ────────────────────────────────────────────────────────── */
+.right-sidebar {
   width: 360px;
   flex-shrink: 0;
   display: flex;
@@ -95,22 +136,33 @@ import TwitchChat from "./components/TwitchChat.vue";
 }
 
 /* ── Responsive: collapse sidebar on narrow screens ──────────────────────── */
-@media (max-width: 640px) {
+@media (max-width: 1024px) {
   .app-layout {
     flex-direction: column;
+  }
+
+  .left-sidebar,
+  .right-sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+    min-height: 200px;
+    border: none;
+    border-top: 1px solid #2a2a2e;
+  }
+
+  .left-sidebar {
+    border-top: none;
+    border-bottom: 1px solid #2a2a2e;
+  }
+
+  .center-column {
+    flex: 1;
   }
 
   .main-area {
     flex: 0 0 auto;
     min-height: 200px;
     padding: 16px;
-  }
-
-  .chat-sidebar {
-    width: 100%;
-    flex: 1;
-    border-left: none;
-    border-top: 1px solid #2a2a2e;
   }
 }
 </style>

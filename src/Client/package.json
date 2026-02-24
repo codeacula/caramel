@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "obs-websocket-js": "^5.0.7",
     "vue": "^3.5.18"
   },
   "devDependencies": {
