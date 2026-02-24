@@ -13,7 +13,7 @@ import ControlPanel from "./components/ControlPanel.vue";
     <!-- Center column -->
     <main class="center-column">
       <!-- Top 2/3: Main adventure area -->
-      <div class="main-area">
+      <section class="main-area">
         <div class="main-placeholder">
           <div class="placeholder-icon" aria-hidden="true">🎲</div>
           <h1 class="placeholder-title">Adventure Awaits</h1>
@@ -22,12 +22,12 @@ import ControlPanel from "./components/ControlPanel.vue";
             Use <code>!adventure start</code> in chat to begin.
           </p>
         </div>
-      </div>
+      </section>
 
       <!-- Bottom 1/3: Control Panel -->
-      <div class="control-panel-container">
+      <section class="control-panel-container">
         <ControlPanel />
-      </div>
+      </section>
     </main>
 
     <!-- Right sidebar (Chat) -->
@@ -39,31 +39,30 @@ import ControlPanel from "./components/ControlPanel.vue";
 
 <style scoped>
 .app-layout {
-  display: flex;
-  height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr 360px;
+  block-size: 100vh;
   overflow: hidden;
-  gap: 0;
+  background: var(--bg-color);
+  color: var(--text-primary);
 }
 
 /* ── Left sidebar ─────────────────────────────────────────────────────────── */
 .left-sidebar {
-  width: 240px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #2a2a2e;
-  background: #0e0e10;
+  border-inline-end: 1px solid var(--border-color);
+  background: var(--surface-color);
   overflow: hidden;
 }
 
 /* ── Center column ────────────────────────────────────────────────────────── */
 .center-column {
-  flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
+  min-inline-size: 0;
   overflow: hidden;
-  background: #0e0e10;
+  background: var(--bg-color);
 }
 
 .main-area {
@@ -71,7 +70,7 @@ import ControlPanel from "./components/ControlPanel.vue";
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 24px;
+  padding: var(--space-xl);
 }
 
 .control-panel-container {
@@ -79,8 +78,8 @@ import ControlPanel from "./components/ControlPanel.vue";
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 24px;
-  border-top: 1px solid #2a2a2e;
+  padding: var(--space-xl);
+  border-block-start: 1px solid var(--border-color);
 }
 
 .main-placeholder {
@@ -89,80 +88,78 @@ import ControlPanel from "./components/ControlPanel.vue";
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: var(--space-md);
   text-align: center;
-  color: #6b6b7d;
+  color: var(--text-muted);
   user-select: none;
 }
 
 .placeholder-icon {
-  font-size: 64px;
+  font-size: var(--text-3xl);
   line-height: 1;
   filter: grayscale(0.3) opacity(0.7);
+  transition: transform var(--transition-normal);
+}
+.placeholder-icon:hover {
+  transform: scale(1.1);
 }
 
 .placeholder-title {
-  font-size: 24px;
+  font-size: var(--text-2xl);
   font-weight: 700;
-  color: #adadb8;
+  color: var(--text-secondary);
   letter-spacing: -0.01em;
 }
 
 .placeholder-body {
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.7;
-  max-width: 340px;
+  max-inline-size: 340px;
 }
 
 .placeholder-body code {
   display: inline-block;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: #18181b;
-  border: 1px solid #3a3a40;
-  color: #bf94ff;
-  font-size: 13px;
-  font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
+  padding: 0.125em 0.375em;
+  border-radius: var(--radius-sm);
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  color: var(--accent-primary);
+  font-size: 0.85em;
+  font-family: var(--font-mono);
 }
 
 /* ── Right sidebar ────────────────────────────────────────────────────────── */
 .right-sidebar {
-  width: 360px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #2a2a2e;
+  border-inline-start: 1px solid var(--border-color);
   overflow: hidden;
+  background: var(--surface-color);
 }
 
 /* ── Responsive: collapse sidebar on narrow screens ──────────────────────── */
 @media (max-width: 1024px) {
   .app-layout {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    overflow-y: auto;
   }
 
   .left-sidebar,
   .right-sidebar {
-    width: 100%;
-    flex: 0 0 auto;
-    min-height: 200px;
+    min-block-size: 200px;
     border: none;
-    border-top: 1px solid #2a2a2e;
+    border-block-start: 1px solid var(--border-color);
   }
 
   .left-sidebar {
-    border-top: none;
-    border-bottom: 1px solid #2a2a2e;
-  }
-
-  .center-column {
-    flex: 1;
+    border-block-start: none;
+    border-block-end: 1px solid var(--border-color);
   }
 
   .main-area {
-    flex: 0 0 auto;
-    min-height: 200px;
-    padding: 16px;
+    min-block-size: 200px;
+    padding: var(--space-md);
   }
 }
 </style>

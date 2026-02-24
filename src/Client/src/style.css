@@ -1,4 +1,80 @@
-/* Minimal reset – component styles are scoped in their .vue files */
+/* ── Modern CSS Reset & Variables ─────────────────────────────────────── */
+:root {
+  /* Colors - Base Theme (Dark by default, inspired by Twitch/Modern UI) */
+  --bg-color: #0e0e10;
+  --surface-color: #18181b;
+  --surface-color-hover: #26262c;
+  --border-color: #2a2a2e;
+  --border-color-hover: #3a3a40;
+  
+  --text-primary: #efeff1;
+  --text-secondary: #adadb8;
+  --text-muted: #6b6b7d;
+  
+  --accent-primary: #bf94ff;
+  --accent-primary-hover: #a970ff;
+  --accent-secondary: #9147ff;
+  
+  /* Semantic Colors */
+  --success-color: #4ade80;
+  --success-bg: color-mix(in srgb, var(--success-color) 15%, transparent);
+  --warning-color: #ffb400;
+  --warning-bg: color-mix(in srgb, var(--warning-color) 15%, transparent);
+  --error-color: #f87171;
+  --error-bg: color-mix(in srgb, var(--error-color) 15%, transparent);
+  --info-color: #909096;
+  --info-bg: color-mix(in srgb, var(--info-color) 15%, transparent);
+
+  /* Typography */
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Fira Code", "Cascadia Code", "Consolas", monospace;
+  
+  /* Fluid Typography */
+  --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
+  --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+  --text-lg: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+  --text-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --text-3xl: clamp(2rem, 1.8rem + 1vw, 4rem);
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  
+  /* Borders & Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}
+
+/* Light Theme (optional, but modern to include) */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-color: #f7f7f8;
+    --surface-color: #ffffff;
+    --surface-color-hover: #e5e5ea;
+    --border-color: #d3d3d9;
+    --border-color-hover: #b8b8c0;
+    
+    --text-primary: #0e0e10;
+    --text-secondary: #53535f;
+    --text-muted: #848494;
+    
+    --accent-primary: #772ce8;
+    --accent-primary-hover: #5c16c5;
+    --accent-secondary: #9147ff;
+  }
+}
+
 *,
 *::before,
 *::after {
@@ -10,10 +86,12 @@
 html,
 body {
   height: 100%;
-  background: #0e0e10;
-  color: #efeff1;
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {

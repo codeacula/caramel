@@ -40,83 +40,97 @@ const playAds = () => {
 .control-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background: #18181b;
-  border: 1px solid #2a2a2e;
-  border-radius: 8px;
-  padding: 16px;
-  gap: 16px;
+  block-size: 100%;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  gap: var(--space-md);
+  box-shadow: 0 4px 6px -1px color-mix(in srgb, var(--bg-color) 50%, transparent);
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #2a2a2e;
-  padding-bottom: 12px;
+  border-block-end: 1px solid var(--border-color);
+  padding-block-end: var(--space-sm);
 }
 
 h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--text-base);
   font-weight: 600;
-  color: #efeff1;
+  color: var(--text-primary);
 }
 
 .obs-status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #adadb8;
+  gap: var(--space-xs);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  background: var(--surface-color-hover);
 }
 
 .status-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #f87171; /* Red for disconnected */
+  inline-size: 8px;
+  block-size: 8px;
+  border-radius: var(--radius-full);
+  background: var(--error-color);
+  box-shadow: 0 0 5px var(--error-color);
 }
 
 .obs-status.connected .status-indicator {
-  background: #4ade80; /* Green for connected */
+  background: var(--success-color);
+  box-shadow: 0 0 5px var(--success-color);
 }
 
 .panel-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-sm);
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
   font-family: inherit;
+  color: var(--text-primary);
+  background: var(--surface-color-hover);
 }
 
 .action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--border-color);
 }
 
 .ads-btn {
-  background: #9146ff;
+  background: var(--accent-secondary);
   color: white;
 }
 
 .ads-btn:hover:not(:disabled) {
-  background: #a970ff;
+  background: var(--accent-primary-hover);
 }
 
 .icon {
-  font-size: 16px;
+  font-size: var(--text-base);
 }
 </style>
