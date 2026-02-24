@@ -5,7 +5,7 @@ import { useTwitchSetup } from "../composables/useTwitchSetup";
 import type { TwitchChatMessage } from "../composables/useTwitchChat";
 
 const {
-  messages,
+  feedItems,
   status,
   errorMessage,
   sendStatus,
@@ -130,7 +130,7 @@ function onScroll() {
 }
 
 watch(
-  messages,
+  feedItems,
   () => {
     if (!autoScroll.value) return;
     nextTick(() => {
@@ -218,7 +218,7 @@ function scrollToBottom() {
     <div v-if="isSetupConfigured && errorMessage" class="error-banner" role="alert">⚠ {{ errorMessage }}</div>
 
     <!-- Empty state -->
-    <div v-if="isSetupConfigured && messages.length === 0" class="empty-state">
+    <div v-if="isSetupConfigured && feedItems.length === 0" class="empty-state">
       <p v-if="status === 'connecting'">Connecting to chat feed…</p>
       <p v-else-if="status === 'connected'">
         Waiting for messages. Make sure the bot is authorized and your channel IDs are configured.
@@ -228,28 +228,44 @@ function scrollToBottom() {
 
     <!-- Message feed -->
     <div
-      v-if="isSetupConfigured && messages.length > 0"
+      v-if="isSetupConfigured && feedItems.length > 0"
       ref="feedEl"
       class="chat-feed"
       role="log"
       aria-live="polite"
-      aria-label="Twitch chat messages"
+      aria-label="Twitch chat feed"
       @scroll="onScroll"
     >
-      <div v-for="msg in messages" :key="msg.messageId" class="chat-message">
-        <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
-        <span class="msg-username" :style="usernameStyle(msg)" :title="`#${msg.broadcasterLogin}`">{{
-          msg.chatterDisplayName
-        }}</span>
-        <span class="msg-colon" aria-hidden="true">:</span>
-        <span class="msg-text">{{ msg.messageText }}</span>
-      </div>
+      <template v-for="item in feedItems" :key="item.kind === 'chat' ? item.data.messageId : item.data.redemptionId">
+        <!-- Chat message row -->
+        <div v-if="item.kind === 'chat'" class="chat-message">
+          <span class="msg-time">{{ formatTime(item.data.timestamp) }}</span>
+          <span class="msg-username" :style="usernameStyle(item.data)" :title="`#${item.data.broadcasterLogin}`">{{
+            item.data.chatterDisplayName
+          }}</span>
+          <span class="msg-colon" aria-hidden="true">:</span>
+          <span class="msg-text">{{ item.data.messageText }}</span>
+        </div>
+
+        <!-- Channel point redeem row -->
+        <div v-else-if="item.kind === 'redeem'" class="chat-redeem">
+          <span class="msg-time">{{ formatTime(item.data.redeemedAt) }}</span>
+          <svg class="redeem-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
+          </svg>
+          <span class="redeem-username">{{ item.data.redeemerDisplayName }}</span>
+          <span class="redeem-sep" aria-hidden="true">redeemed</span>
+          <span class="redeem-title">{{ item.data.rewardTitle }}</span>
+          <span v-if="item.data.userInput" class="redeem-input">— {{ item.data.userInput }}</span>
+          <span class="redeem-cost">{{ item.data.rewardCost.toLocaleString() }} pts</span>
+        </div>
+      </template>
     </div>
 
     <!-- Scroll-to-bottom button -->
     <Transition name="fade">
       <button
-        v-if="!autoScroll && messages.length > 0"
+        v-if="!autoScroll && feedItems.length > 0"
         class="scroll-btn"
         @click="scrollToBottom"
         aria-label="Scroll to latest messages"
@@ -298,7 +314,7 @@ function scrollToBottom() {
     </div>
 
     <!-- Footer -->
-    <footer class="chat-footer">{{ messages.length }} message{{ messages.length !== 1 ? "s" : "" }}</footer>
+    <footer class="chat-footer">{{ feedItems.length }} event{{ feedItems.length !== 1 ? "s" : "" }}</footer>
   </aside>
 </template>
 
@@ -545,6 +561,66 @@ function scrollToBottom() {
 }
 .chat-message:hover {
   background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+}
+
+/* ── Redeem rows ─────────────────────────────────────────────────────────── */
+.chat-redeem {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 5px;
+  padding: var(--space-xs) var(--space-md);
+  line-height: 1.55;
+  word-break: break-word;
+  background: color-mix(in srgb, var(--accent-secondary) 8%, transparent);
+  border-inline-start: 2px solid var(--accent-secondary);
+  transition: background var(--transition-fast);
+}
+.chat-redeem:hover {
+  background: color-mix(in srgb, var(--accent-secondary) 14%, transparent);
+}
+
+.redeem-icon {
+  inline-size: 13px;
+  block-size: 13px;
+  fill: var(--accent-secondary);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.redeem-username {
+  font-weight: 700;
+  color: var(--accent-secondary);
+  flex-shrink: 0;
+}
+
+.redeem-sep {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  flex-shrink: 0;
+}
+
+.redeem-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.redeem-input {
+  color: var(--text-secondary);
+  font-style: italic;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.redeem-cost {
+  margin-inline-start: auto;
+  color: var(--accent-secondary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .msg-time {

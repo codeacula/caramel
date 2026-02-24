@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+using Caramel.Core.Twitch;
+
 namespace Caramel.Twitch.Services;
 
 /// <summary>
@@ -28,6 +30,23 @@ public interface ITwitchChatBroadcaster
     string chatterDisplayName,
     string messageText,
     string color,
+    CancellationToken cancellationToken = default);
+
+  /// <summary>
+  /// Publishes a channel point custom reward redemption to the Redis pub/sub channel wrapped in a typed envelope.
+  /// </summary>
+  Task PublishRedeemAsync(
+    string redemptionId,
+    string broadcasterUserId,
+    string broadcasterLogin,
+    string redeemerUserId,
+    string redeemerLogin,
+    string redeemerDisplayName,
+    string rewardId,
+    string rewardTitle,
+    int rewardCost,
+    string userInput,
+    DateTimeOffset redeemedAt,
     CancellationToken cancellationToken = default);
 
   /// <summary>
@@ -112,6 +131,54 @@ public sealed class TwitchChatBroadcaster(
   }
 
   /// <inheritdoc/>
+  public async Task PublishRedeemAsync(
+    string redemptionId,
+    string broadcasterUserId,
+    string broadcasterLogin,
+    string redeemerUserId,
+    string redeemerLogin,
+    string redeemerDisplayName,
+    string rewardId,
+    string rewardTitle,
+    int rewardCost,
+    string userInput,
+    DateTimeOffset redeemedAt,
+    CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      var redeem = new TwitchChannelPointRedeem
+      {
+        RedemptionId = redemptionId,
+        BroadcasterUserId = broadcasterUserId,
+        BroadcasterLogin = broadcasterLogin,
+        RedeemerUserId = redeemerUserId,
+        RedeemerLogin = redeemerLogin,
+        RedeemerDisplayName = redeemerDisplayName,
+        RewardId = rewardId,
+        RewardTitle = rewardTitle,
+        RewardCost = rewardCost,
+        UserInput = userInput,
+        RedeemedAt = redeemedAt,
+      };
+
+      var envelope = new TwitchWebSocketEnvelope { Type = "channel_point_redeem", Data = redeem };
+      var payload = JsonSerializer.Serialize(envelope, SerializerOptions);
+
+      var subscriber = redis.GetSubscriber();
+      _ = await subscriber.PublishAsync(
+        RedisChannel.Literal(TwitchChatMessage.RedisChannel),
+        payload);
+
+      TwitchChatBroadcasterLogs.RedeemPublished(logger, redeemerLogin, rewardTitle, broadcasterLogin);
+    }
+    catch (Exception ex)
+    {
+      TwitchChatBroadcasterLogs.RedeemPublishFailed(logger, redeemerLogin, ex.Message);
+    }
+  }
+
+  /// <inheritdoc/>
   public async Task PublishSystemMessageAsync(string type, object payload, CancellationToken cancellationToken = default)
   {
     try
@@ -143,6 +210,12 @@ internal static partial class TwitchChatBroadcasterLogs
 
   [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to publish chat message from {Username} to Redis: {Error}")]
   public static partial void PublishFailed(ILogger logger, string username, string error);
+
+  [LoggerMessage(Level = LogLevel.Debug, Message = "Channel point redeem by {Username} for '{RewardTitle}' in {Channel} published to Redis")]
+  public static partial void RedeemPublished(ILogger logger, string username, string rewardTitle, string channel);
+
+  [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to publish channel point redeem from {Username} to Redis: {Error}")]
+  public static partial void RedeemPublishFailed(ILogger logger, string username, string error);
 
   [LoggerMessage(Level = LogLevel.Debug, Message = "System message '{Type}' published to Redis")]
   public static partial void SystemMessagePublished(ILogger logger, string type);

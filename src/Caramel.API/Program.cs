@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using Caramel.API.Services;
 
 using Caramel.Cache;
+using Caramel.GRPC;
 
 WebApplicationBuilder webAppBuilder = WebApplication.CreateBuilder(args);
 var configuration = webAppBuilder.Configuration;
@@ -14,6 +15,7 @@ string redisConnectionString = configuration.GetConnectionString("Redis")
 _ = webAppBuilder.Services.AddControllers();
 _ = webAppBuilder.Services
   .AddCacheServices(redisConnectionString);
+_ = webAppBuilder.Services.AddGrpcClientServices();
 
 // WebSocket connection registry -- shared between the endpoint and the background broadcaster
 var socketRegistry = new ConcurrentDictionary<string, WebSocket>();

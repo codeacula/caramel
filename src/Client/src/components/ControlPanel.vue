@@ -2,17 +2,13 @@
 import { onMounted } from "vue";
 import { useObs } from "../composables/useObs";
 
-const { connect, isConnected, switchToScene } = useObs();
+const { isConnected, refreshStatus, switchToScene } = useObs();
 
 onMounted(() => {
-  // Attempt to connect to OBS WebSocket on mount
-  // Make sure OBS WebSocket is enabled on port 4455 without a password,
-  // or update the credentials here if needed.
-  connect("ws://localhost:4455", "");
+  refreshStatus();
 });
 
 const playAds = () => {
-  // Replace 'Ads' with the exact name of your OBS scene for ads
   switchToScene("BRB");
 };
 </script>

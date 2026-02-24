@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Caramel.Application\Caramel.Application.csproj" />
     <ProjectReference Include="..\Caramel.Cache\Caramel.Cache.csproj" />
     <ProjectReference Include="..\Caramel.Core\Caramel.Core.csproj" />
+    <ProjectReference Include="..\Caramel.GRPC\Caramel.GRPC.csproj" />
   </ItemGroup>
 
 </Project>

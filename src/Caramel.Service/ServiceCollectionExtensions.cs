@@ -1,7 +1,9 @@
 using Caramel.Core.Data;
+using Caramel.Core.OBS;
 using Caramel.Core.ToDos;
 using Caramel.Notifications;
 using Caramel.Service.Jobs;
+using Caramel.Service.OBS;
 
 using Quartz;
 
@@ -36,6 +38,12 @@ public static class ServiceCollectionExtensions
         .AddQuartzHostedService(opt => opt.WaitForJobsToComplete = true);
 
     _ = services.AddScoped<IToDoReminderScheduler, QuartzToDoReminderScheduler>();
+
+    // Register OBS service
+    _ = services.Configure<OBSConfig>(configuration.GetSection(nameof(OBSConfig)));
+    _ = services.AddSingleton<IOBSService, OBSService>();
+    _ = services.AddSingleton<IOBSStatusProvider>(sp => sp.GetRequiredService<IOBSService>());
+    _ = services.AddHostedService(sp => (OBSService)sp.GetRequiredService<IOBSService>());
 
     // Register Discord REST client for notifications
     var discordToken = configuration["Discord:Token"];
