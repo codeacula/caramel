@@ -80,7 +80,7 @@ app.MapGet("/auth/login", () =>
   return Results.Redirect(oauthUrl);
 });
 
-app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactory httpClientFactory, ITwitchChatBroadcaster broadcaster, ILogger<Program> callbackLogger, CancellationToken ct) =>
+app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactory httpClientFactory, ITwitchChatBroadcaster broadcaster, ITwitchUserResolver userResolver, ICaramelServiceClient serviceClient, ITwitchSetupState setupState, ILogger<Program> callbackLogger, CancellationToken ct) =>
 {
   try
   {
@@ -118,6 +118,36 @@ app.MapGet("/auth/callback", async (string code, string state, IHttpClientFactor
 
     tokenManager.SetTokens(accessToken, refreshToken, expiresIn);
     CaramelTwitchProgramLogs.OAuthSucceeded(callbackLogger);
+
+    // Resolve the authorized user's identity and auto-configure setup (bot = user, channel = their own channel)
+    try
+    {
+      var (userId, login) = await userResolver.ResolveCurrentUserAsync(ct);
+      var setup = new TwitchSetup
+      {
+        BotUserId = userId,
+        BotLogin = login,
+        Channels = [new TwitchChannel { UserId = userId, Login = login }],
+        ConfiguredOn = DateTimeOffset.UtcNow,
+        UpdatedOn = DateTimeOffset.UtcNow,
+      };
+
+      var saveResult = await serviceClient.SaveTwitchSetupAsync(setup, ct);
+      if (saveResult.IsSuccess)
+      {
+        setupState.Update(saveResult.Value);
+        CaramelTwitchProgramLogs.OAuthSetupConfigured(callbackLogger, login);
+        await broadcaster.PublishSystemMessageAsync("setup_status", new { configured = true }, ct);
+      }
+      else
+      {
+        CaramelTwitchProgramLogs.OAuthSetupFailed(callbackLogger, string.Join("; ", saveResult.Errors.Select(e => e.Message)));
+      }
+    }
+    catch (Exception ex)
+    {
+      CaramelTwitchProgramLogs.OAuthSetupFailed(callbackLogger, ex.Message);
+    }
 
     // Push auth_status notification to all connected WebSocket clients
     await broadcaster.PublishSystemMessageAsync("auth_status", new { authorized = true }, ct);
@@ -471,6 +501,12 @@ internal static partial class CaramelTwitchProgramLogs
 
   [LoggerMessage(Level = LogLevel.Information, Message = "OAuth authentication successful - bot tokens updated")]
   public static partial void OAuthSucceeded(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "OAuth setup auto-configured for user '{Login}'")]
+  public static partial void OAuthSetupConfigured(ILogger logger, string login);
+
+  [LoggerMessage(Level = LogLevel.Warning, Message = "OAuth setup auto-configuration failed: {Error}")]
+  public static partial void OAuthSetupFailed(ILogger logger, string error);
 
   [LoggerMessage(Level = LogLevel.Error, Message = "OAuth callback endpoint error: {Error}")]
   public static partial void OAuthCallbackError(ILogger logger, string error);

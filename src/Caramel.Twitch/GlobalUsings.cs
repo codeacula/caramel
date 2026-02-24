@@ -10,6 +10,7 @@ global using Caramel.Core.ToDos.Requests;
 global using Caramel.Core.Twitch;
 global using Caramel.Domain.Common.Enums;
 global using Caramel.Domain.People.ValueObjects;
+global using Caramel.Domain.Twitch;
 global using Caramel.GRPC;
 global using Caramel.Twitch.Handlers;
 global using Caramel.Twitch.Services;
