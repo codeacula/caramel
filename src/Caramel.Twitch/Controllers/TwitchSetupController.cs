@@ -2,12 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Caramel.Twitch.Controllers;
 
-/// <summary>
-/// Response body for <see cref="TwitchSetupController.GetSetup"/>.
-/// </summary>
-/// <param name="IsConfigured"></param>
-/// <param name="BotLogin"></param>
-/// <param name="ChannelLogin"></param>
 public sealed record TwitchSetupStatusResponse(bool IsConfigured, string? BotLogin, string? ChannelLogin);
 
 [ApiController]
@@ -16,7 +10,7 @@ public sealed class TwitchSetupController(ITwitchSetupState setupState) : Contro
 {
   /// <summary>
   /// Returns whether Twitch bot + channel setup is configured.
-  /// Setup is automatically applied after completing OAuth via GET /auth/login.
+  /// Setup is automatically applied after completing OAuth via GET /auth/twitch/login.
   /// </summary>
   [HttpGet]
   public IActionResult GetSetup()

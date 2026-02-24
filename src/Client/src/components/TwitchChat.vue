@@ -167,7 +167,7 @@ function scrollToBottom() {
           {{ statusLabel }}
         </span>
 
-        <a v-if="!isAuthorized" href="/auth/login" class="btn btn-auth" target="_blank" rel="noopener noreferrer">
+        <a v-if="!isAuthorized" href="/auth/twitch/login" class="btn btn-auth" target="_blank" rel="noopener noreferrer">
           Authorize Twitch
         </a>
 

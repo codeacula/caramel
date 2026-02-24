@@ -4,7 +4,7 @@
 
 :8080 {
   # Twitch OAuth, setup, and chat send endpoints -> Caramel.Twitch
-  handle /auth/* {
+  handle /auth/twitch/* {
     reverse_proxy caramel-twitch:5146
   }
 

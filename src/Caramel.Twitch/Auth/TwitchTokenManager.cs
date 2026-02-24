@@ -44,7 +44,7 @@ public sealed class TwitchTokenManager
     if (_refreshToken == null)
     {
       throw new InvalidOperationException(
-        "Cannot refresh token: no refresh token available. Complete the OAuth flow via GET /auth/login");
+        "Cannot refresh token: no refresh token available. Complete the OAuth flow via GET /auth/twitch/login");
     }
 
     await RefreshAccessTokenAsync(cancellationToken);

@@ -17,12 +17,6 @@ public sealed class ChatController(
 {
   private const int MaxMessageLength = 500;
 
-  /// <summary>
-  /// Sends a message to the first configured Twitch channel via the Helix chat API.
-  /// Returns 503 if setup has not been completed yet.
-  /// </summary>
-  /// <param name="request"></param>
-  /// <param name="cancellationToken"></param>
   [HttpPost("send")]
   public async Task<IActionResult> SendAsync([FromBody] SendChatMessageRequest request, CancellationToken cancellationToken)
   {

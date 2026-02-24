@@ -30,7 +30,7 @@ graph TD
         API[Caramel.API<br/>:5144]
         Bot[Caramel.Discord]
         Twitch[Caramel.Twitch]
-        
+
         subgraph "Core Backend"
             Service[Caramel.Service<br/>:5270]
             DB[(PostgreSQL<br/>Marten)]
@@ -42,11 +42,11 @@ graph TD
     User -->|HTTP/REST| API
     DiscordPlatform -->|WebSocket| Bot
     TwitchPlatform -->|OAuth/EventSub| Twitch
-    
+
     API -->|gRPC| Service
     Bot -->|gRPC| Service
     Twitch -->|gRPC| Service
-    
+
     Service -->|Read/Write| DB
     Service -->|Cache| Redis
     Service -->|Prompts| AI
@@ -105,7 +105,7 @@ graph TD
     Service --> Database
     Service --> GRPC
     Service --> Notifications
-    
+
     API --> GRPC
     Discord --> GRPC
     Twitch --> GRPC
@@ -114,7 +114,7 @@ graph TD
     Application --> Domain
     Application --> AI
     Application --> Cache
-    
+
     Database --> Domain
     AI --> Core
     Cache --> Core
@@ -150,10 +150,10 @@ sequenceDiagram
     Note over D: User sends "Remind me to buy milk"
     D->>G: SendCaramelMessageAsync(NewMessageRequest)
     G->>M: Send(ProcessIncomingMessageCommand)
-    
+
     M->>DB: GetOrCreatePerson()
     M->>DB: AddMessageAsync(User Content)
-    
+
     rect rgb(240, 248, 255)
         Note right of M: AI Processing Loop
         M->>AI: Plan Tools (History + Active ToDos)
@@ -162,7 +162,7 @@ sequenceDiagram
         M->>AI: Generate Response (with Tool Results)
         AI-->>M: "I've added that to your list."
     end
-    
+
     M->>DB: AddReplyAsync(AI Content)
     M-->>G: Return Reply
     G-->>D: Return GrpcResult
@@ -517,9 +517,9 @@ Twitch bot host with EventSub integration and OAuth authentication. Handles chat
 - gRPC client for communication with Caramel.Service
 
 **HTTP Endpoints (port 5146):**
-- `GET /auth/login` - Begins Twitch OAuth authorization code flow (redirects to Twitch)
-- `GET /auth/callback` - Receives the authorization code, exchanges it for tokens, stores them
-- `GET /auth/status` - Returns `{ "authorized": true/false }` indicating whether valid tokens are held
+- `GET /auth/twitch/login` - Begins Twitch OAuth authorization code flow (redirects to Twitch)
+- `GET /auth/twitch/callback` - Receives the authorization code, exchanges it for tokens, stores them
+- `GET /auth/twitch/status` - Returns `{ "authorized": true/false }` indicating whether valid tokens are held
 - `GET /health` - Liveness probe
 
 **OAuth Scopes requested:**
@@ -546,7 +546,7 @@ Twitch EventSub WS → ChannelChatMessage event
 ```
 Twitch__ClientId=your_twitch_client_id_here
 Twitch__ClientSecret=your_twitch_client_secret_here
-Twitch__OAuthCallbackUrl=http://localhost:5146/auth/callback
+Twitch__OAuthCallbackUrl=http://localhost:5146/auth/twitch/callback
 Twitch__EncryptionKey=your_secure_32_byte_base64_key_here
 Twitch__BotUserId=your_bot_user_id_here
 Twitch__ChannelIds=channel_id_1,channel_id_2

@@ -7,7 +7,7 @@ public sealed class OAuthStateManagerTests
     ClientId = "test-client-id",
     ClientSecret = "test-client-secret",
     AccessToken = "test-token",
-    OAuthCallbackUrl = "http://localhost:5146/auth/callback",
+    OAuthCallbackUrl = "http://localhost:5146/auth/twitch/callback",
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
 
