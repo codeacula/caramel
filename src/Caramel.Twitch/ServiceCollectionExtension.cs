@@ -28,8 +28,8 @@ public static class ServiceCollectionExtension
 
     // Register handlers as singletons (they're called from event handlers)
     _ = services.AddSingleton<ChatMessageHandler>();
-    _ = services.AddSingleton<WhisperEventHandler>();
-    _ = services.AddSingleton<ChannelPointRedeemEventHandler>();
+    _ = services.AddSingleton<WhisperHandler>();
+    _ = services.AddSingleton<ChannelPointRedeemHandler>();
 
     return services;
   }

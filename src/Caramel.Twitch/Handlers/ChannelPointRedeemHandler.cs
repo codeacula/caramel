@@ -1,14 +1,8 @@
 namespace Caramel.Twitch.Handlers;
 
-/// <summary>
-/// Handles incoming channel point custom reward redemptions from Twitch EventSub
-/// channel.channel_points_custom_reward_redemption.add events.
-/// </summary>
-/// <param name="broadcaster"></param>
-/// <param name="logger"></param>
-public sealed class ChannelPointRedeemEventHandler(
+public sealed class ChannelPointRedeemHandler(
   ITwitchChatBroadcaster broadcaster,
-  ILogger<ChannelPointRedeemEventHandler> logger)
+  ILogger<ChannelPointRedeemHandler> logger)
 {
   /// <summary>
   /// Processes an incoming channel point redemption and broadcasts it to the Redis pub/sub
@@ -54,7 +48,7 @@ public sealed class ChannelPointRedeemEventHandler(
 }
 
 /// <summary>
-/// Structured logging for <see cref="ChannelPointRedeemEventHandler"/>.
+/// Structured logging for <see cref="ChannelPointRedeemHandler"/>.
 /// </summary>
 internal static partial class ChannelPointRedeemLogs
 {

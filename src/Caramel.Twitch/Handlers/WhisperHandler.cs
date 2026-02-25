@@ -2,24 +2,11 @@ using Caramel.Twitch.Extensions;
 
 namespace Caramel.Twitch.Handlers;
 
-/// <summary>
-/// Handles incoming whispers (direct messages) from Twitch EventSub user.whisper.message events.
-/// </summary>
-/// <param name="caramelServiceClient"></param>
-/// <param name="personCache"></param>
-/// <param name="logger"></param>
-public sealed class WhisperEventHandler(
+public sealed class WhisperHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
-  ILogger<WhisperEventHandler> logger)
+  ILogger<WhisperHandler> logger)
 {
-  /// <summary>
-  /// Processes an incoming whisper from a Twitch user.
-  /// </summary>
-  /// <param name="fromUserId"></param>
-  /// <param name="fromUserLogin"></param>
-  /// <param name="messageText"></param>
-  /// <param name="cancellationToken"></param>
   public async Task HandleAsync(
     string fromUserId,
     string fromUserLogin,
