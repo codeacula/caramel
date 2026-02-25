@@ -102,9 +102,7 @@ public sealed class ToolPlanValidator
 
   private static PlannedToolCall NormalizeArguments(PlannedToolCall toolCall)
   {
-    var normalizedArguments = toolCall.Arguments is null
-      ? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-      : new Dictionary<string, string?>(toolCall.Arguments, StringComparer.OrdinalIgnoreCase);
+    var normalizedArguments = new Dictionary<string, string?>(toolCall.Arguments ?? [], StringComparer.OrdinalIgnoreCase);
     return toolCall with { Arguments = normalizedArguments };
   }
 

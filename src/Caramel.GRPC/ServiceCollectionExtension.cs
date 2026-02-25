@@ -48,7 +48,8 @@ public static class ServiceCollectionExtension
           return GrpcChannel.ForAddress(address, channelOptions);
         });
 
-    _ = services.AddSingleton<ICaramelServiceClient, CaramelGrpcClient>();
+    _ = services.AddSingleton<ICaramelServiceClient, CaramelGrpcClient>()
+      .AddScoped<IOBSServiceClient, OBSServiceClient>();
 
     return services;
   }

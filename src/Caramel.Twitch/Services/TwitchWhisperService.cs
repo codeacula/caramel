@@ -4,37 +4,17 @@ using Caramel.Twitch.Auth;
 
 namespace Caramel.Twitch.Services;
 
-/// <summary>
-/// Contract for sending Twitch whispers (direct messages) via the Helix API.
-/// </summary>
 public interface ITwitchWhisperService
 {
-  /// <summary>
-  /// Sends a whisper from the bot to a recipient.
-  /// </summary>
-  /// <param name="botUserId">Numeric Twitch user ID of the bot.</param>
-  /// <param name="recipientUserId">Numeric Twitch user ID of the recipient.</param>
-  /// <param name="message">Message content (max 10,000 characters).</param>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>True if the whisper was sent successfully.</returns>
   Task<bool> SendWhisperAsync(string botUserId, string recipientUserId, string message, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Sends Twitch whispers via the Helix "Send Whisper" API endpoint.
-/// Requires the bot to have user:manage:whispers scope and Twitch verification.
-/// </summary>
-/// <param name="httpClientFactory"></param>
-/// <param name="twitchConfig"></param>
-/// <param name="tokenManager"></param>
-/// <param name="logger"></param>
 public sealed class TwitchWhisperService(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
   TwitchTokenManager tokenManager,
   ILogger<TwitchWhisperService> logger) : ITwitchWhisperService
 {
-  /// <inheritdoc/>
   public async Task<bool> SendWhisperAsync(
     string botUserId,
     string recipientUserId,
@@ -75,9 +55,6 @@ public sealed class TwitchWhisperService(
   }
 }
 
-/// <summary>
-/// Structured logging for <see cref="TwitchWhisperService"/>.
-/// </summary>
 internal static partial class TwitchWhisperServiceLogs
 {
   [LoggerMessage(Level = LogLevel.Information, Message = "Whisper sent from {BotUserId} to {RecipientUserId}")]

@@ -2,43 +2,13 @@ using Caramel.Twitch.Auth;
 
 namespace Caramel.Twitch.Services;
 
-/// <summary>
-/// Contract for resolving Twitch usernames to numeric user IDs via the Helix API.
-/// </summary>
 public interface ITwitchUserResolver
 {
-  /// <summary>
-  /// Resolves a Twitch login name or numeric ID to a numeric user ID.
-  /// If the input is already numeric, it is returned as-is.
-  /// Results are cached in-memory for the lifetime of the service.
-  /// </summary>
-  /// <param name="loginOrId"></param>
-  /// <param name="cancellationToken"></param>
   Task<string> ResolveUserIdAsync(string loginOrId, CancellationToken cancellationToken = default);
-
-  /// <summary>
-  /// Resolves multiple logins/IDs in a single batch call.
-  /// </summary>
-  /// <param name="loginsOrIds"></param>
-  /// <param name="cancellationToken"></param>
   Task<IReadOnlyList<string>> ResolveUserIdsAsync(IEnumerable<string> loginsOrIds, CancellationToken cancellationToken = default);
-
-  /// <summary>
-  /// Returns the identity (numeric ID and login) of the user who owns the current access token
-  /// by calling <c>GET /helix/users</c> with no parameters.
-  /// </summary>
-  /// <param name="cancellationToken"></param>
   Task<(string UserId, string Login)> ResolveCurrentUserAsync(CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Resolves Twitch usernames to numeric user IDs via the Helix "Get Users" API.
-/// Caches results in-memory so that repeated lookups for the same user avoid extra API calls.
-/// </summary>
-/// <param name="httpClientFactory"></param>
-/// <param name="twitchConfig"></param>
-/// <param name="tokenManager"></param>
-/// <param name="logger"></param>
 public sealed class TwitchUserResolver(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
@@ -204,9 +174,6 @@ public sealed class TwitchUserResolver(
   }
 }
 
-/// <summary>
-/// Structured logging for <see cref="TwitchUserResolver"/>.
-/// </summary>
 internal static partial class TwitchUserResolverLogs
 {
   [LoggerMessage(Level = LogLevel.Information, Message = "Resolved Twitch user '{Login}' to ID {UserId}")]

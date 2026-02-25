@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using Caramel.API.Services;
 
 using Caramel.Cache;
+using Caramel.Core.API;
 using Caramel.GRPC;
 
 WebApplicationBuilder webAppBuilder = WebApplication.CreateBuilder(args);

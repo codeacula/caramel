@@ -1,6 +1,5 @@
 using Caramel.Core.API;
 using Caramel.Core.Conversations;
-using Caramel.Core.OBS;
 using Caramel.Domain.Twitch;
 using Caramel.GRPC.Interceptors;
 using Caramel.GRPC.Service;
@@ -37,6 +36,37 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
     GC.SuppressFinalize(this);
   }
 
+  public async Task<Result<TwitchSetup?>> GetTwitchSetupAsync(CancellationToken cancellationToken = default)
+  {
+    var grpcResult = await CaramelGrpcService.GetTwitchSetupAsync();
+
+    return grpcResult switch
+    {
+      { IsSuccess: false } => Result.Fail<TwitchSetup?>(string.Join("; ", grpcResult.Errors.Select(e => e.Message))),
+      { Data: null } => Result.Ok<TwitchSetup?>(null),
+      { Data: { } data } => Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(data)),
+      _ => Result.Fail<TwitchSetup?>("Unknown gRPC response state.")
+    };
+  }
+
+  public async Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default)
+  {
+    var grpcRequest = new Contracts.SaveTwitchSetupRequest
+    {
+      BotUserId = setup.BotUserId,
+      BotLogin = setup.BotLogin,
+      Channels = [.. setup.Channels.Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
+    };
+
+    var grpcResult = await CaramelGrpcService.SaveTwitchSetupAsync(grpcRequest);
+
+    return grpcResult switch
+    {
+      { IsSuccess: true, Data: { } data } => Result.Ok(MapTwitchSetupToDomain(data)),
+      _ => Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
+    };
+  }
+
   public async Task<Result<string>> SendMessageAsync(ProcessMessageRequest request, CancellationToken cancellationToken = default)
   {
     var grpcRequest = new Contracts.NewMessageRequest
@@ -52,61 +82,6 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
     return grpcResult.IsSuccess ?
       Result.Ok(grpcResult.Data ?? string.Empty) :
       Result.Fail(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
-  }
-
-  public async Task<Result<TwitchSetup?>> GetTwitchSetupAsync(CancellationToken cancellationToken = default)
-  {
-    var grpcResult = await CaramelGrpcService.GetTwitchSetupAsync();
-
-    if (!grpcResult.IsSuccess)
-    {
-      return Result.Fail<TwitchSetup?>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
-    }
-    else if (grpcResult.Data is null)
-    {
-      return Result.Ok<TwitchSetup?>(null);
-    }
-    else
-    {
-      return Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
-    }
-  }
-
-  public async Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default)
-  {
-    var grpcRequest = new Contracts.SaveTwitchSetupRequest
-    {
-      BotUserId = setup.BotUserId,
-      BotLogin = setup.BotLogin,
-      Channels = [.. setup.Channels.Select(c => new Contracts.TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
-    };
-
-    var grpcResult = await CaramelGrpcService.SaveTwitchSetupAsync(grpcRequest);
-
-    return !grpcResult.IsSuccess || grpcResult.Data is null
-      ? Result.Fail<TwitchSetup>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
-      : Result.Ok(MapTwitchSetupToDomain(grpcResult.Data));
-  }
-
-  public async Task<Result<OBSStatus>> GetOBSStatusAsync(CancellationToken cancellationToken = default)
-  {
-    var grpcResult = await CaramelGrpcService.GetOBSStatusAsync();
-    return !grpcResult.IsSuccess || grpcResult.Data is null
-      ? Result.Fail<OBSStatus>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
-      : Result.Ok(new OBSStatus
-      {
-        IsConnected = grpcResult.Data.IsConnected,
-        CurrentScene = grpcResult.Data.CurrentScene
-      });
-  }
-
-  public async Task<Result<string>> SetOBSSceneAsync(string sceneName, CancellationToken cancellationToken = default)
-  {
-    var grpcRequest = new Contracts.SetOBSSceneRequest { SceneName = sceneName };
-    var grpcResult = await CaramelGrpcService.SetOBSSceneAsync(grpcRequest);
-    return grpcResult.IsSuccess
-      ? Result.Ok(grpcResult.Data ?? string.Empty)
-      : Result.Fail(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
   }
 
   private static TwitchSetup MapTwitchSetupToDomain(Contracts.TwitchSetupDTO dto)

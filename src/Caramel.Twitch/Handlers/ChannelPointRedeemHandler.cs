@@ -4,10 +4,6 @@ public sealed class ChannelPointRedeemHandler(
   ITwitchChatBroadcaster broadcaster,
   ILogger<ChannelPointRedeemHandler> logger)
 {
-  /// <summary>
-  /// Processes an incoming channel point redemption and broadcasts it to the Redis pub/sub
-  /// channel so the UI can display it in the event feed.
-  /// </summary>
   public async Task HandleAsync(
     string redemptionId,
     string broadcasterUserId,

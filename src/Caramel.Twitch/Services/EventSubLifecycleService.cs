@@ -24,83 +24,71 @@ internal sealed class EventSubLifecycleService(
 
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)
   {
-    try
+    CaramelTwitchProgramLogs.EventSubStarting(logger);
+
+    // Wire event handlers exactly once to prevent duplicate invocations on reconnect
+    WireEventHandlers();
+
+    while (!stoppingToken.IsCancellationRequested)
     {
-      CaramelTwitchProgramLogs.EventSubStarting(logger);
-
-      // Wire event handlers exactly once to prevent duplicate invocations on reconnect
-      WireEventHandlers();
-
-      while (!stoppingToken.IsCancellationRequested)
+      try
       {
-        try
-        {
-          // Phase 1: Wait for valid OAuth tokens
-          _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
+        // Phase 1: Wait for valid OAuth tokens
+        _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
 
-          // Phase 2: Load setup from DB (retry until configured)
-          if (!setupState.IsConfigured)
+        // Phase 2: Load setup from DB (retry until configured)
+        if (!setupState.IsConfigured)
+        {
+          var setupResult = await serviceClient.GetTwitchSetupAsync(stoppingToken);
+          if (setupResult.IsSuccess && setupResult.Value is not null)
           {
-            var setupResult = await serviceClient.GetTwitchSetupAsync(stoppingToken);
-            if (setupResult.IsSuccess && setupResult.Value is not null)
-            {
-              setupState.Update(setupResult.Value);
-              CaramelTwitchProgramLogs.EventSubSetupLoaded(logger, setupResult.Value.BotLogin);
-            }
-            else
-            {
-              CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
-              await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-              continue;
-            }
+            setupState.Update(setupResult.Value);
+            CaramelTwitchProgramLogs.EventSubSetupLoaded(logger, setupResult.Value.BotLogin);
           }
-
-          // Phase 3: Connect EventSub
-          _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-          CaramelTwitchProgramLogs.EventSubConnecting(logger);
-          _ = await eventSubClient.ConnectAsync();
-
-          // Wait until either the host is stopping or the WebSocket disconnects
-          using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-          var cancelTask = Task.Delay(Timeout.Infinite, cts.Token);
-          var disconnectTask = _disconnectTcs.Task;
-          var completedTask = await Task.WhenAny(disconnectTask, cancelTask);
-
-          if (completedTask == cancelTask)
+          else
           {
-            // Host is shutting down
-            break;
+            CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            continue;
           }
+        }
 
-          // WebSocket disconnected - log and retry after a brief delay
-          CaramelTwitchProgramLogs.EventSubConnectionError(logger, "WebSocket disconnected, reconnecting...");
-          await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-        }
-        catch (OperationCanceledException)
+        // Phase 3: Connect EventSub
+        _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        CaramelTwitchProgramLogs.EventSubConnecting(logger);
+        _ = await eventSubClient.ConnectAsync();
+
+        // Wait until either the host is stopping or the WebSocket disconnects
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var cancelTask = Task.Delay(Timeout.Infinite, cts.Token);
+        var disconnectTask = _disconnectTcs.Task;
+        var completedTask = await Task.WhenAny(disconnectTask, cancelTask);
+
+        if (completedTask == cancelTask)
         {
-          throw;
+          // Host is shutting down
+          break;
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("refresh token"))
-        {
-          CaramelTwitchProgramLogs.EventSubWaitingForOAuth(logger);
-          await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-        }
-        catch (Exception ex)
-        {
-          CaramelTwitchProgramLogs.EventSubConnectionError(logger, ex.Message);
-          await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
-        }
+
+        // WebSocket disconnected - log and retry after a brief delay
+        CaramelTwitchProgramLogs.EventSubConnectionError(logger, "WebSocket disconnected, reconnecting...");
+        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
       }
-    }
-    catch (OperationCanceledException)
-    {
-      CaramelTwitchProgramLogs.ServiceCancelled(logger);
-    }
-    catch (Exception ex)
-    {
-      CaramelTwitchProgramLogs.ServiceFailed(logger, ex.Message);
-      throw;
+      catch (OperationCanceledException)
+      {
+        throw;
+      }
+      catch (InvalidOperationException ex) when (ex.Message.Contains("refresh token"))
+      {
+        CaramelTwitchProgramLogs.EventSubWaitingForOAuth(logger);
+        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+      }
+      catch (Exception ex)
+      {
+        CaramelTwitchProgramLogs.EventSubConnectionError(logger, ex.Message);
+        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+      }
     }
   }
 
