@@ -2,11 +2,11 @@ namespace Caramel.Twitch.Tests.Handlers;
 
 public sealed class WhisperEventHandlerTests
 {
-  private static (Mock<ICaramelServiceClient>, Mock<IPersonCache>, Mock<ILogger<WhisperEventHandler>>) CreateMocks()
+  private static (Mock<ICaramelServiceClient>, Mock<IPersonCache>, Mock<ILogger<WhisperHandler>>) CreateMocks()
   {
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var personCacheMock = new Mock<IPersonCache>();
-    var loggerMock = new Mock<ILogger<WhisperEventHandler>>();
+    var loggerMock = new Mock<ILogger<WhisperHandler>>();
     return (serviceClientMock, personCacheMock, loggerMock);
   }
 
@@ -15,7 +15,7 @@ public sealed class WhisperEventHandlerTests
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
-    var handler = new WhisperEventHandler(
+    var handler = new WhisperHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       loggerMock.Object);
@@ -46,7 +46,7 @@ public sealed class WhisperEventHandlerTests
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
-    var handler = new WhisperEventHandler(
+    var handler = new WhisperHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       loggerMock.Object);
@@ -69,7 +69,7 @@ public sealed class WhisperEventHandlerTests
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
-    var handler = new WhisperEventHandler(
+    var handler = new WhisperHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       loggerMock.Object);
@@ -92,7 +92,7 @@ public sealed class WhisperEventHandlerTests
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
-    var handler = new WhisperEventHandler(
+    var handler = new WhisperHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       loggerMock.Object);
@@ -119,7 +119,7 @@ public sealed class WhisperEventHandlerTests
   {
     // Arrange
     var (serviceClientMock, personCacheMock, loggerMock) = CreateMocks();
-    var handler = new WhisperEventHandler(
+    var handler = new WhisperHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       loggerMock.Object);

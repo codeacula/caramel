@@ -1,7 +1,5 @@
 using System.Text.Json.Serialization;
 
-using Caramel.Core.Twitch;
-
 namespace Caramel.Twitch.Services;
 
 /// <summary>

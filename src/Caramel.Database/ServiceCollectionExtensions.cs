@@ -1,14 +1,11 @@
 using Caramel.Core.Conversations;
 using Caramel.Core.Data;
 using Caramel.Core.People;
-using Caramel.Core.ToDos;
 using Caramel.Core.Twitch;
 using Caramel.Database.Conversations;
 using Caramel.Database.Conversations.Events;
 using Caramel.Database.People;
 using Caramel.Database.People.Events;
-using Caramel.Database.ToDos;
-using Caramel.Database.ToDos.Events;
 using Caramel.Database.Twitch;
 using Caramel.Database.Twitch.Events;
 
@@ -63,33 +60,6 @@ public static class ServiceCollectionExtensions
         _ = options.Events.AddEventType<UserSentMessageEvent>();
         _ = options.Events.AddEventType<CaramelRepliedEvent>();
 
-        _ = options.Schema.For<DbToDo>()
-          .Identity(x => x.Id)
-          .Index(x => x.PersonId);
-
-        _ = options.Events.AddEventType<ToDoCreatedEvent>();
-        _ = options.Events.AddEventType<ToDoUpdatedEvent>();
-        _ = options.Events.AddEventType<ToDoCompletedEvent>();
-        _ = options.Events.AddEventType<ToDoDeletedEvent>();
-        _ = options.Events.AddEventType<ToDoReminderScheduledEvent>();
-        _ = options.Events.AddEventType<ToDoReminderSetEvent>();
-
-        _ = options.Schema.For<DbReminder>()
-          .Identity(x => x.Id);
-
-        _ = options.Events.AddEventType<ReminderCreatedEvent>();
-        _ = options.Events.AddEventType<ReminderSentEvent>();
-        _ = options.Events.AddEventType<ReminderAcknowledgedEvent>();
-        _ = options.Events.AddEventType<ReminderDeletedEvent>();
-
-        _ = options.Schema.For<DbToDoReminder>()
-          .Identity(x => x.Id)
-          .Index(x => x.ToDoId)
-          .Index(x => x.ReminderId);
-
-        _ = options.Events.AddEventType<ToDoReminderLinkedEvent>();
-        _ = options.Events.AddEventType<ToDoReminderUnlinkedEvent>();
-
         _ = options.Schema.For<DbTwitchSetup>()
           .Identity(x => x.Id);
 
@@ -98,9 +68,6 @@ public static class ServiceCollectionExtensions
 
         _ = options.Projections.Snapshot<DbPerson>(Marten.Events.Projections.SnapshotLifecycle.Inline);
         _ = options.Projections.Snapshot<DbConversation>(Marten.Events.Projections.SnapshotLifecycle.Inline);
-        _ = options.Projections.Snapshot<DbToDo>(Marten.Events.Projections.SnapshotLifecycle.Inline);
-        _ = options.Projections.Snapshot<DbReminder>(Marten.Events.Projections.SnapshotLifecycle.Inline);
-        _ = options.Projections.Snapshot<DbToDoReminder>(Marten.Events.Projections.SnapshotLifecycle.Inline);
         _ = options.Projections.Snapshot<DbTwitchSetup>(Marten.Events.Projections.SnapshotLifecycle.Inline);
       })
       .UseLightweightSessions();
@@ -108,8 +75,6 @@ public static class ServiceCollectionExtensions
     _ = services
       .AddScoped<IConversationStore, ConversationStore>()
       .AddScoped<IPersonStore, PersonStore>()
-      .AddScoped<IToDoStore, ToDoStore>()
-      .AddScoped<IReminderStore, ReminderStore>()
       .AddScoped<ITwitchSetupStore, TwitchSetupStore>();
 
     return services;

@@ -1,6 +1,5 @@
 using Caramel.AI.Config;
 using Caramel.AI.Prompts;
-using Caramel.Core.ToDos;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +23,7 @@ public static class ServiceCollectionExtensions
       .AddSingleton(config)
       .AddSingleton<IPromptLoader, PromptLoader>()
       .AddSingleton<IPromptTemplateProcessor, PromptTemplateProcessor>()
-      .AddTransient<ICaramelAIAgent, CaramelAIAgent>()
-      .AddTransient<IReminderMessageGenerator, CaramelReminderMessageGenerator>();
+      .AddTransient<ICaramelAIAgent, CaramelAIAgent>();
 
     return services;
   }

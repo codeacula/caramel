@@ -8,7 +8,6 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": "http://localhost:5144",
-      "/interactions": "http://localhost:5144",
       "/ws": {
         target: "http://localhost:5144",
         ws: true,

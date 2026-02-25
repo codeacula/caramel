@@ -42,7 +42,6 @@ export function useObs() {
 
   return {
     isConnected,
-    currentScene,
     refreshStatus,
     switchToScene,
   };

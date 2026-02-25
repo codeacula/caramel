@@ -14,6 +14,8 @@ public sealed class ApiTestFactory : WebApplicationFactory<ICaramelAPI>
 {
   protected override void ConfigureWebHost(IWebHostBuilder builder)
   {
+    _ = builder.UseWebRoot(Path.Combine(AppContext.BaseDirectory, "wwwroot"));
+
     _ = builder.ConfigureServices(services =>
     {
       var mockCache = new Mock<IPersonCache>();

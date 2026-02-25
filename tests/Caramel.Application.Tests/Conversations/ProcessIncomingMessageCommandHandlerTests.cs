@@ -4,7 +4,6 @@ using Caramel.AI.Requests;
 using Caramel.Application.Conversations;
 using Caramel.Core.Conversations;
 using Caramel.Core.People;
-using Caramel.Core.ToDos;
 using Caramel.Domain.Common.ValueObjects;
 using Caramel.Domain.Conversations.Models;
 using Caramel.Domain.Conversations.ValueObjects;
@@ -25,11 +24,9 @@ public class ProcessIncomingMessageCommandHandlerTests
 {
   private readonly Mock<ICaramelAIAgent> _mockAIAgent;
   private readonly Mock<IConversationStore> _mockConversationStore;
-  private readonly Mock<IFuzzyTimeParser> _mockFuzzyTimeParser;
   private readonly Mock<ILogger<ProcessIncomingMessageCommandHandler>> _mockLogger;
   private readonly Mock<IMediator> _mockMediator;
   private readonly Mock<IPersonStore> _mockPersonStore;
-  private readonly Mock<IToDoStore> _mockToDoStore;
   private readonly Mock<IAIRequestBuilder> _mockRequestBuilder;
   private readonly PersonConfig _personConfig;
   private readonly TimeProvider _timeProvider;
@@ -39,11 +36,9 @@ public class ProcessIncomingMessageCommandHandlerTests
   {
     _mockAIAgent = new Mock<ICaramelAIAgent>();
     _mockConversationStore = new Mock<IConversationStore>();
-    _mockFuzzyTimeParser = new Mock<IFuzzyTimeParser>();
     _mockLogger = new Mock<ILogger<ProcessIncomingMessageCommandHandler>>();
     _mockMediator = new Mock<IMediator>();
     _mockPersonStore = new Mock<IPersonStore>();
-    _mockToDoStore = new Mock<IToDoStore>();
     _mockRequestBuilder = new Mock<IAIRequestBuilder>();
     _personConfig = new PersonConfig { DefaultDailyTaskCount = 5 };
     _timeProvider = TimeProvider.System;
@@ -51,11 +46,8 @@ public class ProcessIncomingMessageCommandHandlerTests
     _handler = new ProcessIncomingMessageCommandHandler(
       _mockAIAgent.Object,
       _mockConversationStore.Object,
-      _mockFuzzyTimeParser.Object,
       _mockLogger.Object,
-      _mockMediator.Object,
       _mockPersonStore.Object,
-      _mockToDoStore.Object,
       _personConfig,
       _timeProvider
     );
@@ -80,10 +72,7 @@ public class ProcessIncomingMessageCommandHandlerTests
     _ = _mockConversationStore.Setup(x => x.AddMessageAsync(conversationId, It.IsAny<Content>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(Result.Ok(conversation));
 
-    _ = _mockToDoStore.Setup(x => x.GetByPersonIdAsync(personId, false, It.IsAny<CancellationToken>()))
-        .ReturnsAsync(Result.Ok<IEnumerable<Domain.ToDos.Models.ToDo>>([]));
-
-    _ = _mockAIAgent.Setup(x => x.CreateToolPlanningRequest(It.IsAny<IEnumerable<ChatMessageDTO>>(), It.IsAny<string>(), It.IsAny<string>()))
+    _ = _mockAIAgent.Setup(x => x.CreateToolPlanningRequest(It.IsAny<IEnumerable<ChatMessageDTO>>(), It.IsAny<string>()))
         .Returns(_mockRequestBuilder.Object);
 
     _ = _mockRequestBuilder.Setup(x => x.ExecuteAsync(It.IsAny<CancellationToken>()))

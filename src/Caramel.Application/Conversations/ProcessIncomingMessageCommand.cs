@@ -4,13 +4,10 @@ using Caramel.AI.Planning;
 using Caramel.AI.Requests;
 using Caramel.AI.Tooling;
 using Caramel.Application.People;
-using Caramel.Application.Reminders;
-using Caramel.Application.ToDos;
 using Caramel.Core;
 using Caramel.Core.Conversations;
 using Caramel.Core.Logging;
 using Caramel.Core.People;
-using Caramel.Core.ToDos;
 using Caramel.Domain.Common.ValueObjects;
 using Caramel.Domain.Conversations.Models;
 using Caramel.Domain.People.Models;
@@ -31,11 +28,8 @@ public sealed record ProcessIncomingMessageCommand(PersonId PersonId, Content Co
 public sealed class ProcessIncomingMessageCommandHandler(
   ICaramelAIAgent caramelAIAgent,
   IConversationStore conversationStore,
-  IFuzzyTimeParser fuzzyTimeParser,
   ILogger<ProcessIncomingMessageCommandHandler> logger,
-  IMediator mediator,
   IPersonStore personStore,
-  IToDoStore toDoStore,
   PersonConfig personConfig,
   TimeProvider timeProvider
 ) : IRequestHandler<ProcessIncomingMessageCommand, Result<Reply>>
@@ -92,12 +86,11 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
     // Get context variables
     var userTimezone = GetUserTimezone(person);
-    var activeTodosSnapshot = await BuildActiveTodosSnapshotAsync(person.Id, cancellationToken);
-    var toolPlanningMessages = ConversationHistoryBuilder.BuildForToolPlanning(conversation, activeTodosSnapshot.TodoIds);
+    var toolPlanningMessages = ConversationHistoryBuilder.BuildForToolPlanning(conversation);
 
     // Phase 1: Tool Planning (JSON output)
     var toolPlanResult = await caramelAIAgent
-      .CreateToolPlanningRequest(toolPlanningMessages, userTimezone, activeTodosSnapshot.Summary)
+      .CreateToolPlanningRequest(toolPlanningMessages, userTimezone)
       .ExecuteAsync(cancellationToken);
 
     var toolPlan = new ToolPlan();
@@ -122,8 +115,7 @@ public sealed class ProcessIncomingMessageCommandHandler(
     // Phase 2: Validate + Execute Tool Calls
     var validationContext = new ToolPlanValidationContext(
       plugins,
-      toolPlanningMessages,
-      activeTodosSnapshot.TodoIds);
+      toolPlanningMessages);
 
     var validationResult = ToolPlanValidator.Validate(toolPlan, validationContext);
     var toolResults = new List<ToolCallResult>(validationResult.BlockedCalls);
@@ -159,14 +151,10 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
   private Dictionary<string, object> CreatePlugins(Person person)
   {
-    var toDoPlugin = new ToDoPlugin(mediator, personStore, fuzzyTimeParser, timeProvider, personConfig, person.Id);
-    var remindersPlugin = new RemindersPlugin(mediator, personStore, fuzzyTimeParser, timeProvider, personConfig, person.Id);
     var personPlugin = new PersonPlugin(personStore, personConfig, person.Id);
 
     return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
     {
-      [ToDoPlugin.PluginName] = toDoPlugin,
-      [RemindersPlugin.PluginName] = remindersPlugin,
       [PersonPlugin.PluginName] = personPlugin
     };
   }
@@ -195,30 +183,6 @@ public sealed class ProcessIncomingMessageCommandHandler(
   private static string GetUserTimezone(Person person)
   {
     return person.TimeZoneId?.Value ?? "UTC";
-  }
-
-  private async Task<ActiveTodosSnapshot> BuildActiveTodosSnapshotAsync(PersonId personId, CancellationToken cancellationToken)
-  {
-    var todosResult = await toDoStore.GetByPersonIdAsync(personId, includeCompleted: false, cancellationToken);
-
-    if (todosResult.IsFailed || !todosResult.Value.Any())
-    {
-      return new ActiveTodosSnapshot("No active todos", []);
-    }
-
-    var todos = todosResult.Value
-      .OrderBy(t => t.DueDate?.Value)
-      .Take(10) // Limit to 10 to avoid bloating the prompt
-      .ToList();
-
-    var summary = string.Join("\n", todos.Select(t =>
-    {
-      var dueDate = t.DueDate?.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? "No due date";
-      return $"• [{t.Id.Value}] {t.Description.Value} (Due: {dueDate})";
-    }));
-
-    var todoIds = todos.ConvertAll(t => t.Id.Value.ToString());
-    return new ActiveTodosSnapshot(summary, todoIds);
   }
 
   private sealed record ActiveTodosSnapshot(string Summary, IReadOnlyCollection<string> TodoIds);
