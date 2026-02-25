@@ -13,18 +13,18 @@ public sealed class ChatMessageEventHandlerTests
     Mock<IPersonCache>,
     Mock<ITwitchChatBroadcaster>,
     Mock<ITwitchSetupState>,
-    Mock<ILogger<ChatMessageEventHandler>>) CreateMocks()
+    Mock<ILogger<ChatMessageHandler>>) CreateMocks()
   {
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var personCacheMock = new Mock<IPersonCache>();
     var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
     var setupStateMock = new Mock<ITwitchSetupState>();
-    var loggerMock = new Mock<ILogger<ChatMessageEventHandler>>();
+    var loggerMock = new Mock<ILogger<ChatMessageHandler>>();
     return (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock);
   }
 
   private static Task HandleAsync(
-    ChatMessageEventHandler handler,
+    ChatMessageHandler handler,
     string broadcasterUserId = "streamer_123",
     string broadcasterLogin = "streamer",
     string chatterUserId = "user_456",
@@ -62,7 +62,7 @@ public sealed class ChatMessageEventHandlerTests
       UpdatedOn = DateTimeOffset.UtcNow
     });
 
-    var handler = new ChatMessageEventHandler(
+    var handler = new ChatMessageHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
@@ -82,121 +82,11 @@ public sealed class ChatMessageEventHandlerTests
   }
 
   [Fact]
-  public async Task HandleAsyncWithAccessDeniedReturnsEarlyAsync()
-  {
-    // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    var handler = new ChatMessageEventHandler(
-      serviceClientMock.Object,
-      personCacheMock.Object,
-      broadcasterMock.Object,
-      setupStateMock.Object,
-      loggerMock.Object);
-
-    _ = personCacheMock
-      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
-      .Returns(Task.FromResult(Result.Ok<bool?>(false)));
-
-    // Act
-    await HandleAsync(handler, messageText: "!caramel todo test");
-
-    // Assert
-    serviceClientMock.Verify(
-      x => x.CreateToDoAsync(It.IsAny<CreateToDoRequest>(), It.IsAny<CancellationToken>()),
-      Times.Never);
-  }
-
-  [Fact]
-  public async Task HandleAsyncWithAccessCheckFailureReturnsEarlyAsync()
-  {
-    // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    var handler = new ChatMessageEventHandler(
-      serviceClientMock.Object,
-      personCacheMock.Object,
-      broadcasterMock.Object,
-      setupStateMock.Object,
-      loggerMock.Object);
-
-    _ = personCacheMock
-      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
-      .Returns(Task.FromResult(Result.Fail<bool?>("Cache error")));
-
-    // Act
-    await HandleAsync(handler, messageText: "!caramel todo test");
-
-    // Assert
-    serviceClientMock.Verify(
-      x => x.CreateToDoAsync(It.IsAny<CreateToDoRequest>(), It.IsAny<CancellationToken>()),
-      Times.Never);
-  }
-
-  [Theory]
-  [InlineData("just a random message")]
-  [InlineData("hello everyone")]
-  [InlineData("caramel is cool")]
-  public async Task HandleAsyncWithMessageNotDirectedAtBotReturnsEarlyAsync(string messageText)
-  {
-    // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    var handler = new ChatMessageEventHandler(
-      serviceClientMock.Object,
-      personCacheMock.Object,
-      broadcasterMock.Object,
-      setupStateMock.Object,
-      loggerMock.Object);
-
-    _ = personCacheMock
-      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
-      .Returns(Task.FromResult(Result.Ok<bool?>(true)));
-
-    // Act
-    await HandleAsync(handler, messageText: messageText);
-
-    // Assert
-    serviceClientMock.Verify(
-      x => x.CreateToDoAsync(It.IsAny<CreateToDoRequest>(), It.IsAny<CancellationToken>()),
-      Times.Never);
-    serviceClientMock.Verify(
-      x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()),
-      Times.Never);
-  }
-
-  [Fact]
-  public async Task HandleAsyncWithBotCommandPrefixProcessesCommandAsync()
-  {
-    // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    var handler = new ChatMessageEventHandler(
-      serviceClientMock.Object,
-      personCacheMock.Object,
-      broadcasterMock.Object,
-      setupStateMock.Object,
-      loggerMock.Object);
-
-    _ = personCacheMock
-      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
-      .Returns(Task.FromResult(Result.Ok<bool?>(true)));
-
-    _ = serviceClientMock
-      .Setup(x => x.CreateToDoAsync(It.IsAny<CreateToDoRequest>(), It.IsAny<CancellationToken>()))
-      .Returns(Task.FromResult(Result.Ok(It.IsAny<ToDo>())));
-
-    // Act
-    await HandleAsync(handler, messageText: "!caramel todo buy milk");
-
-    // Assert
-    serviceClientMock.Verify(
-      x => x.CreateToDoAsync(It.IsAny<CreateToDoRequest>(), It.IsAny<CancellationToken>()),
-      Times.Once);
-  }
-
-  [Fact]
   public async Task HandleAsyncWithMentionPrefixProcessesCommandAsync()
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    var handler = new ChatMessageEventHandler(
+    var handler = new ChatMessageHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
@@ -225,7 +115,7 @@ public sealed class ChatMessageEventHandlerTests
   {
     // Arrange
     var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
-    var handler = new ChatMessageEventHandler(
+    var handler = new ChatMessageHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,

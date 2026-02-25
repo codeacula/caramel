@@ -36,7 +36,7 @@ public class ConversationHistoryBuilderTests
       UpdatedOn = new UpdatedOn(DateTime.UtcNow)
     };
 
-    var history = ConversationHistoryBuilder.BuildForToolPlanning(conversation, []);
+    var history = ConversationHistoryBuilder.BuildForToolPlanning(conversation);
 
     Assert.Contains(history, m => m.Content.Contains("timezone", StringComparison.OrdinalIgnoreCase));
     Assert.Contains(history, m => m.Content == "Sure" && m.Role == ChatRole.Assistant);

@@ -399,8 +399,7 @@ public class ToolPlanValidatorTests
 
     return new ToolPlanValidationContext(
       plugins,
-      messages ?? [],
-      []);
+      messages ?? []);
   }
 
   [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "ToolCallResolver uses BindingFlags.Instance to match production plugin patterns")]

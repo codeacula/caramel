@@ -5,8 +5,6 @@ global using Caramel.Cache;
 global using Caramel.Core.API;
 global using Caramel.Core.Conversations;
 global using Caramel.Core.People;
-global using Caramel.Core.Reminders.Requests;
-global using Caramel.Core.ToDos.Requests;
 global using Caramel.Core.Twitch;
 global using Caramel.Domain.Common.Enums;
 global using Caramel.Domain.People.ValueObjects;

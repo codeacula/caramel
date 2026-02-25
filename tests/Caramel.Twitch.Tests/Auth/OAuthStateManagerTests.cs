@@ -2,15 +2,6 @@ namespace Caramel.Twitch.Tests.Auth;
 
 public sealed class OAuthStateManagerTests
 {
-  private readonly TwitchConfig _mockConfig = new()
-  {
-    ClientId = "test-client-id",
-    ClientSecret = "test-client-secret",
-    AccessToken = "test-token",
-    OAuthCallbackUrl = "http://localhost:5146/auth/twitch/callback",
-    EncryptionKey = Convert.ToBase64String(new byte[32]),
-  };
-
   [Fact]
   public void GenerateStateReturnsNonEmptyString()
   {

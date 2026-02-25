@@ -1,11 +1,9 @@
-global using System.Collections.Generic;
 global using System.Threading;
 global using System.Threading.Tasks;
 
 global using Caramel.Core.API;
 global using Caramel.Core.Conversations;
 global using Caramel.Core.People;
-global using Caramel.Core.ToDos.Requests;
 global using Caramel.Domain.Common.Enums;
 global using Caramel.Domain.People.ValueObjects;
 global using Caramel.Domain.ToDos.Models;
@@ -22,4 +20,3 @@ global using Microsoft.Extensions.Logging;
 global using Moq;
 
 global using Xunit;
-

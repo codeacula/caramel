@@ -2,38 +2,16 @@ using Caramel.Twitch.Extensions;
 
 namespace Caramel.Twitch.Handlers;
 
-/// <summary>
-/// Handles incoming chat messages from Twitch EventSub channel.chat.message events.
-/// </summary>
-/// <param name="caramelServiceClient"></param>
-/// <param name="personCache"></param>
-/// <param name="broadcaster"></param>
-/// <param name="setupState"></param>
-/// <param name="logger"></param>
-public sealed class ChatMessageEventHandler(
+public sealed class ChatMessageHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
   ITwitchChatBroadcaster broadcaster,
   ITwitchSetupState setupState,
-  ILogger<ChatMessageEventHandler> logger)
+  ILogger<ChatMessageHandler> logger)
 {
   private const string BotCommandPrefix = "!caramel";
   private const string MentionPrefix = "@caramel";
 
-  /// <summary>
-  /// Processes an incoming chat message from a Twitch channel.
-  /// Broadcasts the message to the Redis pub/sub channel for UI display before
-  /// applying any bot-directed filtering.
-  /// </summary>
-  /// <param name="broadcasterUserId"></param>
-  /// <param name="broadcasterLogin"></param>
-  /// <param name="chatterUserId"></param>
-  /// <param name="chatterLogin"></param>
-  /// <param name="chatterDisplayName"></param>
-  /// <param name="messageId"></param>
-  /// <param name="messageText"></param>
-  /// <param name="color"></param>
-  /// <param name="cancellationToken"></param>
   public async Task HandleAsync(
     string broadcasterUserId,
     string broadcasterLogin,
@@ -94,107 +72,12 @@ public sealed class ChatMessageEventHandler(
         return;
       }
 
-      // Try to parse as quick command (e.g., !caramel todo buy milk)
-      var commandResult = TryParseQuickCommand(messageText, out var commandType, out var commandContent);
-      if (commandResult)
-      {
-        await HandleQuickCommandAsync(commandType, commandContent, platformId, cancellationToken);
-        return;
-      }
-
       // Otherwise, send as a general message to the AI
       await HandleGeneralMessageAsync(messageText, platformId, cancellationToken);
     }
     catch (Exception ex)
     {
       CaramelTwitchLogs.ChatMessageHandlerFailed(logger, chatterLogin, ex.Message);
-    }
-  }
-
-  private static bool TryParseQuickCommand(string messageText, out string commandType, out string commandContent)
-  {
-    commandType = string.Empty;
-    commandContent = string.Empty;
-
-    var normalized = messageText.AsSpan().Trim();
-
-    if (normalized.StartsWith(BotCommandPrefix.AsSpan(), StringComparison.OrdinalIgnoreCase))
-    {
-      normalized = normalized[BotCommandPrefix.Length..].Trim();
-    }
-    else if (normalized.Contains(MentionPrefix.AsSpan(), StringComparison.OrdinalIgnoreCase))
-    {
-      var idx = normalized.IndexOf(MentionPrefix.AsSpan(), StringComparison.OrdinalIgnoreCase);
-      normalized = normalized[(idx + MentionPrefix.Length)..].Trim();
-    }
-
-    if (normalized.StartsWith("todo", StringComparison.OrdinalIgnoreCase) || normalized.StartsWith("task", StringComparison.OrdinalIgnoreCase))
-    {
-      var spaceIdx = normalized.IndexOf(' ');
-      if (spaceIdx > 0)
-      {
-        commandType = "todo";
-        commandContent = normalized[(spaceIdx + 1)..].Trim().ToString();
-        return true;
-      }
-    }
-    else if (normalized.StartsWith("remind", StringComparison.OrdinalIgnoreCase))
-    {
-      var spaceIdx = normalized.IndexOf(' ');
-      if (spaceIdx > 0)
-      {
-        commandType = "remind";
-        commandContent = normalized[(spaceIdx + 1)..].Trim().ToString();
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private async Task HandleQuickCommandAsync(
-    string commandType,
-    string commandContent,
-    PlatformId platformId,
-    CancellationToken cancellationToken)
-  {
-    if (commandType == "todo")
-    {
-      var request = new CreateToDoRequest
-      {
-        PlatformId = platformId,
-        Title = "From Twitch",
-        Description = commandContent
-      };
-
-      var result = await caramelServiceClient.CreateToDoAsync(request, cancellationToken);
-      if (result.IsSuccess)
-      {
-        CaramelTwitchLogs.ToDoCreatedViaChat(logger, platformId.Username, commandContent);
-      }
-      else
-      {
-        CaramelTwitchLogs.ToDoCreationFailed(logger, platformId.Username, result.Errors[0].Message);
-      }
-    }
-    else if (commandType == "remind")
-    {
-      var request = new CreateReminderRequest
-      {
-        PlatformId = platformId,
-        Message = commandContent,
-        ReminderTime = DateTime.UtcNow.AddMinutes(1).ToString("O")
-      };
-
-      var result = await caramelServiceClient.CreateReminderAsync(request, cancellationToken);
-      if (result.IsSuccess)
-      {
-        CaramelTwitchLogs.ReminderCreatedViaChat(logger, platformId.Username, commandContent);
-      }
-      else
-      {
-        CaramelTwitchLogs.ReminderCreationFailed(logger, platformId.Username, result.Errors[0].Message);
-      }
     }
   }
 

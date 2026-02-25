@@ -11,7 +11,6 @@ public sealed class ConversationHistoryBuilder
 
   public static List<ChatMessageDTO> BuildForToolPlanning(
     Conversation conversation,
-    IReadOnlyCollection<string> activeTodoIds,
     int maxMessages = DefaultMaxMessages,
     int minMessages = DefaultMinMessages)
   {
@@ -25,10 +24,8 @@ public sealed class ConversationHistoryBuilder
     }
 
     var recentMessages = orderedMessages.TakeLast(minMessages);
-    var contextualMessages = orderedMessages.Where(m => IsContextRelevant(m.Content.Value, activeTodoIds));
 
     var selected = recentMessages
-      .Concat(contextualMessages)
       .DistinctBy(m => m.Id.Value)
       .OrderBy(m => m.CreatedOn.Value)
       .ToList();
@@ -48,18 +45,6 @@ public sealed class ConversationHistoryBuilder
       .ToList();
 
     return ToChatMessages(orderedMessages);
-  }
-
-  private static bool IsContextRelevant(string content, IReadOnlyCollection<string> activeTodoIds)
-  {
-    return ContainsTimezoneKeyword(content) || activeTodoIds.Any(id => content.Contains(id, StringComparison.OrdinalIgnoreCase));
-  }
-
-  private static bool ContainsTimezoneKeyword(string content)
-  {
-    return content.Contains("timezone", StringComparison.OrdinalIgnoreCase)
-      || content.Contains("time zone", StringComparison.OrdinalIgnoreCase)
-      || content.Contains("tz", StringComparison.OrdinalIgnoreCase);
   }
 
   private static List<ChatMessageDTO> ToChatMessages(IEnumerable<Message> messages)

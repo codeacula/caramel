@@ -12,22 +12,10 @@ public interface ICaramelAIAgent
 
   IAIRequestBuilder CreateToolPlanningRequest(
     IEnumerable<ChatMessageDTO> messages,
-    string userTimezone,
-    string activeTodos);
+    string userTimezone);
 
   IAIRequestBuilder CreateResponseRequest(
     IEnumerable<ChatMessageDTO> messages,
     string actionsSummary,
     string userTimezone);
-
-  IAIRequestBuilder CreateReminderRequest(
-    string userTimezone,
-    string currentTime,
-    string reminderItems);
-
-  IAIRequestBuilder CreateDailyPlanRequest(
-    string userTimezone,
-    string currentTime,
-    string activeTodos,
-    int taskCount);
 }

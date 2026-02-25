@@ -37,7 +37,7 @@ public sealed class ChatController(
       return StatusCode(503, "Twitch setup has not been completed. Visit /twitch/setup to configure.");
     }
 
-    var broadcasterId = setup.Channels.FirstOrDefault()?.UserId;
+    var broadcasterId = setup.Channels.Count > 0 ? setup.Channels[0].UserId : null;
     if (broadcasterId is null)
     {
       ChatControllerLogs.NoBroadcasterConfigured(logger);
@@ -81,15 +81,8 @@ public sealed class ChatController(
   }
 }
 
-/// <summary>
-/// Request body for <see cref="ChatController.SendAsync"/>.
-/// </summary>
-/// <param name="Message"></param>
 public sealed record SendChatMessageRequest(string Message);
 
-/// <summary>
-/// Structured log messages for <see cref="ChatController"/>.
-/// </summary>
 internal static partial class ChatControllerLogs
 {
   [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot send chat message: Twitch setup has not been completed")]

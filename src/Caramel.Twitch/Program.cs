@@ -76,7 +76,7 @@ internal sealed class EventSubLifecycleService(
   TwitchTokenManager tokenManager,
   ITwitchSetupState setupState,
   ICaramelServiceClient serviceClient,
-  ChatMessageEventHandler chatHandler,
+  ChatMessageHandler chatHandler,
   WhisperEventHandler whisperHandler,
   ChannelPointRedeemEventHandler redeemHandler,
   IHttpClientFactory httpClientFactory,
