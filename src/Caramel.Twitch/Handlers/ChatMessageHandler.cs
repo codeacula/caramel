@@ -116,21 +116,6 @@ public static partial class CaramelTwitchLogs
   [LoggerMessage(Level = LogLevel.Information, Message = "Access denied for Twitch user {Username}")]
   public static partial void AccessDenied(ILogger logger, string username);
 
-  [LoggerMessage(Level = LogLevel.Information, Message = "Todo created via chat for {Username}: {Description}")]
-  public static partial void ToDoCreatedViaChat(ILogger logger, string username, string description);
-
-  [LoggerMessage(Level = LogLevel.Warning, Message = "Todo creation failed for {Username}: {Error}")]
-  public static partial void ToDoCreationFailed(ILogger logger, string username, string error);
-
-  [LoggerMessage(Level = LogLevel.Information, Message = "Reminder created via chat for {Username}: {Message}")]
-  public static partial void ReminderCreatedViaChat(ILogger logger, string username, string message);
-
-  [LoggerMessage(Level = LogLevel.Warning, Message = "Reminder creation failed for {Username}: {Error}")]
-  public static partial void ReminderCreationFailed(ILogger logger, string username, string error);
-
-  [LoggerMessage(Level = LogLevel.Information, Message = "Message processed for {Username}")]
-  public static partial void MessageProcessed(ILogger logger, string username);
-
   [LoggerMessage(Level = LogLevel.Warning, Message = "Message processing failed for {Username}: {Error}")]
   public static partial void MessageProcessingFailed(ILogger logger, string username, string error);
 

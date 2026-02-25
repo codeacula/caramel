@@ -17,7 +17,6 @@ public sealed class ToolPlanValidator
     }
 
     var allowsTimezoneChange = HasTimezoneContext(context.ConversationHistory);
-    var createdToDo = false;
     var lastToolCallKey = "";
     var consecutiveRepeats = 0;
 
@@ -61,17 +60,6 @@ public sealed class ToolPlanValidator
       {
         result.BlockedCalls.Add(Blocked(toolCall, "Timezone changes require an explicit user request or timezone context."));
         continue;
-      }
-
-      if (createdToDo && IsBlockedAfterCreate(toolCall))
-      {
-        result.BlockedCalls.Add(Blocked(toolCall, "Cannot modify a newly created todo within the same request."));
-        continue;
-      }
-
-      if (ToolCallMatchers.IsCreateToDo(toolCall.PluginName, toolCall.FunctionName))
-      {
-        createdToDo = true;
       }
 
       result.ApprovedCalls.Add(NormalizeArguments(toolCall));
@@ -118,12 +106,6 @@ public sealed class ToolPlanValidator
       ? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
       : new Dictionary<string, string?>(toolCall.Arguments, StringComparer.OrdinalIgnoreCase);
     return toolCall with { Arguments = normalizedArguments };
-  }
-
-  private static bool IsBlockedAfterCreate(PlannedToolCall toolCall)
-  {
-    return ToolCallMatchers.IsBlockedAfterCreateToDo(toolCall.PluginName, toolCall.FunctionName)
-      || ToolCallMatchers.IsBlockedAfterCreateReminder(toolCall.PluginName, toolCall.FunctionName);
   }
 
   private static bool HasTimezoneContext(IEnumerable<ChatMessageDTO> history)

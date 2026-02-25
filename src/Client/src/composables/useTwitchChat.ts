@@ -71,7 +71,7 @@ export function useTwitchChat() {
   async function fetchInitialStatus(): Promise<void> {
     try {
       const [authResp, setupResp] = await Promise.all([
-        fetch("/auth/status"),
+        fetch("/auth/twitch/status"),
         fetch("/twitch/setup"),
       ]);
       if (authResp.ok) {
@@ -272,7 +272,6 @@ export function useTwitchChat() {
   });
 
   return {
-    messages,
     feedItems,
     status,
     errorMessage,
@@ -282,7 +281,6 @@ export function useTwitchChat() {
     isSetupConfigured,
     clearMessages,
     clearSendError,
-    disconnect,
     sendMessage,
     maxMessageLength: MAX_MESSAGE_LENGTH,
   };

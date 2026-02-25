@@ -8,7 +8,6 @@ namespace Caramel.AI.Requests;
 
 internal sealed class FunctionInvocationFilter(List<ToolCallResult> toolCalls, int maxToolCalls, ILogger logger) : IFunctionInvocationFilter
 {
-  private bool _createdToDo;
   private bool _limitReached;
   private string? _lastToolCall;
   private int _consecutiveRepeats;
@@ -46,13 +45,6 @@ internal sealed class FunctionInvocationFilter(List<ToolCallResult> toolCalls, i
       return;
     }
 
-    if (_createdToDo && IsBlockedAfterCreate(context))
-    {
-      AILogs.ToolInvocationBlocked(logger, pluginName, functionName, "Cannot modify newly created ToDo");
-      BlockInvocation(context, "Cannot complete or delete a newly created ToDo, or unlink/delete its reminders, within the same request.");
-      return;
-    }
-
     var beforeExec = DateTimeOffset.UtcNow;
     await next(context);
     var afterExec = DateTimeOffset.UtcNow;
@@ -68,19 +60,6 @@ internal sealed class FunctionInvocationFilter(List<ToolCallResult> toolCalls, i
       Result = result,
       Success = true
     });
-
-    if (ToolCallMatchers.IsCreateToDo(context.Function.PluginName, context.Function.Name))
-    {
-      _createdToDo = true;
-    }
-  }
-
-  private static bool IsBlockedAfterCreate(FunctionInvocationContext context)
-  {
-    var pluginName = context.Function.PluginName;
-    var functionName = context.Function.Name;
-    return ToolCallMatchers.IsBlockedAfterCreateToDo(pluginName, functionName)
-      || ToolCallMatchers.IsBlockedAfterCreateReminder(pluginName, functionName);
   }
 
   private void BlockInvocation(FunctionInvocationContext context, string errorMessage, bool includeInResults = true)

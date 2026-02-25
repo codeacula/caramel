@@ -73,11 +73,8 @@ export function useTwitchSetup() {
   }
 
   return {
-    setupStatus,
     requestStatus,
     errorMessage,
-    checkSetupStatus,
     submitSetup,
-    markConfigured,
   };
 }
