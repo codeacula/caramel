@@ -1,8 +1,6 @@
 using Caramel.Core.API;
 using Caramel.Core.Conversations;
 using Caramel.Core.OBS;
-using Caramel.Domain.People.ValueObjects;
-using Caramel.Domain.ToDos.Models;
 using Caramel.Domain.Twitch;
 using Caramel.GRPC.Interceptors;
 using Caramel.GRPC.Service;
@@ -64,8 +62,14 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
     {
       return Result.Fail<TwitchSetup?>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
     }
-
-    return grpcResult.Data is null ? Result.Ok<TwitchSetup?>(null) : Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
+    else if (grpcResult.Data is null)
+    {
+      return Result.Ok<TwitchSetup?>(null);
+    }
+    else
+    {
+      return Result.Ok<TwitchSetup?>(MapTwitchSetupToDomain(grpcResult.Data));
+    }
   }
 
   public async Task<Result<TwitchSetup>> SaveTwitchSetupAsync(TwitchSetup setup, CancellationToken cancellationToken = default)
@@ -87,12 +91,9 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
   public async Task<Result<OBSStatus>> GetOBSStatusAsync(CancellationToken cancellationToken = default)
   {
     var grpcResult = await CaramelGrpcService.GetOBSStatusAsync();
-    if (!grpcResult.IsSuccess || grpcResult.Data is null)
-    {
-      return Result.Fail<OBSStatus>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
-    }
-
-    return Result.Ok(new OBSStatus
+    return !grpcResult.IsSuccess || grpcResult.Data is null
+      ? Result.Fail<OBSStatus>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
+      : Result.Ok(new OBSStatus
     {
       IsConnected = grpcResult.Data.IsConnected,
       CurrentScene = grpcResult.Data.CurrentScene

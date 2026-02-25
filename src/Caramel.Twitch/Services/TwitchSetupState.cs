@@ -1,5 +1,3 @@
-using Caramel.Domain.Twitch;
-
 namespace Caramel.Twitch.Services;
 
 /// <summary>

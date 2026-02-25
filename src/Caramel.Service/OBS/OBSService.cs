@@ -92,10 +92,14 @@ public sealed class OBSService : IHostedService, IOBSService, IDisposable
   }
 
   private void OnConnected(object? sender, EventArgs e)
-    => OBSLogs.Connected(_logger, _config.Url);
+  {
+    OBSLogs.Connected(_logger, _config.Url);
+  }
 
   private void OnDisconnected(object? sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
-    => OBSLogs.Disconnected(_logger, e.DisconnectReason ?? "unknown");
+  {
+    OBSLogs.Disconnected(_logger, e.DisconnectReason ?? "unknown");
+  }
 
   public void Dispose()
   {
