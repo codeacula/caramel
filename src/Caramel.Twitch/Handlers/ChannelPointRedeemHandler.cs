@@ -2,43 +2,31 @@ namespace Caramel.Twitch.Handlers;
 
 public sealed class ChannelPointRedeemHandler(
   ITwitchChatBroadcaster broadcaster,
-  ILogger<ChannelPointRedeemHandler> logger)
+  ILogger<ChannelPointRedeemHandler> logger) : INotificationHandler<ChannelPointsCustomRewardRedeemed>
 {
-  public async Task HandleAsync(
-    string redemptionId,
-    string broadcasterUserId,
-    string broadcasterLogin,
-    string redeemerUserId,
-    string redeemerLogin,
-    string redeemerDisplayName,
-    string rewardId,
-    string rewardTitle,
-    int rewardCost,
-    string userInput,
-    DateTimeOffset redeemedAt,
-    CancellationToken cancellationToken = default)
+  public async Task Handle(ChannelPointsCustomRewardRedeemed notification, CancellationToken cancellationToken)
   {
     try
     {
-      ChannelPointRedeemLogs.RedeemReceived(logger, redeemerLogin, rewardTitle);
+      ChannelPointRedeemLogs.RedeemReceived(logger, notification.RedeemerLogin, notification.RewardTitle);
 
       await broadcaster.PublishRedeemAsync(
-        redemptionId,
-        broadcasterUserId,
-        broadcasterLogin,
-        redeemerUserId,
-        redeemerLogin,
-        redeemerDisplayName,
-        rewardId,
-        rewardTitle,
-        rewardCost,
-        userInput,
-        redeemedAt,
+        notification.RedemptionId,
+        notification.BroadcasterUserId,
+        notification.BroadcasterLogin,
+        notification.RedeemerUserId,
+        notification.RedeemerLogin,
+        notification.RedeemerDisplayName,
+        notification.RewardId,
+        notification.RewardTitle,
+        notification.RewardCost,
+        notification.UserInput,
+        notification.RedeemedAt,
         cancellationToken);
     }
     catch (Exception ex)
     {
-      ChannelPointRedeemLogs.RedeemHandlerFailed(logger, redeemerLogin, ex.Message);
+      ChannelPointRedeemLogs.RedeemHandlerFailed(logger, notification.RedeemerLogin, ex.Message);
     }
   }
 }

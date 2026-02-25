@@ -13,9 +13,8 @@ internal sealed class EventSubLifecycleService(
   TwitchTokenManager tokenManager,
   ITwitchSetupState setupState,
   ICaramelServiceClient serviceClient,
-  ChatMessageHandler chatHandler,
-  WhisperHandler whisperHandler,
-  ChannelPointRedeemHandler redeemHandler,
+  IEnumerable<IEventSubSubscriptionRegistrar> subscriptionRegistrars,
+  IMediator mediator,
   IHttpClientFactory httpClientFactory,
   ILogger<EventSubLifecycleService> logger) : BackgroundService
 {
@@ -131,80 +130,24 @@ internal sealed class EventSubLifecycleService(
       var accessToken = await tokenManager.GetValidAccessTokenAsync();
 
       // Numeric IDs are stored in setup — no resolver needed
-      var botUserId = setup.BotUserId;
-      var channelIds = setup.Channels.Select(c => c.UserId).ToList();
+      var registrationContext = new EventSubSubscriptionRegistrationContext(
+        HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
+        SessionId: eventSubClient.SessionId,
+        BotUserId: setup.BotUserId,
+        ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)]);
 
-      using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
+      using var httpClient = registrationContext.HttpClient;
       httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
       httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
-      foreach (var channelId in channelIds)
+      foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
       {
-        // Subscribe to channel chat messages
-        await CreateEventSubSubscriptionAsync(httpClient, "channel.chat.message", "1", new Dictionary<string, string>
-        {
-          { "broadcaster_user_id", channelId },
-          { "user_id", botUserId },
-        });
-
-        // Subscribe to channel point custom reward redemptions
-        await CreateEventSubSubscriptionAsync(httpClient, "channel.channel_points_custom_reward_redemption.add", "1", new Dictionary<string, string>
-        {
-          { "broadcaster_user_id", channelId },
-        });
+        await registrar.RegisterAsync(registrationContext, CancellationToken.None);
       }
-
-      // Subscribe to incoming whispers directed at the bot user
-      await CreateEventSubSubscriptionAsync(httpClient, "user.whisper.message", "1", new Dictionary<string, string>
-      {
-        { "user_id", botUserId },
-      });
     }
     catch (Exception ex)
     {
       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, ex.Message);
-    }
-  }
-
-  private async Task CreateEventSubSubscriptionAsync(
-    HttpClient httpClient,
-    string eventType,
-    string version,
-    Dictionary<string, string> condition)
-  {
-    var conditionDisplay = string.Join(", ", condition.Select(kvp => $"{kvp.Key}={kvp.Value}"));
-
-    try
-    {
-      var body = new
-      {
-        type = eventType,
-        version,
-        condition,
-        transport = new
-        {
-          method = "websocket",
-          session_id = eventSubClient.SessionId,
-        },
-      };
-
-      var json = JsonSerializer.Serialize(body);
-      using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-      var response = await httpClient.PostAsync("https://api.twitch.tv/helix/eventsub/subscriptions", content);
-
-      if (response.IsSuccessStatusCode)
-      {
-        CaramelTwitchProgramLogs.EventSubSubscribed(logger, eventType, conditionDisplay);
-      }
-      else
-      {
-        var errorBody = await response.Content.ReadAsStringAsync();
-        CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, $"{(int)response.StatusCode}: {errorBody}");
-      }
-    }
-    catch (Exception ex)
-    {
-      CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, ex.Message);
     }
   }
 
@@ -219,7 +162,7 @@ internal sealed class EventSubLifecycleService(
   private async Task OnChannelChatMessageAsync(object? sender, ChannelChatMessageArgs args)
   {
     var evt = args.Payload.Event;
-    await chatHandler.HandleAsync(
+    await mediator.Publish(new ChannelChatMessageReceived(
       evt.BroadcasterUserId,
       evt.BroadcasterUserLogin,
       evt.ChatterUserId,
@@ -227,24 +170,22 @@ internal sealed class EventSubLifecycleService(
       evt.ChatterUserName,
       evt.MessageId,
       evt.Message.Text,
-      evt.Color,
-      CancellationToken.None);
+      evt.Color ?? string.Empty), CancellationToken.None);
   }
 
   private async Task OnUserWhisperMessageAsync(object? sender, UserWhisperMessageArgs args)
   {
     var evt = args.Payload.Event;
-    await whisperHandler.HandleAsync(
+    await mediator.Publish(new UserWhisperMessageReceived(
       evt.FromUserId,
       evt.FromUserLogin,
-      evt.Whisper.Text,
-      CancellationToken.None);
+      evt.Whisper.Text), CancellationToken.None);
   }
 
   private async Task OnChannelPointsCustomRewardRedemptionAddAsync(object? sender, ChannelPointsCustomRewardRedemptionArgs args)
   {
     var evt = args.Payload.Event;
-    await redeemHandler.HandleAsync(
+    await mediator.Publish(new ChannelPointsCustomRewardRedeemed(
       evt.Id,
       evt.BroadcasterUserId,
       evt.BroadcasterUserLogin,
@@ -254,9 +195,8 @@ internal sealed class EventSubLifecycleService(
       evt.Reward.Id,
       evt.Reward.Title,
       evt.Reward.Cost,
-      evt.UserInput,
-      evt.RedeemedAt,
-      CancellationToken.None);
+      evt.UserInput ?? string.Empty,
+      evt.RedeemedAt), CancellationToken.None);
   }
 
   public override async Task StopAsync(CancellationToken cancellationToken)

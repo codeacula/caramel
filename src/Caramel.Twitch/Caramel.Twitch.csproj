@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.0.0" />
     <PackageReference Include="StackExchange.Redis" Version="2.10.1" />
     <PackageReference Include="TwitchLib.Api" Version="3.6.0" />
     <PackageReference Include="TwitchLib.EventSub.Websockets" Version="0.8.0" />

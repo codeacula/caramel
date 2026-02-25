@@ -35,7 +35,7 @@ public sealed class ChatMessageEventHandlerTests
     string color = "#FF0000",
     CancellationToken cancellationToken = default)
   {
-    return handler.HandleAsync(
+    return handler.Handle(new ChannelChatMessageReceived(
       broadcasterUserId,
       broadcasterLogin,
       chatterUserId,
@@ -43,7 +43,7 @@ public sealed class ChatMessageEventHandlerTests
       chatterDisplayName,
       messageId,
       messageText,
-      color,
+      color),
       cancellationToken);
   }
 

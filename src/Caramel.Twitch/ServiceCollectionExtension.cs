@@ -4,6 +4,17 @@ public static class ServiceCollectionExtension
 {
   public static IServiceCollection AddTwitchServices(this IServiceCollection services)
   {
+    _ = services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<ICaramelTwitch>());
+    _ = services.AddSingleton<IEventSubSubscriptionClient, EventSubSubscriptionClient>();
+
+    foreach (var registrarType in typeof(ICaramelTwitch).Assembly
+               .GetTypes()
+               .Where(static type =>
+                 type is { IsClass: true, IsAbstract: false } && typeof(IEventSubSubscriptionRegistrar).IsAssignableFrom(type)))
+    {
+      _ = services.AddSingleton(typeof(IEventSubSubscriptionRegistrar), registrarType);
+    }
+
     // Register TwitchConfig from configuration
     _ = services.AddSingleton(serviceProvider =>
     {
@@ -25,11 +36,6 @@ public static class ServiceCollectionExtension
     // Register Twitch API utilities
     _ = services.AddSingleton<ITwitchUserResolver, TwitchUserResolver>();
     _ = services.AddSingleton<ITwitchWhisperService, TwitchWhisperService>();
-
-    // Register handlers as singletons (they're called from event handlers)
-    _ = services.AddSingleton<ChatMessageHandler>();
-    _ = services.AddSingleton<WhisperHandler>();
-    _ = services.AddSingleton<ChannelPointRedeemHandler>();
 
     return services;
   }

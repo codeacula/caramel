@@ -13,6 +13,8 @@ global using Caramel.GRPC;
 global using Caramel.Twitch.Handlers;
 global using Caramel.Twitch.Services;
 
+global using MediatR;
+
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;

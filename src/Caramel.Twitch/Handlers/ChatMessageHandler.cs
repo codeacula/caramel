@@ -7,65 +7,56 @@ public sealed class ChatMessageHandler(
   IPersonCache personCache,
   ITwitchChatBroadcaster broadcaster,
   ITwitchSetupState setupState,
-  ILogger<ChatMessageHandler> logger)
+  ILogger<ChatMessageHandler> logger) : INotificationHandler<ChannelChatMessageReceived>
 {
   private const string BotCommandPrefix = "!caramel";
   private const string MentionPrefix = "@caramel";
 
-  public async Task HandleAsync(
-    string broadcasterUserId,
-    string broadcasterLogin,
-    string chatterUserId,
-    string chatterLogin,
-    string chatterDisplayName,
-    string messageId,
-    string messageText,
-    string color,
-    CancellationToken cancellationToken = default)
+  public async Task Handle(ChannelChatMessageReceived notification, CancellationToken cancellationToken)
   {
     try
     {
-      CaramelTwitchLogs.ChatMessageReceived(logger, chatterLogin);
+      CaramelTwitchLogs.ChatMessageReceived(logger, notification.ChatterUserLogin);
 
       // Broadcast every message to Redis so the UI can display it regardless of
       // whether it is directed at the bot.
       await broadcaster.PublishAsync(
-        messageId,
-        broadcasterUserId,
-        broadcasterLogin,
-        chatterUserId,
-        chatterLogin,
-        chatterDisplayName,
-        messageText,
-        color,
+        notification.MessageId,
+        notification.BroadcasterUserId,
+        notification.BroadcasterUserLogin,
+        notification.ChatterUserId,
+        notification.ChatterUserLogin,
+        notification.ChatterDisplayName,
+        notification.MessageText,
+        notification.Color,
         cancellationToken);
 
       // Ignore messages from the bot itself
       var setup = setupState.Current;
-      if (setup is not null && chatterUserId == setup.BotUserId)
+      if (setup is not null && notification.ChatterUserId == setup.BotUserId)
       {
         return;
       }
 
-      var platformId = TwitchPlatformExtension.GetTwitchPlatformId(chatterLogin, chatterUserId);
+      var platformId = TwitchPlatformExtension.GetTwitchPlatformId(notification.ChatterUserLogin, notification.ChatterUserId);
 
       // Check access via cache (fast path)
       var accessResult = await personCache.GetAccessAsync(platformId);
       if (accessResult.IsFailed)
       {
-        CaramelTwitchLogs.AccessCheckFailed(logger, chatterLogin, accessResult.Errors[0].Message);
+        CaramelTwitchLogs.AccessCheckFailed(logger, notification.ChatterUserLogin, accessResult.Errors[0].Message);
         return;
       }
 
       if (accessResult.Value is false)
       {
-        CaramelTwitchLogs.AccessDenied(logger, chatterLogin);
+        CaramelTwitchLogs.AccessDenied(logger, notification.ChatterUserLogin);
         return;
       }
 
       // Check if message is directed at the bot
-      var isDirectedAtBot = messageText.StartsWith(BotCommandPrefix, StringComparison.OrdinalIgnoreCase)
-                            || messageText.Contains(MentionPrefix, StringComparison.OrdinalIgnoreCase);
+      var isDirectedAtBot = notification.MessageText.StartsWith(BotCommandPrefix, StringComparison.OrdinalIgnoreCase)
+                            || notification.MessageText.Contains(MentionPrefix, StringComparison.OrdinalIgnoreCase);
 
       if (!isDirectedAtBot)
       {
@@ -73,11 +64,11 @@ public sealed class ChatMessageHandler(
       }
 
       // Otherwise, send as a general message to the AI
-      await HandleGeneralMessageAsync(messageText, platformId, cancellationToken);
+      await HandleGeneralMessageAsync(notification.MessageText, platformId, cancellationToken);
     }
     catch (Exception ex)
     {
-      CaramelTwitchLogs.ChatMessageHandlerFailed(logger, chatterLogin, ex.Message);
+      CaramelTwitchLogs.ChatMessageHandlerFailed(logger, notification.ChatterUserLogin, ex.Message);
     }
   }
 
