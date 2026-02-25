@@ -25,6 +25,22 @@ public sealed class CaramelGrpcService(
       : (GrpcResult<string>)requestResult.Value.Content.Value;
   }
 
+  public async Task<GrpcResult<string>> AskTheOrbAsync(AskTheOrbGrpcRequest request)
+  {
+    var person = userContext.Person;
+    if (person is null)
+    {
+      return (GrpcResult<string>)new[] { new GrpcError("Unable to resolve person for AskTheOrb request.") };
+    }
+
+    var command = new AskTheOrbCommand(person.Id, new Domain.Common.ValueObjects.Content(request.Content));
+    var result = await mediator.Send(command);
+
+    return result.IsFailed
+      ? (GrpcResult<string>)result.Errors.Select(e => new GrpcError(e.Message)).ToArray()
+      : (GrpcResult<string>)result.Value;
+  }
+
   public async Task<GrpcResult<TwitchSetupDTO>> GetTwitchSetupAsync()
   {
     var result = await mediator.Send(new GetTwitchSetupQuery());

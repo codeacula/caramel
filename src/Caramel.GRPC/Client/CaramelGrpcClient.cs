@@ -13,27 +13,19 @@ using ProtoBuf.Grpc.Client;
 
 namespace Caramel.GRPC.Client;
 
-public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
+public class CaramelGrpcClient : ICaramelServiceClient
 {
   public ICaramelGrpcService CaramelGrpcService { get; }
-  private readonly GrpcChannel _channel;
 
   public CaramelGrpcClient(GrpcChannel channel, GrpcClientLoggingInterceptor GrpcClientLoggingInterceptor, GrpcHostConfig grpcHostConfig)
   {
-    _channel = channel;
-    var invoker = _channel.Intercept(GrpcClientLoggingInterceptor)
+    var invoker = channel.Intercept(GrpcClientLoggingInterceptor)
       .Intercept(metadata =>
       {
         metadata.Add("X-API-Token", grpcHostConfig.ApiToken);
         return metadata;
       });
     CaramelGrpcService = invoker.CreateGrpcService<ICaramelGrpcService>();
-  }
-
-  public void Dispose()
-  {
-    _channel.Dispose();
-    GC.SuppressFinalize(this);
   }
 
   public async Task<Result<TwitchSetup?>> GetTwitchSetupAsync(CancellationToken cancellationToken = default)
@@ -82,6 +74,23 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
     return grpcResult.IsSuccess ?
       Result.Ok(grpcResult.Data ?? string.Empty) :
       Result.Fail(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
+  }
+
+  public async Task<Result<string>> AskTheOrbAsync(AskTheOrbRequest request, CancellationToken cancellationToken = default)
+  {
+    var grpcRequest = new Contracts.AskTheOrbGrpcRequest
+    {
+      Platform = request.Platform,
+      PlatformUserId = request.PlatformUserId,
+      Username = request.Username,
+      Content = request.Content
+    };
+
+    var grpcResult = await CaramelGrpcService.AskTheOrbAsync(grpcRequest);
+
+    return grpcResult.IsSuccess
+      ? Result.Ok(grpcResult.Data ?? string.Empty)
+      : Result.Fail(string.Join("; ", grpcResult.Errors.Select(e => e.Message)));
   }
 
   private static TwitchSetup MapTwitchSetupToDomain(Contracts.TwitchSetupDTO dto)

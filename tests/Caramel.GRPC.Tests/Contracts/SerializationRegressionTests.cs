@@ -355,3 +355,33 @@ public class GrpcContractConversionTests
     Assert.Equal("Remind me to buy milk", deserialized.Content);
   }
 }
+
+public class AskTheOrbGrpcRequestSerializationTests
+{
+  [Fact]
+  public void AskTheOrbGrpcRequestRoundTripSerializationPreservesAllFields()
+  {
+    // Arrange
+    var original = new AskTheOrbGrpcRequest
+    {
+      Username = "viewer",
+      PlatformUserId = "12345",
+      Platform = Platform.Twitch,
+      Content = "What should I do next?"
+    };
+
+    // Act
+    using var ms = new MemoryStream();
+    Serializer.Serialize(ms, original);
+    ms.Position = 0;
+
+    var deserialized = Serializer.Deserialize<AskTheOrbGrpcRequest>(ms);
+
+    // Assert
+    Assert.NotNull(deserialized);
+    Assert.Equal(original.Username, deserialized.Username);
+    Assert.Equal(original.PlatformUserId, deserialized.PlatformUserId);
+    Assert.Equal(original.Platform, deserialized.Platform);
+    Assert.Equal(original.Content, deserialized.Content);
+  }
+}

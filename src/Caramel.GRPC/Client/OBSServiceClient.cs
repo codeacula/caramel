@@ -13,27 +13,19 @@ using ProtoBuf.Grpc.Client;
 
 namespace Caramel.GRPC.Client;
 
-public class OBSServiceClient : IOBSServiceClient, IDisposable
+public class OBSServiceClient : IOBSServiceClient
 {
   public ICaramelGrpcService CaramelGrpcService { get; }
-  private readonly GrpcChannel _channel;
 
   public OBSServiceClient(GrpcChannel channel, GrpcClientLoggingInterceptor GrpcClientLoggingInterceptor, GrpcHostConfig grpcHostConfig)
   {
-    _channel = channel;
-    var invoker = _channel.Intercept(GrpcClientLoggingInterceptor)
+    var invoker = channel.Intercept(GrpcClientLoggingInterceptor)
       .Intercept(metadata =>
       {
         metadata.Add("X-API-Token", grpcHostConfig.ApiToken);
         return metadata;
       });
     CaramelGrpcService = invoker.CreateGrpcService<ICaramelGrpcService>();
-  }
-
-  public void Dispose()
-  {
-    _channel.Dispose();
-    GC.SuppressFinalize(this);
   }
 
   public async Task<Result<OBSStatus>> GetOBSStatusAsync(CancellationToken cancellationToken = default)

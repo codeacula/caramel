@@ -56,7 +56,11 @@ internal sealed class EventSubLifecycleService(
         _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         CaramelTwitchProgramLogs.EventSubConnecting(logger);
-        _ = await eventSubClient.ConnectAsync();
+        if (!await TryConnectEventSubAsync(stoppingToken))
+        {
+          await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+          continue;
+        }
 
         // Wait until either the host is stopping or the WebSocket disconnects
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
@@ -89,6 +93,31 @@ internal sealed class EventSubLifecycleService(
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
       }
     }
+  }
+
+  private async Task<bool> TryConnectEventSubAsync(CancellationToken stoppingToken)
+  {
+    if (stoppingToken.IsCancellationRequested)
+    {
+      return false;
+    }
+
+    var connected = await eventSubClient.ConnectAsync();
+    if (connected)
+    {
+      return true;
+    }
+
+    CaramelTwitchProgramLogs.EventSubConnectionError(logger, "EventSub ConnectAsync returned false. Trying ReconnectAsync.");
+
+    var reconnected = await eventSubClient.ReconnectAsync();
+    if (reconnected)
+    {
+      return true;
+    }
+
+    CaramelTwitchProgramLogs.EventSubConnectionError(logger, "EventSub ReconnectAsync returned false.");
+    return false;
   }
 
   /// <summary>

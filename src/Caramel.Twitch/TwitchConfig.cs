@@ -34,6 +34,12 @@ public sealed record TwitchConfig
   public required string OAuthCallbackUrl { get; init; }
 
   /// <summary>
+  /// The custom reward GUID for the "Message The AI" channel point redeem.
+  /// When a redeem arrives with this reward ID, Caramel routes the user input to AskTheOrb.
+  /// </summary>
+  public string? MessageTheAiRewardId { get; init; }
+
+  /// <summary>
   /// Base64-encoded 32-byte encryption key for securing OAuth state parameters.
   /// Generate with: `openssl rand -base64 32`
   /// </summary>
