@@ -7,13 +7,8 @@ using Marten;
 
 namespace Caramel.Database.Twitch;
 
-/// <summary>
-/// Store for persisting and retrieving Twitch setup configuration using Marten event sourcing.
-/// </summary>
-/// <param name="session"></param>
 public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupStore
 {
-  /// <inheritdoc/>
   public async Task<Result<Domain.Twitch.TwitchSetup?>> GetAsync(CancellationToken cancellationToken = default)
   {
     try
@@ -29,7 +24,6 @@ public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupSto
     }
   }
 
-  /// <inheritdoc/>
   public async Task<Result<Domain.Twitch.TwitchSetup>> SaveAsync(
     Domain.Twitch.TwitchSetup setup,
     CancellationToken cancellationToken = default)
