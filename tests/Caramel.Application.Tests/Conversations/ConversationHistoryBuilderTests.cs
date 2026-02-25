@@ -15,16 +15,16 @@ public class ConversationHistoryBuilderTests
     var personId = new PersonId(Guid.NewGuid());
     var conversationId = new ConversationId(Guid.NewGuid());
 
+    // Keep total at or below minMessages (6) so all messages are returned,
+    // including the timezone context message.
     var messages = new List<Message>
     {
-      CreateMessage(conversationId, personId, "What timezone are you in?", false, DateTime.UtcNow.AddMinutes(-10)),
-      CreateMessage(conversationId, personId, "PST", true, DateTime.UtcNow.AddMinutes(-9)),
-      CreateMessage(conversationId, personId, "Add buy milk", true, DateTime.UtcNow.AddMinutes(-8)),
-      CreateMessage(conversationId, personId, "Added!", false, DateTime.UtcNow.AddMinutes(-7)),
-      CreateMessage(conversationId, personId, "Also add eggs", true, DateTime.UtcNow.AddMinutes(-6)),
-      CreateMessage(conversationId, personId, "Done", false, DateTime.UtcNow.AddMinutes(-5)),
-      CreateMessage(conversationId, personId, "Remind me tomorrow", true, DateTime.UtcNow.AddMinutes(-4)),
-      CreateMessage(conversationId, personId, "Sure", false, DateTime.UtcNow.AddMinutes(-3))
+      CreateMessage(conversationId, personId, "What timezone are you in?", false, DateTime.UtcNow.AddMinutes(-6)),
+      CreateMessage(conversationId, personId, "PST", true, DateTime.UtcNow.AddMinutes(-5)),
+      CreateMessage(conversationId, personId, "Add buy milk", true, DateTime.UtcNow.AddMinutes(-4)),
+      CreateMessage(conversationId, personId, "Added!", false, DateTime.UtcNow.AddMinutes(-3)),
+      CreateMessage(conversationId, personId, "Remind me tomorrow", true, DateTime.UtcNow.AddMinutes(-2)),
+      CreateMessage(conversationId, personId, "Sure", false, DateTime.UtcNow.AddMinutes(-1))
     };
 
     var conversation = new Conversation
