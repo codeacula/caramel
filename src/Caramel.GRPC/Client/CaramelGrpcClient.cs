@@ -94,10 +94,10 @@ public class CaramelGrpcClient : ICaramelServiceClient, IDisposable
     return !grpcResult.IsSuccess || grpcResult.Data is null
       ? Result.Fail<OBSStatus>(string.Join("; ", grpcResult.Errors.Select(e => e.Message)))
       : Result.Ok(new OBSStatus
-    {
-      IsConnected = grpcResult.Data.IsConnected,
-      CurrentScene = grpcResult.Data.CurrentScene
-    });
+      {
+        IsConnected = grpcResult.Data.IsConnected,
+        CurrentScene = grpcResult.Data.CurrentScene
+      });
   }
 
   public async Task<Result<string>> SetOBSSceneAsync(string sceneName, CancellationToken cancellationToken = default)

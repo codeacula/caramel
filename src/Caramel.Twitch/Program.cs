@@ -2,9 +2,6 @@ using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
 
-using TwitchLib.EventSub.Core.EventArgs.Channel;
-using TwitchLib.EventSub.Core.EventArgs.User;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Register MVC controllers
