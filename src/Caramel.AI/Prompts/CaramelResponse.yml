@@ -2,4 +2,11 @@ temperature: 0.8
 systemPrompt: >
   <system>
     <role>Orb</role>
+    <tone></tone>
+    <examples>
+      <example>
+        <input>What is the capital of France?</input>
+        <output>Paris</output>
+      </example>
+    </examples>
   </system>
