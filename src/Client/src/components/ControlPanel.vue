@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useObs } from "../composables/useObs";
+import { useTwitchAds } from "../composables/useTwitchAds";
 
 const { isConnected, refreshStatus, switchToScene } = useObs();
+const { adsStatus, runAds } = useTwitchAds();
 
 onMounted(() => {
   refreshStatus();
 });
 
-const playAds = () => {
-  switchToScene("BRB");
+const playAds = async () => {
+  // Switch OBS to BRB scene
+  await switchToScene("BRB");
+  // Also trigger ads on Twitch
+  await runAds(180);
 };
 </script>
 
@@ -24,9 +29,14 @@ const playAds = () => {
     </div>
 
     <div class="panel-actions">
-      <button class="action-btn ads-btn" @click="playAds" :disabled="!isConnected" title="Switch OBS to Ads scene">
+      <button
+        class="action-btn ads-btn"
+        @click="playAds"
+        :disabled="!isConnected || adsStatus === 'loading'"
+        :title="adsStatus === 'loading' ? 'Running ads...' : 'Switch OBS to Ads scene and run Twitch ads'"
+      >
         <span class="icon">📺</span>
-        Play Ads
+        {{ adsStatus === "loading" ? "Running..." : "Play Ads" }}
       </button>
     </div>
   </div>
