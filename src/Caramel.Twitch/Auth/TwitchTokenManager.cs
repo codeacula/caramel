@@ -4,7 +4,7 @@ namespace Caramel.Twitch.Auth;
 /// Manages the bot's OAuth tokens (access and refresh).
 /// Handles automatic token refresh when expiry approaches.
 /// </summary>
-public sealed class TwitchTokenManager
+public sealed class TwitchTokenManager : ITwitchTokenManager
 {
   private readonly TwitchConfig _config;
   private readonly IHttpClientFactory _httpClientFactory;
@@ -23,12 +23,9 @@ public sealed class TwitchTokenManager
     _accessToken = config.AccessToken;
     _refreshToken = config.RefreshToken;
 
-    // If we have an initial token, assume it is valid for 1 hour.
-    // Otherwise, set to MinValue to force a refresh attempt/error if refresh token exists,
-    // or to signal that OAuth is needed.
-    _expiresAt = !string.IsNullOrWhiteSpace(_accessToken)
-      ? DateTime.UtcNow.AddHours(1)
-      : DateTime.MinValue;
+    // Treat startup token as expired to force validation/refresh on first use.
+    // We cannot know how old the token from config is, so always refresh.
+    _expiresAt = DateTime.MinValue;
   }
 
   public async Task<string> GetValidAccessTokenAsync(CancellationToken cancellationToken = default)

@@ -32,6 +32,9 @@ public sealed class ChannelPointRedeemHandler(
         notification.RedeemedAt,
         cancellationToken);
 
+
+      ChannelPointRedeemLogs.LogRedeemGuid(logger, notification.RewardId);
+
       if (IsMessageTheAiRedeem(notification.RewardId))
       {
         await HandleMessageTheAiRedeemAsync(notification, cancellationToken);
@@ -94,4 +97,7 @@ internal static partial class ChannelPointRedeemLogs
 
   [LoggerMessage(Level = LogLevel.Warning, Message = "Message The AI request failed for {Username}: {Error}")]
   public static partial void MessageTheAiRequestFailed(ILogger logger, string username, string error);
+
+  [LoggerMessage(Level = LogLevel.Warning, Message = "The redeem being checked: {RedeemId} ")]
+  public static partial void LogRedeemGuid(ILogger logger, string redeemId);
 }

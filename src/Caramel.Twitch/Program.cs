@@ -33,7 +33,7 @@ var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<Tw
 
 // Register OAuth and token management
 _ = builder.Services.AddSingleton<OAuthStateManager>();
-_ = builder.Services.AddSingleton<TwitchTokenManager>();
+_ = builder.Services.AddSingleton<ITwitchTokenManager, TwitchTokenManager>();
 
 // Register Twitch notification channel using ITwitchSetupState for dynamic botUserId resolution.
 // The factory resolves at dispatch time so a missing setup degrades gracefully.
@@ -136,4 +136,10 @@ internal static partial class CaramelTwitchProgramLogs
 
   [LoggerMessage(Level = LogLevel.Error, Message = "EventSub connection error: {Error} - will retry")]
   public static partial void EventSubConnectionError(ILogger logger, string error);
+
+  [LoggerMessage(Level = LogLevel.Warning, Message = "EventSub connect failed after prior success; attempting reconnect")]
+  public static partial void EventSubConnectFailedAttemptingReconnect(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "EventSub WebSocket reconnected successfully")]
+  public static partial void EventSubReconnected(ILogger logger);
 }

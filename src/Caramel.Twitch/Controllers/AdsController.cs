@@ -9,7 +9,7 @@ namespace Caramel.Twitch.Controllers;
 [ApiController]
 [Route("twitch/ads")]
 public sealed class AdsController(
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   TwitchConfig twitchConfig,
   ITwitchSetupState setupState,
   IHttpClientFactory httpClientFactory,

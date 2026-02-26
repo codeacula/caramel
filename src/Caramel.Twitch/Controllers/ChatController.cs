@@ -9,7 +9,7 @@ namespace Caramel.Twitch.Controllers;
 [ApiController]
 [Route("chat")]
 public sealed class ChatController(
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   TwitchConfig twitchConfig,
   ITwitchSetupState setupState,
   IHttpClientFactory httpClientFactory,

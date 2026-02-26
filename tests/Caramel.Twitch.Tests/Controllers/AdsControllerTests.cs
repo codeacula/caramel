@@ -12,6 +12,7 @@ public sealed class AdsControllerTests
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
 
+  private readonly Mock<ITwitchTokenManager> _mockTokenManager = new();
   private readonly Mock<ITwitchSetupState> _mockSetupState = new();
   private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new();
   private readonly Mock<ILogger<AdsController>> _mockLogger = new();
@@ -21,6 +22,10 @@ public sealed class AdsControllerTests
   {
     // Default: not on cooldown
     _ = _mockAdsCoordinator.Setup(c => c.IsOnCooldown()).Returns(false);
+    // Default: return a valid access token
+    _ = _mockTokenManager
+        .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
+        .ReturnsAsync("initial-access-token");
   }
 
   private AdsController CreateController(HttpMessageHandler? handler = null)
@@ -30,8 +35,7 @@ public sealed class AdsControllerTests
     _ = _mockHttpClientFactory
         .Setup(f => f.CreateClient(It.IsAny<string>()))
         .Returns(httpClient);
-    var tokenManager = new TwitchTokenManager(DefaultConfig, _mockHttpClientFactory.Object, new Mock<ILogger<TwitchTokenManager>>().Object);
-    return new AdsController(tokenManager, DefaultConfig, _mockSetupState.Object, _mockHttpClientFactory.Object, _mockAdsCoordinator.Object, _mockLogger.Object);
+    return new AdsController(_mockTokenManager.Object, DefaultConfig, _mockSetupState.Object, _mockHttpClientFactory.Object, _mockAdsCoordinator.Object, _mockLogger.Object);
   }
 
   private static TwitchSetup MakeSetup(string broadcasterId = "channel123")
@@ -211,11 +215,13 @@ public sealed class AdsControllerTests
   {
     // Arrange
     _ = _mockSetupState.Setup(s => s.Current).Returns(MakeSetup());
+    _ = _mockTokenManager
+        .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
+        .ReturnsAsync("initial-access-token");
     _ = _mockHttpClientFactory
         .Setup(f => f.CreateClient(It.IsAny<string>()))
         .Throws(new InvalidOperationException("Connection failed"));
-    var tokenManager = new TwitchTokenManager(DefaultConfig, _mockHttpClientFactory.Object, new Mock<ILogger<TwitchTokenManager>>().Object);
-    var controller = new AdsController(tokenManager, DefaultConfig, _mockSetupState.Object, _mockHttpClientFactory.Object, _mockAdsCoordinator.Object, _mockLogger.Object);
+    var controller = new AdsController(_mockTokenManager.Object, DefaultConfig, _mockSetupState.Object, _mockHttpClientFactory.Object, _mockAdsCoordinator.Object, _mockLogger.Object);
     var request = new RunAdsRequest { Duration = 180 };
 
     // Act
