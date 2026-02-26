@@ -37,6 +37,9 @@ public static class ServiceCollectionExtension
     _ = services.AddSingleton<ITwitchUserResolver, TwitchUserResolver>();
     _ = services.AddSingleton<ITwitchWhisperService, TwitchWhisperService>();
 
+    // Register ads coordinator for cooldown tracking
+    _ = services.AddSingleton<IAdsCoordinator, AdsCoordinator>();
+
     return services;
   }
 }

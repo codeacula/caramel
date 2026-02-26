@@ -1,6 +1,3 @@
-using Caramel.Domain.Twitch;
-using Caramel.Twitch.Services;
-
 namespace Caramel.Twitch.Tests.Services;
 
 public sealed class TwitchSetupStateTests

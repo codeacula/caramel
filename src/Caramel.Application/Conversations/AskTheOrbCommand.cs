@@ -10,9 +10,6 @@ using FluentResults;
 
 namespace Caramel.Application.Conversations;
 
-/// <summary>
-/// Sends a one-shot AI request with the supplied user input and returns the response.
-/// </summary>
 public sealed record AskTheOrbCommand(PersonId PersonId, Content Content) : IRequest<Result<string>>;
 
 public sealed class AskTheOrbCommandHandler(
@@ -46,8 +43,11 @@ public sealed class AskTheOrbCommandHandler(
       .CreateResponseRequest(messages, actionsSummary: "None", userTimezone)
       .ExecuteAsync(cancellationToken);
 
-    return responseResult.Success
-      ? Result.Ok(responseResult.Content)
-      : Result.Fail<string>(responseResult.ErrorMessage ?? "AskTheOrb request failed.");
+    return responseResult.Success switch
+    {
+      true => Result.Ok(responseResult.Content),
+      false when responseResult.ErrorMessage != null => Result.Fail<string>(responseResult.ErrorMessage),
+      _ => Result.Fail<string>("AskTheOrb request failed.")
+    };
   }
 }

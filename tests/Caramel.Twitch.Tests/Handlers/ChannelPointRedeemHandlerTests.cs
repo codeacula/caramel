@@ -1,5 +1,3 @@
-using Caramel.Twitch.Services;
-
 namespace Caramel.Twitch.Tests.Handlers;
 
 public sealed class ChannelPointRedeemHandlerTests

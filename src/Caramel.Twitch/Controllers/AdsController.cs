@@ -13,6 +13,7 @@ public sealed class AdsController(
   TwitchConfig twitchConfig,
   ITwitchSetupState setupState,
   IHttpClientFactory httpClientFactory,
+  IAdsCoordinator adsCoordinator,
   ILogger<AdsController> logger) : ControllerBase
 {
   private static readonly int[] ValidDurations = [30, 60, 90, 120, 150, 180];
@@ -20,6 +21,11 @@ public sealed class AdsController(
   [HttpPost("run")]
   public async Task<IActionResult> RunAdsAsync([FromBody] RunAdsRequest request, CancellationToken cancellationToken)
   {
+    if (adsCoordinator.IsOnCooldown())
+    {
+      return StatusCode(409, new { message = "Ads are on cooldown." });
+    }
+
     if (!ValidDurations.Contains(request.Duration))
     {
       return BadRequest($"Duration must be one of: {string.Join(", ", ValidDurations)}");
@@ -49,22 +55,41 @@ public sealed class AdsController(
 
       var body = new
       {
-        duration = request.Duration,
+        broadcaster_id = broadcasterId,
+        length = request.Duration,
       };
 
       var json = JsonSerializer.Serialize(body);
       using var content = new StringContent(json, Encoding.UTF8, "application/json");
-      var response = await httpClient.PostAsync($"https://api.twitch.tv/helix/channels/{broadcasterId}/ads", content, cancellationToken);
+      var response = await httpClient.PostAsync("https://api.twitch.tv/helix/channels/commercial", content, cancellationToken);
 
       if (response.IsSuccessStatusCode)
       {
         AdsControllerLogs.AdsRun(logger, broadcasterId, request.Duration);
-        return Ok(new { message = $"Ads started for {request.Duration} seconds" });
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var retryAfter = 0;
+        using var json2 = JsonDocument.Parse(responseBody);
+        var dataArray = json2.RootElement.GetProperty("data");
+        if (dataArray.GetArrayLength() > 0 &&
+            dataArray[0].TryGetProperty("retry_after", out var retryAfterEl))
+        {
+          retryAfter = retryAfterEl.TryGetInt32(out var parsed) ? parsed : 0;
+        }
+
+        return Ok(new { message = $"Ads started for {request.Duration} seconds", retry_after = retryAfter });
       }
 
       var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
       AdsControllerLogs.AdsRunFailed(logger, (int)response.StatusCode, errorBody);
-      return Problem("Twitch API rejected the request.");
+
+      return response.StatusCode switch
+      {
+        System.Net.HttpStatusCode.BadRequest => Problem("Invalid request to Twitch API. Please check the request parameters."),
+        System.Net.HttpStatusCode.Unauthorized => Problem("Unauthorized: Twitch rejected the access token. Please re-authorize via /auth/twitch/login."),
+        System.Net.HttpStatusCode.Forbidden => Problem("Twitch rejected the request: missing required scope 'channel:edit:commercial'. Please re-authorize via /auth/twitch/login."),
+        _ => Problem("Twitch API rejected the request.")
+      };
     }
     catch (Exception ex)
     {

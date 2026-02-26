@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { Toaster } from "vue-sonner";
 import ControlPanel from "./components/ControlPanel.vue";
 import TwitchChat from "./components/TwitchChat.vue";
 
@@ -106,6 +107,7 @@ const activeScreen = ref<ScreenId>("chat");
         </section>
       </main>
     </div>
+    <Toaster position="top-right" richColors />
   </div>
 </template>
 

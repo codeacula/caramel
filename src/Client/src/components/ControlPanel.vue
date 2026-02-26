@@ -1,20 +1,38 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
+import { toast } from "vue-sonner";
 import { useObs } from "../composables/useObs";
 import { useTwitchAds } from "../composables/useTwitchAds";
 
 const { isConnected, refreshStatus, switchToScene } = useObs();
-const { adsStatus, runAds } = useTwitchAds();
+const { adsStatus, cooldownRemaining, runAds } = useTwitchAds();
 
 onMounted(() => {
   refreshStatus();
 });
 
 const playAds = async () => {
-  // Switch OBS to BRB scene
+  // Always switch to BRB scene, regardless of cooldown
   await switchToScene("BRB");
-  // Also trigger ads on Twitch
-  await runAds(180);
+
+  // Skip ads API call if on cooldown
+  if (cooldownRemaining.value > 0) {
+    toast.info(`Ads on cooldown — ${cooldownRemaining.value}s remaining`);
+    return;
+  }
+
+  const result = await runAds(180);
+
+  if (result.success) {
+    const minutes = Math.floor(result.retryAfter / 60);
+    const seconds = result.retryAfter % 60;
+    const cooldownStr = result.retryAfter > 0
+      ? ` Next available in ${minutes}:${String(seconds).padStart(2, "0")}`
+      : "";
+    toast.success(`Ads started!${cooldownStr}`);
+  } else {
+    toast.error(result.errorMessage ?? "Failed to run ads");
+  }
 };
 </script>
 
