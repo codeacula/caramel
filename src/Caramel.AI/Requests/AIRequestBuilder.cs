@@ -13,9 +13,9 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace Caramel.AI.Requests;
 
-public sealed class AIRequestBuilder(CaramelAIConfig config, IPromptTemplateProcessor templateProcessor, ILogger<AIRequestBuilder> logger) : IAIRequestBuilder
+public sealed class AIRequestBuilder(CaramelAiConfig config, IPromptTemplateProcessor templateProcessor, ILogger<AIRequestBuilder> logger) : IAIRequestBuilder
 {
-  private readonly CaramelAIConfig _config = config;
+  private readonly CaramelAiConfig _config = config;
   private readonly IPromptTemplateProcessor _templateProcessor = templateProcessor;
   private readonly ILogger<AIRequestBuilder> _logger = logger;
   private readonly List<ChatMessageDTO> _messages = [];

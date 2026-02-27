@@ -1,6 +1,6 @@
 namespace Caramel.AI.Config;
 
-public record CaramelAIConfig
+public record CaramelAiConfig
 {
   public string ModelId { get; init; } = "";
   public string Endpoint { get; init; } = "";

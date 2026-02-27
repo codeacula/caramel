@@ -9,12 +9,12 @@ namespace Caramel.Service.OBS;
 public sealed class OBSService : IHostedService, IOBSService, IDisposable
 {
   private readonly OBSWebsocket _obs;
-  private readonly OBSConfig _config;
+  private readonly ObsConfig _config;
   private readonly ILogger<OBSService> _logger;
 
   public bool IsConnected => _obs.IsConnected;
 
-  public OBSService(IOptions<OBSConfig> config, ILogger<OBSService> logger)
+  public OBSService(IOptions<ObsConfig> config, ILogger<OBSService> logger)
   {
     _config = config.Value;
     _logger = logger;
