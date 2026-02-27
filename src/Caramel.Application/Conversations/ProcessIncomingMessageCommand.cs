@@ -133,16 +133,19 @@ public sealed class ProcessIncomingMessageCommandHandler(
       validationResult.BlockedCalls.Count,
       toolResults.Count - validationResult.BlockedCalls.Count);
 
-    // Phase 3: Response Generation
-    var actionsSummary = toolResults.Count == 0
-      ? "None"
-      : string.Join("\n", toolResults.Select(tc => $"- {tc.ToSummary()}"));
+     // Phase 3: Response Generation
+     var actionsSummary = toolResults.Count == 0
+       ? "None"
+       : string.Join("\n", toolResults.Select(tc => $"- {tc.ToSummary()}"));
 
-    ConversationLogs.ActionsTaken(logger, person.Id.Value, [actionsSummary]);
+     if (logger.IsEnabled(LogLevel.Information))
+     {
+       ConversationLogs.ActionsTaken(logger, person.Id.Value, [actionsSummary]);
+     }
 
-    var responseResult = await caramelAIAgent
-      .CreateResponseRequest(responseMessages, actionsSummary, userTimezone)
-      .ExecuteAsync(cancellationToken);
+     var responseResult = await caramelAIAgent
+       .CreateResponseRequest(responseMessages, actionsSummary, userTimezone)
+       .ExecuteAsync(cancellationToken);
 
     return !responseResult.Success
       ? $"I encountered an issue while processing your request: {responseResult.ErrorMessage}"
@@ -159,15 +162,18 @@ public sealed class ProcessIncomingMessageCommandHandler(
     };
   }
 
-  private async Task SaveReplyAsync(Conversation conversation, string response, CancellationToken cancellationToken)
-  {
-    var addReplyResult = await conversationStore.AddReplyAsync(conversation.Id, new Content(response), cancellationToken);
+   private async Task SaveReplyAsync(Conversation conversation, string response, CancellationToken cancellationToken)
+   {
+     var addReplyResult = await conversationStore.AddReplyAsync(conversation.Id, new Content(response), cancellationToken);
 
-    if (addReplyResult.IsFailed)
-    {
-      DataAccessLogs.UnableToSaveMessageToConversation(logger, conversation.Id.Value, response);
-    }
-  }
+     if (addReplyResult.IsFailed)
+     {
+       if (logger.IsEnabled(LogLevel.Error))
+       {
+         DataAccessLogs.UnableToSaveMessageToConversation(logger, conversation.Id.Value, response);
+       }
+     }
+   }
 
   private Result<Reply> CreateReplyToUser(string response)
   {

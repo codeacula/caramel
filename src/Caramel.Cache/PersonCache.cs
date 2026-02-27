@@ -18,34 +18,38 @@ public sealed class PersonCache(IConnectionMultiplexer redis, ILogger<PersonCach
   private const string MappingKeyPrefix = "person:mapping:";
   private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(5);
 
-  public async Task<Result<PersonId?>> GetPersonIdAsync(PlatformId platformId)
-  {
-    try
-    {
-      var key = GetMappingCacheKey(platformId);
-      var value = await _db.StringGetAsync(key);
+   public async Task<Result<PersonId?>> GetPersonIdAsync(PlatformId platformId)
+   {
+     try
+     {
+       var key = GetMappingCacheKey(platformId);
+       var value = await _db.StringGetAsync(key);
 
-      if (!value.HasValue)
-      {
-        CacheLogs.PlatformMappingCacheMiss(_logger, platformId.PlatformUserId, platformId.Platform);
-        return Result.Ok<PersonId?>(null);
-      }
+       if (!value.HasValue)
+       {
+         CacheLogs.PlatformMappingCacheMiss(_logger, platformId.PlatformUserId, platformId.Platform);
+         return Result.Ok<PersonId?>(null);
+       }
 
-      if (Guid.TryParse(value.ToString(), out var guid))
-      {
-        var personId = new PersonId(guid);
-        CacheLogs.PlatformMappingCacheHit(_logger, platformId.PlatformUserId, platformId.Platform, personId.Value.ToString());
-        return Result.Ok<PersonId?>(personId);
-      }
+       if (Guid.TryParse(value.ToString(), out var guid))
+       {
+         var personId = new PersonId(guid);
+         var personIdStr = personId.Value.ToString();
+         if (_logger.IsEnabled(LogLevel.Debug))
+         {
+           CacheLogs.PlatformMappingCacheHit(_logger, platformId.PlatformUserId, platformId.Platform, personIdStr);
+         }
+         return Result.Ok<PersonId?>(personId);
+       }
 
-      return Result.Fail<PersonId?>($"Failed to parse cached PersonId for user {platformId.PlatformUserId}");
-    }
-    catch (Exception ex)
-    {
-      CacheLogs.PlatformMappingCacheReadError(_logger, ex, platformId.PlatformUserId, platformId.Platform);
-      return Result.Fail<PersonId?>($"Failed to read mapping from cache for user {platformId.PlatformUserId}: {ex.Message}");
-    }
-  }
+       return Result.Fail<PersonId?>($"Failed to parse cached PersonId for user {platformId.PlatformUserId}");
+     }
+     catch (Exception ex)
+     {
+       CacheLogs.PlatformMappingCacheReadError(_logger, ex, platformId.PlatformUserId, platformId.Platform);
+       return Result.Fail<PersonId?>($"Failed to read mapping from cache for user {platformId.PlatformUserId}: {ex.Message}");
+     }
+   }
 
   public async Task<Result> MapPlatformIdToPersonIdAsync(PlatformId platformId, PersonId personId)
   {
@@ -62,74 +66,94 @@ public sealed class PersonCache(IConnectionMultiplexer redis, ILogger<PersonCach
     }
   }
 
-  public async Task<Result<bool?>> GetAccessAsync(PlatformId platformId)
-  {
-    try
-    {
-      var personIdResult = await GetPersonIdAsync(platformId);
-      if (personIdResult.IsFailed)
+   public async Task<Result<bool?>> GetAccessAsync(PlatformId platformId)
+   {
+     try
+     {
+       var personIdResult = await GetPersonIdAsync(platformId);
+       if (personIdResult.IsFailed)
+       {
+         return Result.Ok<bool?>(null);
+       }
+
+       if (!personIdResult.Value.HasValue)
+       {
+         CacheLogs.PersonCacheMiss(_logger, platformId.PlatformUserId, platformId.Platform);
+         return Result.Ok<bool?>(null);
+       }
+
+       var personId = personIdResult.Value.Value;
+
+       var key = GetAccessCacheKey(personId);
+       var value = await _db.StringGetAsync(key);
+       if (!value.HasValue)
+       {
+         return Result.Ok<bool?>(null);
+       }
+       var hasAccess = (bool)value;
+       var personIdStr = personId.Value.ToString();
+       if (_logger.IsEnabled(LogLevel.Debug))
+       {
+         CacheLogs.PersonCacheHit(_logger, personIdStr, hasAccess);
+       }
+       return Result.Ok<bool?>(hasAccess);
+     }
+     catch (Exception ex)
+     {
+       CacheLogs.PersonCacheReadError(_logger, ex, platformId.PlatformUserId, platformId.Platform);
+       return Result.Fail<bool?>($"Failed to read from cache for person {platformId.PlatformUserId} on {platformId.Platform}: {ex.Message}");
+     }
+   }
+
+   public async Task<Result> SetAccessAsync(PersonId personId, bool hasAccess)
+   {
+     try
+     {
+       var key = GetAccessCacheKey(personId);
+       _ = await _db.StringSetAsync(key, hasAccess, CacheTtl);
+
+       var personIdStr = personId.Value.ToString();
+       if (_logger.IsEnabled(LogLevel.Debug))
+       {
+         CacheLogs.PersonCacheSet(_logger, personIdStr, hasAccess);
+       }
+       return Result.Ok();
+     }
+      catch (Exception ex)
       {
-        return Result.Ok<bool?>(null);
+        var personIdStr = personId.Value.ToString();
+        if (_logger.IsEnabled(LogLevel.Error))
+        {
+          CacheLogs.PersonCacheWriteError(_logger, ex, personIdStr);
+        }
+        return Result.Fail($"Failed to write to cache for person {personId.Value}: {ex.Message}");
       }
+   }
 
-      if (!personIdResult.Value.HasValue)
+   public async Task<Result> InvalidateAccessAsync(PersonId personId)
+   {
+     try
+     {
+       var key = GetAccessCacheKey(personId);
+       _ = await _db.KeyDeleteAsync(key);
+
+       var personIdStr = personId.Value.ToString();
+       if (_logger.IsEnabled(LogLevel.Information))
+       {
+         CacheLogs.PersonCacheInvalidated(_logger, personIdStr);
+       }
+       return Result.Ok();
+     }
+      catch (Exception ex)
       {
-        CacheLogs.PersonCacheMiss(_logger, platformId.PlatformUserId, platformId.Platform);
-        return Result.Ok<bool?>(null);
+        var personIdStr = personId.Value.ToString();
+        if (_logger.IsEnabled(LogLevel.Error))
+        {
+          CacheLogs.PersonCacheDeleteError(_logger, ex, personIdStr);
+        }
+        return Result.Fail($"Failed to invalidate cache for person {personId.Value}: {ex.Message}");
       }
-
-      var personId = personIdResult.Value.Value;
-
-      var key = GetAccessCacheKey(personId);
-      var value = await _db.StringGetAsync(key);
-      if (!value.HasValue)
-      {
-        return Result.Ok<bool?>(null);
-      }
-      var hasAccess = (bool)value;
-      CacheLogs.PersonCacheHit(_logger, personId.Value.ToString(), hasAccess);
-      return Result.Ok<bool?>(hasAccess);
-    }
-    catch (Exception ex)
-    {
-      CacheLogs.PersonCacheReadError(_logger, ex, platformId.PlatformUserId, platformId.Platform);
-      return Result.Fail<bool?>($"Failed to read from cache for person {platformId.PlatformUserId} on {platformId.Platform}: {ex.Message}");
-    }
-  }
-
-  public async Task<Result> SetAccessAsync(PersonId personId, bool hasAccess)
-  {
-    try
-    {
-      var key = GetAccessCacheKey(personId);
-      _ = await _db.StringSetAsync(key, hasAccess, CacheTtl);
-
-      CacheLogs.PersonCacheSet(_logger, personId.Value.ToString(), hasAccess);
-      return Result.Ok();
-    }
-    catch (Exception ex)
-    {
-      CacheLogs.PersonCacheWriteError(_logger, ex, personId.Value.ToString());
-      return Result.Fail($"Failed to write to cache for person {personId.Value}: {ex.Message}");
-    }
-  }
-
-  public async Task<Result> InvalidateAccessAsync(PersonId personId)
-  {
-    try
-    {
-      var key = GetAccessCacheKey(personId);
-      _ = await _db.KeyDeleteAsync(key);
-
-      CacheLogs.PersonCacheInvalidated(_logger, personId.Value.ToString());
-      return Result.Ok();
-    }
-    catch (Exception ex)
-    {
-      CacheLogs.PersonCacheDeleteError(_logger, ex, personId.Value.ToString());
-      return Result.Fail($"Failed to invalidate cache for person {personId.Value}: {ex.Message}");
-    }
-  }
+   }
 
   public async Task<Result> InvalidatePlatformMappingAsync(PlatformId platformId)
   {
