@@ -31,6 +31,9 @@ _ = builder.Services
   .AddGrpcClientServices()
   .AddTwitchServices();
 
+// Register ASP.NET Core Data Protection API for token encryption
+_ = builder.Services.AddDataProtection();
+
 // Register a named HttpClient for Twitch Helix API calls
 _ = builder.Services.AddHttpClient("TwitchHelix");
 
