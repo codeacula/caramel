@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 using Caramel.AI.DTOs;
 using Caramel.AI.Models;
@@ -70,7 +72,7 @@ public sealed class ToolPlanValidator
 
   private static bool HasRequiredArguments(MethodInfo method, IDictionary<string, string?> arguments, out List<string> missing)
   {
-    missing = [];
+    missing = new List<string>();
     var argumentLookup = arguments is null
       ? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
       : new Dictionary<string, string?>(arguments, StringComparer.OrdinalIgnoreCase);
@@ -102,7 +104,7 @@ public sealed class ToolPlanValidator
 
   private static PlannedToolCall NormalizeArguments(PlannedToolCall toolCall)
   {
-    var normalizedArguments = new Dictionary<string, string?>(toolCall.Arguments ?? [], StringComparer.OrdinalIgnoreCase);
+    var normalizedArguments = new Dictionary<string, string?>(toolCall.Arguments ?? new Dictionary<string, string?>(), StringComparer.OrdinalIgnoreCase);
     return toolCall with { Arguments = normalizedArguments };
   }
 
@@ -120,7 +122,7 @@ public sealed class ToolPlanValidator
 
   private static ToolCallResult Blocked(PlannedToolCall toolCall, string errorMessage)
   {
-    var arguments = toolCall.Arguments ?? [];
+    var arguments = toolCall.Arguments ?? new Dictionary<string, string?>();
     return new ToolCallResult
     {
       PluginName = toolCall.PluginName,

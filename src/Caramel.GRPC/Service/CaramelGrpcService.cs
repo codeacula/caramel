@@ -60,7 +60,9 @@ public sealed class CaramelGrpcService(
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })],
+      ConfiguredOnTicks = setup.ConfiguredOn.UtcTicks,
+      UpdatedOnTicks = setup.UpdatedOn.UtcTicks
     };
   }
 
@@ -86,7 +88,9 @@ public sealed class CaramelGrpcService(
     {
       BotUserId = setup.BotUserId,
       BotLogin = setup.BotLogin,
-      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })]
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })],
+      ConfiguredOnTicks = setup.ConfiguredOn.UtcTicks,
+      UpdatedOnTicks = setup.UpdatedOn.UtcTicks
     };
   }
 

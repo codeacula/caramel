@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using System.Collections.Generic;
 
 using Caramel.AI.Models;
 using Caramel.AI.Requests;
@@ -16,7 +17,7 @@ public sealed class ToolExecutionService
     var results = new List<ToolCallResult>();
     foreach (var toolCall in toolCalls)
     {
-      var arguments = toolCall.Arguments ?? [];
+      var arguments = toolCall.Arguments ?? new Dictionary<string, string?>();
       if (!ToolCallResolver.TryResolve(plugins, toolCall.PluginName, toolCall.FunctionName, out var resolved, out var errorMessage))
       {
         results.Add(new ToolCallResult

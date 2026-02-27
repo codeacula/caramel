@@ -102,8 +102,8 @@ public class CaramelGrpcClient : ICaramelServiceClient
       Channels = dto.Channels
         .ConvertAll(c => new TwitchChannel { UserId = c.UserId, Login = c.Login })
 ,
-      ConfiguredOn = DateTimeOffset.UtcNow,
-      UpdatedOn = DateTimeOffset.UtcNow
+      ConfiguredOn = new DateTimeOffset(dto.ConfiguredOnTicks, TimeSpan.Zero),
+      UpdatedOn = new DateTimeOffset(dto.UpdatedOnTicks, TimeSpan.Zero)
     };
   }
 }

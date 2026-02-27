@@ -58,6 +58,8 @@ public static class ServiceCollectionExtension
   {
     _ = services.AddScoped<Context.IUserContext, Context.UserContext>();
     _ = services.AddSingleton<UserResolutionInterceptor>();
+    // AuthorizationInterceptor depends on SuperAdminConfig, which must be registered
+    // by the caller (e.g. via AddDatabaseServices) before the DI container resolves this.
     _ = services.AddSingleton<AuthorizationInterceptor>();
 
     _ = services

@@ -13,6 +13,14 @@ public sealed record TwitchSetupDTO
 
   [DataMember(Order = 3)]
   public required List<TwitchChannelDTO> Channels { get; init; }
+
+  /// <summary>UTC ticks of when the configuration was first created.</summary>
+  [DataMember(Order = 4)]
+  public required long ConfiguredOnTicks { get; init; }
+
+  /// <summary>UTC ticks of when the configuration was last updated.</summary>
+  [DataMember(Order = 5)]
+  public required long UpdatedOnTicks { get; init; }
 }
 
 [DataContract]
