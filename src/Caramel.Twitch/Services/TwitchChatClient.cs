@@ -14,7 +14,7 @@ public interface ITwitchChatClient
 public sealed class TwitchChatClient(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   ITwitchSetupState setupState,
   ILogger<TwitchChatClient> logger) : ITwitchChatClient
 {

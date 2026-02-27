@@ -14,6 +14,7 @@ public sealed class TwitchChatClientTests
 
   private readonly Mock<ITwitchSetupState> _setupStateMock = new();
   private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
+  private readonly Mock<ITwitchTokenManager> _tokenManagerMock = new();
   private readonly Mock<ILogger<TwitchChatClient>> _loggerMock = new();
 
   [Fact]
@@ -128,14 +129,11 @@ public sealed class TwitchChatClientTests
   [Fact]
   public async Task SendChatMessageAsyncReturnsFailureWhenTokenManagerThrowsAsync()
   {
-    // Arrange — create token manager with expired token and no refresh capability
-    var expiredConfig = DefaultConfig with
-    {
-      AccessToken = "expired-token",
-      RefreshToken = null!,
-    };
-    var tokenManager = new TwitchTokenManager(expiredConfig, _httpClientFactoryMock.Object, new Mock<ILogger<TwitchTokenManager>>().Object);
-    tokenManager.SetTokens("expired-token", null, expiresInSeconds: 0);
+    // Arrange — token manager throws when it cannot refresh
+    var throwingTokenManagerMock = new Mock<ITwitchTokenManager>();
+    _ = throwingTokenManagerMock
+      .Setup(t => t.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new InvalidOperationException("No refresh token available."));
 
     var handler = new FakeHttpMessageHandler(HttpStatusCode.OK, "{}");
     var httpClient = new HttpClient(handler);
@@ -147,7 +145,7 @@ public sealed class TwitchChatClientTests
     var client = new TwitchChatClient(
       _httpClientFactoryMock.Object,
       DefaultConfig,
-      tokenManager,
+      throwingTokenManagerMock.Object,
       _setupStateMock.Object,
       _loggerMock.Object);
 
@@ -165,12 +163,14 @@ public sealed class TwitchChatClientTests
       .Setup(f => f.CreateClient(It.IsAny<string>()))
       .Returns(httpClient);
 
-    var tokenManager = new TwitchTokenManager(DefaultConfig, _httpClientFactoryMock.Object, new Mock<ILogger<TwitchTokenManager>>().Object);
+    _ = _tokenManagerMock
+      .Setup(t => t.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync("initial-access-token");
 
     return new TwitchChatClient(
       _httpClientFactoryMock.Object,
       DefaultConfig,
-      tokenManager,
+      _tokenManagerMock.Object,
       _setupStateMock.Object,
       _loggerMock.Object);
   }
