@@ -20,7 +20,7 @@ jobs:
       with:
         dotnet-version: '10.0.x'
         cache: true
-        cache-dependency-path: '**/packages.lock.json'
+        cache-dependency-path: '**/Caramel.sln'
     
     - name: Restore dependencies
       run: dotnet restore
