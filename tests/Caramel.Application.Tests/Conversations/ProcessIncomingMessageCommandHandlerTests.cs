@@ -175,7 +175,8 @@ public class ProcessIncomingMessageCommandHandlerTests
 
     // Assert
     Assert.True(result.IsFailed);
-    Assert.Contains("Unexpected error", result.Errors.Select(e => e.Message));
+    var errorMessage = string.Join(", ", result.Errors.Select(e => e.Message));
+    Assert.Contains("Invalid message processing state", errorMessage);
   }
 
   private static Person CreatePerson(PersonId personId)

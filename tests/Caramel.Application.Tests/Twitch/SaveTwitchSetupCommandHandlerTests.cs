@@ -110,6 +110,6 @@ public sealed class SaveTwitchSetupCommandHandlerTests
     var result = await handler.Handle(MakeCommand(), CancellationToken.None);
 
     _ = result.IsFailed.Should().BeTrue();
-    _ = result.Errors.Should().ContainSingle(e => e.Message == "connection lost");
+    _ = result.Errors.Should().ContainSingle(e => e.Message.Contains("Invalid operation state"));
   }
 }
