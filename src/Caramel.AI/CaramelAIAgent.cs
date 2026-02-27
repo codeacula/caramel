@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace Caramel.AI;
 
 public sealed class CaramelAIAgent(
-  CaramelAIConfig config,
+  CaramelAiConfig config,
   IPromptLoader promptLoader,
   IPromptTemplateProcessor templateProcessor,
   ILogger<AIRequestBuilder> logger) : ICaramelAIAgent
