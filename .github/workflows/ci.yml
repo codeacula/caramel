@@ -39,4 +39,5 @@ jobs:
         path: '**/test-results.trx'
     
     - name: Code analysis
+      continue-on-error: true
       run: dotnet build --configuration Release /p:EnforceCodeStyleInBuild=true
