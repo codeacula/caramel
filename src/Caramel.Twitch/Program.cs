@@ -1,5 +1,6 @@
 using Caramel.Core.Configuration;
 using Caramel.Core.Security;
+using Caramel.Database;
 using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
@@ -21,11 +22,12 @@ _ = builder.Services.AddLogging(config =>
   _ = config.SetMinimumLevel(builder.Environment.IsDevelopment() ? LogLevel.Debug : LogLevel.Information);
 });
 
-// Register Redis, cache, gRPC, and Twitch-specific services
+// Register Redis, cache, gRPC, database, and Twitch-specific services
 string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException("Redis connection string is missing.");
 _ = builder.Services
   .AddCaramelOptions(builder.Configuration)
   .AddCacheServices(redisConnectionString)
+  .AddDatabaseServices(builder.Configuration)
   .AddGrpcClientServices()
   .AddTwitchServices();
 

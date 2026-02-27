@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Caramel.Cache\Caramel.Cache.csproj" />
     <ProjectReference Include="..\Caramel.Core\Caramel.Core.csproj" />
+    <ProjectReference Include="..\Caramel.Database\Caramel.Database.csproj" />
     <ProjectReference Include="..\Caramel.Domain\Caramel.Domain.csproj" />
     <ProjectReference Include="..\Caramel.GRPC\Caramel.GRPC.csproj" />
     <ProjectReference Include="..\Caramel.Notifications\Caramel.Notifications.csproj" />
