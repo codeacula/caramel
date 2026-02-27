@@ -27,8 +27,9 @@ public static class ServiceCollectionExtension
     // Register in-memory Twitch setup state (loaded from DB at runtime)
     _ = services.AddSingleton<ITwitchSetupState, TwitchSetupState>();
 
-    // Register EventSub WebSocket client
+    // Register EventSub WebSocket client and its testable wrapper
     _ = services.AddSingleton<EventSubWebsocketClient>();
+    _ = services.AddSingleton<IEventSubWebsocketClientWrapper, EventSubWebsocketClientWrapper>();
 
     // Register chat broadcaster for Redis pub/sub
     _ = services.AddSingleton<ITwitchChatBroadcaster, TwitchChatBroadcaster>();

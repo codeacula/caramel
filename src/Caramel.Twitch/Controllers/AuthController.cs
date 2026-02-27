@@ -13,7 +13,7 @@ public sealed class AuthController(
   ICaramelServiceClient serviceClient,
   ITwitchSetupState setupState,
   OAuthStateManager stateManager,
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   TwitchConfig twitchConfig,
   ITwitchUserResolver userResolver
 ) : ControllerBase

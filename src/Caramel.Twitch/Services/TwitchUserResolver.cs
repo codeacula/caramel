@@ -12,7 +12,7 @@ public interface ITwitchUserResolver
 public sealed class TwitchUserResolver(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   ILogger<TwitchUserResolver> logger) : ITwitchUserResolver
 {
   private readonly ConcurrentDictionary<string, string> _cache = new(StringComparer.OrdinalIgnoreCase);

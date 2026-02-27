@@ -12,7 +12,7 @@ public interface ITwitchWhisperService
 public sealed class TwitchWhisperService(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   ILogger<TwitchWhisperService> logger) : ITwitchWhisperService
 {
   public async Task<bool> SendWhisperAsync(
