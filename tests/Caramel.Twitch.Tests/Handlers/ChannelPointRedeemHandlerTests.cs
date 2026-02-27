@@ -9,6 +9,7 @@ public sealed class ChannelPointRedeemHandlerTests
     var messageTheAiRewardId = Guid.NewGuid();
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
     var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
     var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
 
@@ -16,7 +17,11 @@ public sealed class ChannelPointRedeemHandlerTests
       .Setup(x => x.AskTheOrbAsync(It.IsAny<AskTheOrbRequest>(), It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok("The orb has spoken."));
 
-    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, config, loggerMock.Object);
+    _ = chatClientMock
+      .Setup(x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok());
+
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
     var notification = CreateRedeemNotification(
       rewardId: messageTheAiRewardId.ToString(),
       userInput: "Should I touch grass today?");
@@ -60,10 +65,11 @@ public sealed class ChannelPointRedeemHandlerTests
     var differentRewardId = Guid.NewGuid();
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
     var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
     var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
 
-    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, config, loggerMock.Object);
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
     var notification = CreateRedeemNotification(
       rewardId: differentRewardId.ToString(),
       userInput: "hello orb");
@@ -100,10 +106,11 @@ public sealed class ChannelPointRedeemHandlerTests
     var messageTheAiRewardId = Guid.NewGuid();
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
     var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
     var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
 
-    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, config, loggerMock.Object);
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
     var notification = CreateRedeemNotification(
       rewardId: messageTheAiRewardId.ToString(),
       userInput: "   ");
@@ -115,6 +122,133 @@ public sealed class ChannelPointRedeemHandlerTests
     serviceClientMock.Verify(
       x => x.AskTheOrbAsync(It.IsAny<AskTheOrbRequest>(), It.IsAny<CancellationToken>()),
       Times.Never);
+  }
+
+  [Fact]
+  public async Task HandleWithMatchingAiRewardSendsResponseToChatAsync()
+  {
+    // Arrange
+    var messageTheAiRewardId = Guid.NewGuid();
+    var serviceClientMock = new Mock<ICaramelServiceClient>();
+    var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
+    var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
+    var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
+
+    _ = serviceClientMock
+      .Setup(x => x.AskTheOrbAsync(It.IsAny<AskTheOrbRequest>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok("The orb has spoken."));
+
+    _ = chatClientMock
+      .Setup(x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok());
+
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
+    var notification = CreateRedeemNotification(
+      rewardId: messageTheAiRewardId.ToString(),
+      userInput: "Should I touch grass today?");
+
+    // Act
+    await handler.Handle(notification, CancellationToken.None);
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync("@viewer The orb has spoken.", It.IsAny<CancellationToken>()),
+      Times.Once);
+  }
+
+  [Fact]
+  public async Task HandleWithMatchingAiRewardDoesNotSendToChatWhenAiFailsAsync()
+  {
+    // Arrange
+    var messageTheAiRewardId = Guid.NewGuid();
+    var serviceClientMock = new Mock<ICaramelServiceClient>();
+    var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
+    var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
+    var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
+
+    _ = serviceClientMock
+      .Setup(x => x.AskTheOrbAsync(It.IsAny<AskTheOrbRequest>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Fail<string>("AI service unavailable"));
+
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
+    var notification = CreateRedeemNotification(
+      rewardId: messageTheAiRewardId.ToString(),
+      userInput: "Hello orb");
+
+    // Act
+    await handler.Handle(notification, CancellationToken.None);
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+      Times.Never);
+  }
+
+  [Fact]
+  public async Task HandleWithMatchingAiRewardDoesNotSendToChatWhenResponseIsEmptyAsync()
+  {
+    // Arrange
+    var messageTheAiRewardId = Guid.NewGuid();
+    var serviceClientMock = new Mock<ICaramelServiceClient>();
+    var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
+    var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
+    var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
+
+    _ = serviceClientMock
+      .Setup(x => x.AskTheOrbAsync(It.IsAny<AskTheOrbRequest>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok("   "));
+
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
+    var notification = CreateRedeemNotification(
+      rewardId: messageTheAiRewardId.ToString(),
+      userInput: "Hello orb");
+
+    // Act
+    await handler.Handle(notification, CancellationToken.None);
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+      Times.Never);
+  }
+
+  [Fact]
+  public async Task HandleWithMatchingAiRewardTruncatesLongResponseAsync()
+  {
+    // Arrange
+    var messageTheAiRewardId = Guid.NewGuid();
+    var serviceClientMock = new Mock<ICaramelServiceClient>();
+    var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
+    var loggerMock = new Mock<ILogger<ChannelPointRedeemHandler>>();
+    var config = CreateTwitchConfig(messageTheAiRewardId.ToString());
+
+    var longResponse = new string('x', 600);
+    _ = serviceClientMock
+      .Setup(x => x.AskTheOrbAsync(It.IsAny<AskTheOrbRequest>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok(longResponse));
+
+    _ = chatClientMock
+      .Setup(x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok());
+
+    var handler = new ChannelPointRedeemHandler(serviceClientMock.Object, broadcasterMock.Object, chatClientMock.Object, config, loggerMock.Object);
+    var notification = CreateRedeemNotification(
+      rewardId: messageTheAiRewardId.ToString(),
+      userInput: "Tell me everything");
+
+    // Act
+    await handler.Handle(notification, CancellationToken.None);
+
+    // Assert — "@viewer " is 8 chars, so the message must be ≤ 500 total
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync(
+        It.Is<string>(msg => msg.Length <= 500 && msg.StartsWith("@viewer ")),
+        It.IsAny<CancellationToken>()),
+      Times.Once);
   }
 
   private static TwitchConfig CreateTwitchConfig(string? messageTheAiRewardId)

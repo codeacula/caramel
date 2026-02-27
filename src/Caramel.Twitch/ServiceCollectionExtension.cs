@@ -36,6 +36,7 @@ public static class ServiceCollectionExtension
     // Register Twitch API utilities
     _ = services.AddSingleton<ITwitchUserResolver, TwitchUserResolver>();
     _ = services.AddSingleton<ITwitchWhisperService, TwitchWhisperService>();
+    _ = services.AddSingleton<ITwitchChatClient, TwitchChatClient>();
 
     // Register ads coordinator for cooldown tracking
     _ = services.AddSingleton<IAdsCoordinator, AdsCoordinator>();

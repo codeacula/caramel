@@ -5,9 +5,12 @@ namespace Caramel.Twitch.Handlers;
 public sealed class ChannelPointRedeemHandler(
   ICaramelServiceClient caramelServiceClient,
   ITwitchChatBroadcaster broadcaster,
+  ITwitchChatClient chatClient,
   TwitchConfig twitchConfig,
   ILogger<ChannelPointRedeemHandler> logger) : INotificationHandler<ChannelPointsCustomRewardRedeemed>
 {
+  private const int MaxMessageLength = 500;
+
   private readonly Guid? _messageTheAiRewardId = Guid.TryParse(twitchConfig.MessageTheAiRewardId, out var rewardId)
     ? rewardId
     : null;
@@ -67,7 +70,34 @@ public sealed class ChannelPointRedeemHandler(
     if (result.IsFailed)
     {
       ChannelPointRedeemLogs.MessageTheAiRequestFailed(logger, notification.RedeemerLogin, result.Errors[0].Message);
+      return;
     }
+
+    if (string.IsNullOrWhiteSpace(result.Value))
+    {
+      return;
+    }
+
+    var message = FormatChatMessage(notification.RedeemerLogin, result.Value);
+    var sendResult = await chatClient.SendChatMessageAsync(message, cancellationToken);
+    if (sendResult.IsFailed)
+    {
+      ChannelPointRedeemLogs.MessageTheAiResponseSendFailed(logger, notification.RedeemerLogin, sendResult.Errors[0].Message);
+    }
+    else
+    {
+      ChannelPointRedeemLogs.MessageTheAiResponseSent(logger, notification.RedeemerLogin);
+    }
+  }
+
+  internal static string FormatChatMessage(string username, string response)
+  {
+    var prefix = $"@{username} ";
+    var maxResponseLength = MaxMessageLength - prefix.Length;
+    var truncatedResponse = response.Length > maxResponseLength
+      ? response[..maxResponseLength]
+      : response;
+    return prefix + truncatedResponse;
   }
 
   private bool IsMessageTheAiRedeem(string rewardId)
@@ -94,4 +124,10 @@ internal static partial class ChannelPointRedeemLogs
 
   [LoggerMessage(Level = LogLevel.Warning, Message = "Message The AI request failed for {Username}: {Error}")]
   public static partial void MessageTheAiRequestFailed(ILogger logger, string username, string error);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "Message The AI response sent to chat for {Username}")]
+  public static partial void MessageTheAiResponseSent(ILogger logger, string username);
+
+  [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to send Message The AI response to chat for {Username}: {Error}")]
+  public static partial void MessageTheAiResponseSendFailed(ILogger logger, string username, string error);
 }

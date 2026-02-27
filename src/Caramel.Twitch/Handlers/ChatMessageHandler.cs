@@ -7,10 +7,12 @@ public sealed class ChatMessageHandler(
   IPersonCache personCache,
   ITwitchChatBroadcaster broadcaster,
   ITwitchSetupState setupState,
+  ITwitchChatClient chatClient,
   ILogger<ChatMessageHandler> logger) : INotificationHandler<ChannelChatMessageReceived>
 {
   private const string BotCommandPrefix = "!caramel";
   private const string MentionPrefix = "@caramel";
+  private const int MaxMessageLength = 500;
 
   public async Task Handle(ChannelChatMessageReceived notification, CancellationToken cancellationToken)
   {
@@ -64,7 +66,7 @@ public sealed class ChatMessageHandler(
       }
 
       // Otherwise, send as a general message to the AI
-      await HandleGeneralMessageAsync(notification.MessageText, platformId, cancellationToken);
+      await HandleGeneralMessageAsync(notification.MessageText, notification.ChatterUserLogin, platformId, cancellationToken);
     }
     catch (Exception ex)
     {
@@ -74,6 +76,7 @@ public sealed class ChatMessageHandler(
 
   private async Task HandleGeneralMessageAsync(
     string messageText,
+    string chatterLogin,
     PlatformId platformId,
     CancellationToken cancellationToken)
   {
@@ -89,7 +92,34 @@ public sealed class ChatMessageHandler(
     if (result.IsFailed)
     {
       CaramelTwitchLogs.MessageProcessingFailed(logger, platformId.Username, result.Errors[0].Message);
+      return;
     }
+
+    if (string.IsNullOrWhiteSpace(result.Value))
+    {
+      return;
+    }
+
+    var message = FormatChatMessage(chatterLogin, result.Value);
+    var sendResult = await chatClient.SendChatMessageAsync(message, cancellationToken);
+    if (sendResult.IsFailed)
+    {
+      CaramelTwitchLogs.ChatResponseSendFailed(logger, chatterLogin, sendResult.Errors[0].Message);
+    }
+    else
+    {
+      CaramelTwitchLogs.ChatResponseSent(logger, chatterLogin);
+    }
+  }
+
+  internal static string FormatChatMessage(string username, string response)
+  {
+    var prefix = $"@{username} ";
+    var maxResponseLength = MaxMessageLength - prefix.Length;
+    var truncatedResponse = response.Length > maxResponseLength
+      ? response[..maxResponseLength]
+      : response;
+    return prefix + truncatedResponse;
   }
 }
 
@@ -112,4 +142,10 @@ public static partial class CaramelTwitchLogs
 
   [LoggerMessage(Level = LogLevel.Error, Message = "Chat message handler failed for {Username}: {Error}")]
   public static partial void ChatMessageHandlerFailed(ILogger logger, string username, string error);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "Chat response sent for {Username}")]
+  public static partial void ChatResponseSent(ILogger logger, string username);
+
+  [LoggerMessage(Level = LogLevel.Warning, Message = "Failed to send chat response for {Username}: {Error}")]
+  public static partial void ChatResponseSendFailed(ILogger logger, string username, string error);
 }
