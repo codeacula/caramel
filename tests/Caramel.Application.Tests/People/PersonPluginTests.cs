@@ -222,8 +222,8 @@ public class PersonPluginTests
     var result = await _sut.SetTimeZoneAsync(timezone);
 
     // Assert
-    _ = result.Should().Contain("Error setting timezone");
-    _ = result.Should().Contain("System error");
+    _ = result.Should().Contain("Timezone operation failed");
+    _ = result.Should().Contain("invalid state");
   }
 
   #endregion Set Timezone Tests
@@ -304,8 +304,8 @@ public class PersonPluginTests
     var result = await _sut.GetTimeZoneAsync();
 
     // Assert
-    _ = result.Should().Contain("Error retrieving timezone");
-    _ = result.Should().Contain("Database connection failed");
+    _ = result.Should().Contain("Timezone lookup failed");
+    _ = result.Should().Contain("invalid state");
   }
 
   #endregion Get Timezone Tests
@@ -484,8 +484,8 @@ public class PersonPluginTests
     var result = await _sut.SetDailyTaskCountAsync(count);
 
     // Assert
-    _ = result.Should().Contain("Error setting daily task count");
-    _ = result.Should().Contain("System error");
+    _ = result.Should().Contain("Task count operation failed");
+    _ = result.Should().Contain("invalid state");
   }
 
   #endregion Set Daily Task Count Tests
@@ -566,8 +566,8 @@ public class PersonPluginTests
     var result = await _sut.GetDailyTaskCountAsync();
 
     // Assert
-    _ = result.Should().Contain("Error retrieving daily task count");
-    _ = result.Should().Contain("Database connection failed");
+    _ = result.Should().Contain("Task count lookup failed");
+    _ = result.Should().Contain("invalid state");
   }
 
   #endregion Get Daily Task Count Tests
