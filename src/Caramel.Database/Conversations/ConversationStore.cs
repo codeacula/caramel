@@ -16,162 +16,124 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
 {
   public async Task<Result<Conversation>> AddMessageAsync(ConversationId conversationId, Content message, CancellationToken cancellationToken = default)
   {
-    try
-    {
-      _ = session.Events.Append(conversationId.Value, new UserSentMessageEvent
-      {
-        Id = conversationId.Value,
-        Message = message.Value,
-        CreatedOn = timeProvider.GetUtcDateTime()
-      });
+    return await ResultExtensions.ExecuteAsync(
+      () => AddMessageInternalAsync(conversationId, message, cancellationToken),
+      "Invalid operation adding message to conversation",
+      "Unexpected error adding message");
+  }
 
-      await session.SaveChangesAsync(cancellationToken);
+  private async Task<Conversation> AddMessageInternalAsync(ConversationId conversationId, Content message, CancellationToken cancellationToken)
+  {
+    _ = session.Events.Append(conversationId.Value, new UserSentMessageEvent
+    {
+      Id = conversationId.Value,
+      Message = message.Value,
+      CreatedOn = timeProvider.GetUtcDateTime()
+    });
 
-      var conversation = await GetAsync(conversationId, cancellationToken);
+    await session.SaveChangesAsync(cancellationToken);
 
-      return conversation.IsFailed ? conversation : Result.Ok(conversation.Value);
-    }
-    catch (OperationCanceledException)
-    {
-      throw;
-    }
-    catch (InvalidOperationException ex)
-    {
-      return Result.Fail<Conversation>($"Invalid operation adding message to conversation: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-      return Result.Fail<Conversation>($"Unexpected error adding message: {ex.Message}");
-    }
+    var conversation = await session.Query<DbConversation>().FirstOrDefaultAsync(u => u.Id == conversationId.Value, cancellationToken);
+    return (Conversation)(conversation ?? throw new InvalidOperationException("Failed to retrieve message after adding it."));
   }
 
   public async Task<Result<Conversation>> AddReplyAsync(ConversationId conversationId, Content reply, CancellationToken cancellationToken = default)
   {
-    try
-    {
-      _ = session.Events.Append(conversationId.Value, new CaramelRepliedEvent
-      {
-        Id = conversationId.Value,
-        Message = reply.Value,
-        CreatedOn = timeProvider.GetUtcDateTime()
-      });
+    return await ResultExtensions.ExecuteAsync(
+      () => AddReplyInternalAsync(conversationId, reply, cancellationToken),
+      "Invalid operation adding reply to conversation",
+      "Unexpected error adding reply");
+  }
 
-      await session.SaveChangesAsync(cancellationToken);
+  private async Task<Conversation> AddReplyInternalAsync(ConversationId conversationId, Content reply, CancellationToken cancellationToken)
+  {
+    _ = session.Events.Append(conversationId.Value, new CaramelRepliedEvent
+    {
+      Id = conversationId.Value,
+      Message = reply.Value,
+      CreatedOn = timeProvider.GetUtcDateTime()
+    });
 
-      var conversation = await GetAsync(conversationId, cancellationToken);
+    await session.SaveChangesAsync(cancellationToken);
 
-      return conversation.IsFailed ? conversation : Result.Ok(conversation.Value);
-    }
-    catch (OperationCanceledException)
-    {
-      throw;
-    }
-    catch (InvalidOperationException ex)
-    {
-      return Result.Fail<Conversation>($"Invalid operation adding reply to conversation: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-      return Result.Fail<Conversation>($"Unexpected error adding reply: {ex.Message}");
-    }
+    var conversation = await session.Query<DbConversation>().FirstOrDefaultAsync(u => u.Id == conversationId.Value, cancellationToken);
+    return (Conversation)(conversation ?? throw new InvalidOperationException("Failed to retrieve reply after adding it."));
   }
 
   public async Task<Result<Conversation>> CreateAsync(PersonId id, CancellationToken cancellationToken = default)
   {
-    try
-    {
-      var conversationId = Guid.NewGuid();
-      var ev = new ConversationStartedEvent
-      {
-        Id = conversationId,
-        PersonId = id.Value,
-        CreatedOn = timeProvider.GetUtcDateTime()
-      };
+    return await ResultExtensions.ExecuteAsync(
+      () => CreateInternalAsync(id, cancellationToken),
+      "Invalid operation creating conversation",
+      "Unexpected error creating conversation");
+  }
 
-      _ = session.Events.StartStream<DbConversation>(conversationId, [ev]);
-      await session.SaveChangesAsync(cancellationToken);
+  private async Task<Conversation> CreateInternalAsync(PersonId id, CancellationToken cancellationToken)
+  {
+    var conversationId = Guid.NewGuid();
+    var ev = new ConversationStartedEvent
+    {
+      Id = conversationId,
+      PersonId = id.Value,
+      CreatedOn = timeProvider.GetUtcDateTime()
+    };
 
-      var newConversation = await session.Events.AggregateStreamAsync<DbConversation>(conversationId, token: cancellationToken);
+    _ = session.Events.StartStream<DbConversation>(conversationId, [ev]);
+    await session.SaveChangesAsync(cancellationToken);
 
-      return newConversation is null ? Result.Fail<Conversation>($"Failed to create new conversation for person {id.Value}") : Result.Ok((Conversation)newConversation);
-    }
-    catch (OperationCanceledException)
-    {
-      throw;
-    }
-    catch (InvalidOperationException ex)
-    {
-      return Result.Fail<Conversation>($"Invalid operation creating conversation: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-      return Result.Fail<Conversation>($"Unexpected error creating conversation: {ex.Message}");
-    }
+    var newConversation = await session.Events.AggregateStreamAsync<DbConversation>(conversationId, token: cancellationToken);
+
+    return (Conversation)(newConversation ?? throw new InvalidOperationException($"Failed to create new conversation for person {id.Value}"));
   }
 
   public async Task<Result<Conversation>> GetAsync(ConversationId conversationId, CancellationToken cancellationToken = default)
   {
-    try
-    {
-      var conversation = await session.Query<DbConversation>().FirstOrDefaultAsync(u => u.Id == conversationId.Value, cancellationToken);
-      return conversation is null ? Result.Fail<Conversation>("No conversation found.") : Result.Ok((Conversation)conversation);
-    }
-    catch (OperationCanceledException)
-    {
-      throw;
-    }
-    catch (InvalidOperationException ex)
-    {
-      return Result.Fail<Conversation>($"Invalid operation retrieving conversation: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-      return Result.Fail<Conversation>($"Unexpected error retrieving conversation: {ex.Message}");
-    }
+    return await ResultExtensions.ExecuteAsync(
+      () => GetInternalAsync(conversationId, cancellationToken),
+      "Invalid operation retrieving conversation",
+      "Unexpected error retrieving conversation");
+  }
+
+  private async Task<Conversation> GetInternalAsync(ConversationId conversationId, CancellationToken cancellationToken)
+  {
+    var conversation = await session.Query<DbConversation>().FirstOrDefaultAsync(u => u.Id == conversationId.Value, cancellationToken);
+    return (Conversation)(conversation ?? throw new InvalidOperationException("No conversation found."));
   }
 
   public async Task<Result<Conversation>> GetConversationByPersonIdAsync(PersonId personId, CancellationToken cancellationToken = default)
   {
-    try
-    {
-      var conversation = await session.Query<DbConversation>()
-        .FirstOrDefaultAsync(u => u.PersonId == personId.Value, cancellationToken);
-      return conversation is null ? Result.Fail<Conversation>("No conversation found.") : Result.Ok((Conversation)conversation);
-    }
-    catch (OperationCanceledException)
-    {
-      throw;
-    }
-    catch (InvalidOperationException ex)
-    {
-      return Result.Fail<Conversation>($"Invalid operation retrieving conversation by person: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-      return Result.Fail<Conversation>($"Unexpected error retrieving conversation by person: {ex.Message}");
-    }
+    return await ResultExtensions.ExecuteAsync(
+      () => GetConversationByPersonIdInternalAsync(personId, cancellationToken),
+      "Invalid operation retrieving conversation by person",
+      "Unexpected error retrieving conversation by person");
+  }
+
+  private async Task<Conversation> GetConversationByPersonIdInternalAsync(PersonId personId, CancellationToken cancellationToken)
+  {
+    var conversation = await session.Query<DbConversation>()
+      .FirstOrDefaultAsync(u => u.PersonId == personId.Value, cancellationToken);
+    return (Conversation)(conversation ?? throw new InvalidOperationException("No conversation found."));
   }
 
   public async Task<Result<Conversation>> GetOrCreateConversationByPersonIdAsync(PersonId personId, CancellationToken cancellationToken = default)
   {
-    try
-    {
-      var conversation = await session.Query<DbConversation>()
-        .FirstOrDefaultAsync(u => u.PersonId == personId.Value, cancellationToken);
+    return await ResultExtensions.ExecuteAsync(
+      () => GetOrCreateInternalAsync(personId, cancellationToken),
+      "Invalid operation retrieving or creating conversation",
+      "Unexpected error retrieving or creating conversation");
+  }
 
-      return conversation is not null ? Result.Ok((Conversation)conversation) : await CreateAsync(personId, cancellationToken);
-    }
-    catch (OperationCanceledException)
+  private async Task<Conversation> GetOrCreateInternalAsync(PersonId personId, CancellationToken cancellationToken)
+  {
+    var conversation = await session.Query<DbConversation>()
+      .FirstOrDefaultAsync(u => u.PersonId == personId.Value, cancellationToken);
+
+    if (conversation is not null)
     {
-      throw;
+      return (Conversation)conversation;
     }
-    catch (InvalidOperationException ex)
-    {
-      return Result.Fail<Conversation>($"Invalid operation retrieving or creating conversation: {ex.Message}");
-    }
-    catch (Exception ex)
-    {
-      return Result.Fail<Conversation>($"Unexpected error retrieving or creating conversation: {ex.Message}");
-    }
+
+    // Create new conversation
+    return await CreateInternalAsync(personId, cancellationToken);
   }
 }
