@@ -12,7 +12,7 @@ public interface ITwitchUserResolver
 public sealed class TwitchUserResolver(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
-  ITwitchTokenManager tokenManager,
+  IDualOAuthTokenManager tokenManager,
   ILogger<TwitchUserResolver> logger) : ITwitchUserResolver
 {
   private readonly ConcurrentDictionary<string, string> _cache = new(StringComparer.OrdinalIgnoreCase);
@@ -79,7 +79,7 @@ public sealed class TwitchUserResolver(
   /// <inheritdoc/>
   public async Task<(string UserId, string Login)> ResolveCurrentUserAsync(CancellationToken cancellationToken = default)
   {
-    var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+    var accessToken = await tokenManager.GetValidBotTokenAsync(cancellationToken);
 
     using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
     httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
@@ -122,7 +122,7 @@ public sealed class TwitchUserResolver(
 
   private async Task<List<string>> FetchUserIdsAsync(List<string> logins, CancellationToken cancellationToken)
   {
-    var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+    var accessToken = await tokenManager.GetValidBotTokenAsync(cancellationToken);
 
     using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
     httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);

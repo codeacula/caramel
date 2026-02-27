@@ -15,7 +15,7 @@ public interface ITwitchChatClient
 public sealed class TwitchChatClient(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
-  ITwitchTokenManager tokenManager,
+  IDualOAuthTokenManager tokenManager,
   ITwitchSetupState setupState,
   ILogger<TwitchChatClient> logger) : ITwitchChatClient
 {
@@ -45,7 +45,7 @@ public sealed class TwitchChatClient(
     var broadcasterId = setup.Channels[0].UserId;
     var senderId = setup.BotUserId;
 
-    var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+    var accessToken = await tokenManager.GetValidBotTokenAsync(cancellationToken);
 
     using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
     httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);

@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { Toaster } from "vue-sonner";
 import ControlPanel from "./components/ControlPanel.vue";
 import TwitchChat from "./components/TwitchChat.vue";
+import TwitchOAuthSetup from "./components/TwitchOAuthSetup.vue";
 
 type ScreenId = "chat" | "settings";
 
@@ -87,23 +88,8 @@ const activeScreen = ref<ScreenId>("chat");
       </div>
 
       <main v-else class="settings-screen">
-        <section class="settings-card">
-          <h1 class="settings-title">Settings</h1>
-          <p class="settings-body">
-            Configure integrations, defaults, and behavior from here. This is now a dedicated screen so we can keep adding
-            more tools without overcrowding chat.
-          </p>
-        </section>
-
-        <section class="settings-card">
-          <h2 class="settings-subtitle">Navigation is extensible</h2>
-          <p class="settings-body">New screens can be added by appending to the shared navigation list.</p>
-          <ul class="settings-list">
-            <li v-for="screen in screenNavItems" :key="`future-${screen.id}`" class="settings-list-item">
-              <span class="settings-item-label">{{ screen.label }}</span>
-              <span class="settings-item-hint">{{ screen.description }}</span>
-            </li>
-          </ul>
+        <section class="settings-card full-width">
+          <TwitchOAuthSetup />
         </section>
       </main>
     </div>
@@ -299,7 +285,7 @@ const activeScreen = ref<ScreenId>("chat");
 
 .settings-screen {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-lg);
   block-size: 100%;
   overflow: auto;
@@ -314,6 +300,10 @@ const activeScreen = ref<ScreenId>("chat");
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   background: var(--surface-color);
+}
+
+.settings-card.full-width {
+  grid-column: 1 / -1;
 }
 
 .settings-title,

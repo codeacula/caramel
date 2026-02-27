@@ -1,7 +1,9 @@
 using Caramel.Core.Configuration;
+using Caramel.Core.Security;
 using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,9 +35,16 @@ _ = builder.Services.AddHttpClient("TwitchHelix");
 // Get TwitchConfig for OAuth setup
 var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<TwitchConfig>() ?? throw new InvalidOperationException("TwitchConfig is missing");
 
-// Register OAuth and token management
-_ = builder.Services.AddSingleton<OAuthStateManager>();
-_ = builder.Services.AddSingleton<ITwitchTokenManager, TwitchTokenManager>();
+// Register token encryption service (required for token persistence)
+_ = builder.Services.AddSingleton<ITokenEncryptionService>(sp =>
+{
+  var dataProtectionProvider = sp.GetRequiredService<IDataProtectionProvider>();
+  return new TokenEncryptionService(dataProtectionProvider);
+});
+
+// Register OAuth and token management (dual OAuth: bot + broadcaster)
+_ = builder.Services.AddSingleton<DualOAuthStateManager>();
+_ = builder.Services.AddSingleton<IDualOAuthTokenManager, DualOAuthTokenManager>();
 
 // Register Twitch notification channel using ITwitchSetupState for dynamic botUserId resolution.
 // The factory resolves at dispatch time so a missing setup degrades gracefully.

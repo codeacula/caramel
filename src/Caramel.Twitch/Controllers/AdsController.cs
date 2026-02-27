@@ -9,7 +9,7 @@ namespace Caramel.Twitch.Controllers;
 [ApiController]
 [Route("twitch/ads")]
 public sealed class AdsController(
-  ITwitchTokenManager tokenManager,
+  IDualOAuthTokenManager tokenManager,
   TwitchConfig twitchConfig,
   ITwitchSetupState setupState,
   IHttpClientFactory httpClientFactory,
@@ -47,7 +47,7 @@ public sealed class AdsController(
 
     try
     {
-      var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+      var accessToken = await tokenManager.GetValidBotTokenAsync(cancellationToken);
 
       using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
       httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);

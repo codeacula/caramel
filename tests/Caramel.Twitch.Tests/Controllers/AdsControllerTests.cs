@@ -12,7 +12,7 @@ public sealed class AdsControllerTests
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
 
-  private readonly Mock<ITwitchTokenManager> _mockTokenManager = new();
+  private readonly Mock<IDualOAuthTokenManager> _mockTokenManager = new();
   private readonly Mock<ITwitchSetupState> _mockSetupState = new();
   private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new();
   private readonly Mock<ILogger<AdsController>> _mockLogger = new();
@@ -24,7 +24,7 @@ public sealed class AdsControllerTests
     _ = _mockAdsCoordinator.Setup(c => c.IsOnCooldown()).Returns(false);
     // Default: return a valid access token
     _ = _mockTokenManager
-        .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
+        .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
         .ReturnsAsync("initial-access-token");
   }
 
@@ -215,9 +215,9 @@ public sealed class AdsControllerTests
   {
     // Arrange
     _ = _mockSetupState.Setup(s => s.Current).Returns(MakeSetup());
-    _ = _mockTokenManager
-        .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
-        .ReturnsAsync("initial-access-token");
+     _ = _mockTokenManager
+         .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+         .ReturnsAsync("initial-access-token");
     _ = _mockHttpClientFactory
         .Setup(f => f.CreateClient(It.IsAny<string>()))
         .Throws(new InvalidOperationException("Connection failed"));

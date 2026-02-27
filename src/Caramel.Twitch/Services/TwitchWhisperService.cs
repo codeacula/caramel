@@ -12,7 +12,7 @@ public interface ITwitchWhisperService
 public sealed class TwitchWhisperService(
   IHttpClientFactory httpClientFactory,
   TwitchConfig twitchConfig,
-  ITwitchTokenManager tokenManager,
+  IDualOAuthTokenManager tokenManager,
   ILogger<TwitchWhisperService> logger) : ITwitchWhisperService
 {
   public async Task<bool> SendWhisperAsync(
@@ -23,7 +23,7 @@ public sealed class TwitchWhisperService(
   {
     try
     {
-      var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+      var accessToken = await tokenManager.GetValidBotTokenAsync(cancellationToken);
 
       using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
       httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);

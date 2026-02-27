@@ -14,7 +14,7 @@ public sealed class TwitchChatClientTests
 
   private readonly Mock<ITwitchSetupState> _setupStateMock = new();
   private readonly Mock<IHttpClientFactory> _httpClientFactoryMock = new();
-  private readonly Mock<ITwitchTokenManager> _tokenManagerMock = new();
+  private readonly Mock<IDualOAuthTokenManager> _tokenManagerMock = new();
   private readonly Mock<ILogger<TwitchChatClient>> _loggerMock = new();
 
   [Fact]
@@ -130,9 +130,9 @@ public sealed class TwitchChatClientTests
   public async Task SendChatMessageAsyncReturnsFailureWhenTokenManagerThrowsAsync()
   {
     // Arrange — token manager throws when it cannot refresh
-    var throwingTokenManagerMock = new Mock<ITwitchTokenManager>();
+    var throwingTokenManagerMock = new Mock<IDualOAuthTokenManager>();
     _ = throwingTokenManagerMock
-      .Setup(t => t.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
+      .Setup(t => t.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
       .ThrowsAsync(new InvalidOperationException("No refresh token available."));
 
     var handler = new FakeHttpMessageHandler(HttpStatusCode.OK, "{}");
@@ -163,9 +163,9 @@ public sealed class TwitchChatClientTests
       .Setup(f => f.CreateClient(It.IsAny<string>()))
       .Returns(httpClient);
 
-    _ = _tokenManagerMock
-      .Setup(t => t.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync("initial-access-token");
+     _ = _tokenManagerMock
+       .Setup(t => t.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+       .ReturnsAsync("initial-access-token");
 
     return new TwitchChatClient(
       _httpClientFactoryMock.Object,
