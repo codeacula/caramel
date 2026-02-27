@@ -68,6 +68,14 @@ public sealed class ChatMessageHandler(
       // Otherwise, send as a general message to the AI
       await HandleGeneralMessageAsync(notification.MessageText, notification.ChatterUserLogin, platformId, cancellationToken);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      CaramelTwitchLogs.ChatMessageHandlerFailed(logger, notification.ChatterUserLogin, $"Invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       CaramelTwitchLogs.ChatMessageHandlerFailed(logger, notification.ChatterUserLogin, ex.Message);

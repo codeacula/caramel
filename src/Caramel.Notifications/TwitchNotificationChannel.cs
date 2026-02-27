@@ -45,9 +45,17 @@ public sealed class TwitchNotificationChannel(string botUserId, Func<string, str
 
       return !success ? Result.Fail("Failed to send Twitch whisper (bot may lack verified status or scopes)") : Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Twitch whisper operation failed - invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail($"Failed to send Twitch notification: {ex.Message}");
+      return Result.Fail($"Unexpected error sending Twitch notification: {ex.Message}");
     }
   }
 }

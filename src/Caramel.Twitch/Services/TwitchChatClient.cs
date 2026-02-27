@@ -65,10 +65,24 @@ public sealed class TwitchChatClient(
       TwitchChatClientLogs.ChatMessageSendFailed(logger, (int)response.StatusCode, errorBody);
       return Result.Fail($"Twitch API rejected the message with status {(int)response.StatusCode}.");
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      TwitchChatClientLogs.ChatMessageSendError(logger, $"Network error: {ex.Message}");
+      return Result.Fail($"Network error sending chat message: {ex.Message}");
+    }
+    catch (InvalidOperationException ex)
+    {
+      TwitchChatClientLogs.ChatMessageSendError(logger, $"Invalid state: {ex.Message}");
+      return Result.Fail($"Invalid operation state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       TwitchChatClientLogs.ChatMessageSendError(logger, ex.Message);
-      return Result.Fail($"Error sending chat message: {ex.Message}");
+      return Result.Fail($"Unexpected error sending chat message: {ex.Message}");
     }
   }
 }

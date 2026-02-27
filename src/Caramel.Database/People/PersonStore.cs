@@ -51,9 +51,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok((Person)newPerson);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Person>($"Invalid operation creating user {platformId.Username}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Person>($"Unexpected error creating user {platformId.Username}: {ex.Message}");
     }
   }
 
@@ -72,9 +80,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return dbUser.IsFailed ? Result.Fail<HasAccess>(dbUser.Errors) : Result.Ok(dbUser.Value.HasAccess);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<HasAccess>($"Invalid operation checking access for {id}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<HasAccess>($"Unexpected error checking access: {ex.Message}");
     }
   }
 
@@ -86,9 +102,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
         .FirstOrDefaultAsync(u => u.Id == id.Value, cancellationToken);
       return dbUser is null ? Result.Fail<Person>($"User with ID {id} not found") : Result.Ok((Person)dbUser);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Person>($"Invalid operation retrieving user {id}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Person>($"Unexpected error retrieving user: {ex.Message}");
     }
   }
 
@@ -100,9 +124,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
         .FirstOrDefaultAsync(u => u.PlatformUserId == platformId.PlatformUserId && u.Platform == platformId.Platform, cancellationToken);
       return dbUser is null ? Result.Fail<Person>($"User with ID {platformId.PlatformUserId} from {platformId.Platform} not found") : Result.Ok((Person)dbUser);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Person>($"Invalid operation retrieving user by platform ID: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Person>($"Unexpected error retrieving user by platform ID: {ex.Message}");
     }
   }
 
@@ -125,9 +157,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation granting access to {id}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error granting access: {ex.Message}");
     }
   }
 
@@ -149,9 +189,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation revoking access from {id}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error revoking access: {ex.Message}");
     }
   }
 
@@ -170,9 +218,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation setting timezone for {id}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error setting timezone: {ex.Message}");
     }
   }
 
@@ -191,9 +247,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation setting daily task count for {id}: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error setting daily task count: {ex.Message}");
     }
   }
 
@@ -214,9 +278,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation adding notification channel: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error adding notification channel: {ex.Message}");
     }
   }
 
@@ -237,9 +309,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation removing notification channel: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error removing notification channel: {ex.Message}");
     }
   }
 
@@ -266,9 +346,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation toggling notification channel: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error toggling notification channel: {ex.Message}");
     }
   }
 
@@ -295,9 +383,17 @@ public sealed class PersonStore(SuperAdminConfig SuperAdminConfig, IDocumentSess
       // No channel of this type exists yet: add the channel
       return await AddNotificationChannelAsync(person, channel, cancellationToken);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid operation ensuring notification channel: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail($"Unexpected error ensuring notification channel: {ex.Message}");
     }
   }
 }

@@ -87,6 +87,18 @@ public sealed class AuthController(
           CaramelTwitchProgramLogs.OAuthSetupFailed(logger, string.Join("; ", saveResult.Errors.Select(e => e.Message)));
         }
       }
+      catch (OperationCanceledException)
+      {
+        throw;
+      }
+      catch (HttpRequestException ex)
+      {
+        CaramelTwitchProgramLogs.OAuthSetupFailed(logger, $"Network error: {ex.Message}");
+      }
+      catch (InvalidOperationException ex)
+      {
+        CaramelTwitchProgramLogs.OAuthSetupFailed(logger, $"Invalid state: {ex.Message}");
+      }
       catch (Exception ex)
       {
         CaramelTwitchProgramLogs.OAuthSetupFailed(logger, ex.Message);
@@ -103,6 +115,20 @@ public sealed class AuthController(
         <p>You can close this window and return to Caramel.</p>
       </body></html>
       """, "text/html");
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      CaramelTwitchProgramLogs.OAuthCallbackError(logger, $"Network error: {ex.Message}");
+      return Results.StatusCode(500);
+    }
+    catch (InvalidOperationException ex)
+    {
+      CaramelTwitchProgramLogs.OAuthCallbackError(logger, $"Invalid state: {ex.Message}");
+      return Results.StatusCode(500);
     }
     catch (Exception ex)
     {

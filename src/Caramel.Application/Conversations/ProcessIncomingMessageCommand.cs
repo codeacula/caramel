@@ -18,13 +18,17 @@ using FluentResults;
 namespace Caramel.Application.Conversations;
 
 /// <summary>
-/// Tells the system to process an incoming message from a supported platform.
+/// Processes an incoming message from a supported platform, generates an AI response, and stores both in conversation history.
 /// </summary>
 /// <param name="PersonId">The ID of the person sending the message.</param>
-/// <param name="Content">The message content.</param>
+/// <param name="Content">The message content to process.</param>
 /// <seealso cref="ProcessIncomingMessageCommandHandler"/>
 public sealed record ProcessIncomingMessageCommand(PersonId PersonId, Content Content) : IRequest<Result<Reply>>;
 
+/// <summary>
+/// Handles the execution of ProcessIncomingMessageCommand requests.
+/// Orchestrates conversation storage, AI processing with tool planning and validation, and response generation.
+/// </summary>
 public sealed class ProcessIncomingMessageCommandHandler(
   ICaramelAIAgent caramelAIAgent,
   IConversationStore conversationStore,
@@ -34,6 +38,12 @@ public sealed class ProcessIncomingMessageCommandHandler(
   TimeProvider timeProvider
 ) : IRequestHandler<ProcessIncomingMessageCommand, Result<Reply>>
 {
+  /// <summary>
+  /// Processes an incoming user message through the full conversation pipeline.
+  /// </summary>
+  /// <param name="request">The command containing the person ID and message content.</param>
+  /// <param name="cancellationToken">Cancellation token for async operation.</param>
+  /// <returns>A Result containing the system Reply, or an error if processing failed.</returns>
   public async Task<Result<Reply>> Handle(ProcessIncomingMessageCommand request, CancellationToken cancellationToken = default)
   {
     try
@@ -58,15 +68,32 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
       return CreateReplyToUser(response);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      DataAccessLogs.UnhandledMessageProcessingError(logger, ex, request.PersonId.Value.ToString());
+      return Result.Fail<Reply>($"Invalid message processing state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       DataAccessLogs.UnhandledMessageProcessingError(logger, ex, request.PersonId.Value.ToString());
-      return Result.Fail<Reply>(ex.Message);
+      return Result.Fail<Reply>("Unexpected error processing message");
     }
   }
 
   private async Task<Result<Conversation>> GetOrCreateConversationWithMessageAsync(Person person, string messageContent, CancellationToken cancellationToken)
   {
+    /// <summary>
+    /// Gets or creates a conversation and adds the incoming message to it.
+    /// </summary>
+    /// <param name="person">The person sending the message.</param>
+    /// <param name="messageContent">The message text to add.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>A Result containing the updated Conversation, or an error if the operation failed.</returns>
+
     var convoResult = await conversationStore.GetOrCreateConversationByPersonIdAsync(person.Id, cancellationToken);
 
     if (convoResult.IsFailed)
@@ -81,6 +108,14 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
   private async Task<string> ProcessWithAIAsync(Conversation conversation, Person person, CancellationToken cancellationToken)
   {
+    /// <summary>
+    /// Processes the conversation with AI through tool planning, validation, and response generation phases.
+    /// </summary>
+    /// <param name="conversation">The conversation containing the message to process.</param>
+    /// <param name="person">The person sending the message.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+    /// <returns>The AI-generated response string.</returns>
+
     var responseMessages = ConversationHistoryBuilder.BuildForResponse(conversation);
     var plugins = CreatePlugins(person);
 
@@ -154,6 +189,12 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
   private Dictionary<string, object> CreatePlugins(Person person)
   {
+    /// <summary>
+    /// Creates the plugin registry for tool execution.
+    /// </summary>
+    /// <param name="person">The person context for which to create plugins.</param>
+    /// <returns>A dictionary of available plugins keyed by plugin name.</returns>
+
     var personPlugin = new PersonPlugin(personStore, personConfig, person.Id);
 
     return new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
@@ -162,8 +203,15 @@ public sealed class ProcessIncomingMessageCommandHandler(
     };
   }
 
-   private async Task SaveReplyAsync(Conversation conversation, string response, CancellationToken cancellationToken)
-   {
+    private async Task SaveReplyAsync(Conversation conversation, string response, CancellationToken cancellationToken)
+    {
+      /// <summary>
+      /// Saves the AI response as a system reply in the conversation.
+      /// </summary>
+      /// <param name="conversation">The conversation to add the reply to.</param>
+      /// <param name="response">The response text to save.</param>
+      /// <param name="cancellationToken">Cancellation token for async operation.</param>
+
      var addReplyResult = await conversationStore.AddReplyAsync(conversation.Id, new Content(response), cancellationToken);
 
      if (addReplyResult.IsFailed)
@@ -177,6 +225,12 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
   private Result<Reply> CreateReplyToUser(string response)
   {
+    /// <summary>
+    /// Creates a Reply object to return to the user.
+    /// </summary>
+    /// <param name="response">The response text.</param>
+    /// <returns>A Result containing the Reply object.</returns>
+
     var currentTime = timeProvider.GetUtcDateTime();
     return Result.Ok(new Reply
     {
@@ -188,8 +242,17 @@ public sealed class ProcessIncomingMessageCommandHandler(
 
   private static string GetUserTimezone(Person person)
   {
+    /// <summary>
+    /// Gets the user's timezone, defaulting to UTC if not configured.
+    /// </summary>
+    /// <param name="person">The person whose timezone to retrieve.</param>
+    /// <returns>The IANA timezone ID string for the person, or "UTC" as default.</returns>
+
     return person.TimeZoneId?.Value ?? "UTC";
   }
 
   private sealed record ActiveTodosSnapshot(string Summary, IReadOnlyCollection<string> TodoIds);
+  /// <summary>
+  /// Snapshot of active todos used during conversation processing.
+  /// </summary>
 }

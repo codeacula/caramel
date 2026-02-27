@@ -33,9 +33,17 @@ public class PersonPlugin(IPersonStore personStore, PersonConfig personConfig, P
       var displayName = timeZoneId.GetDisplayName();
       return $"Successfully set your timezone to {displayName} ({timeZoneId.Value}).";
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return $"Timezone operation failed - invalid state: {ex.Message}";
+    }
     catch (Exception ex)
     {
-      return $"Error setting timezone: {ex.Message}";
+      return $"Unexpected error setting timezone: {ex.Message}";
     }
   }
 
@@ -62,9 +70,17 @@ public class PersonPlugin(IPersonStore personStore, PersonConfig personConfig, P
       var displayName = person.TimeZoneId.Value.GetDisplayName();
       return $"Your timezone is set to: {displayName} ({person.TimeZoneId.Value.Value}).";
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return $"Timezone lookup failed - invalid state: {ex.Message}";
+    }
     catch (Exception ex)
     {
-      return $"Error retrieving timezone: {ex.Message}";
+      return $"Unexpected error retrieving timezone: {ex.Message}";
     }
   }
 
@@ -86,9 +102,17 @@ public class PersonPlugin(IPersonStore personStore, PersonConfig personConfig, P
         ? $"Failed to set daily task count: {(result.Errors.Count > 0 ? result.Errors[0].Message : "Unknown error")}"
         : $"Successfully set your daily task count to {count} tasks.";
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return $"Task count operation failed - invalid state: {ex.Message}";
+    }
     catch (Exception ex)
     {
-      return $"Error setting daily task count: {ex.Message}";
+      return $"Unexpected error setting daily task count: {ex.Message}";
     }
   }
 
@@ -110,9 +134,17 @@ public class PersonPlugin(IPersonStore personStore, PersonConfig personConfig, P
         ? $"You are currently using the default daily task count: {personConfig.DefaultDailyTaskCount} tasks per day."
         : $"Your daily task count is set to: {person.DailyTaskCount.Value.Value} tasks per day.";
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return $"Task count lookup failed - invalid state: {ex.Message}";
+    }
     catch (Exception ex)
     {
-      return $"Error retrieving daily task count: {ex.Message}";
+      return $"Unexpected error retrieving daily task count: {ex.Message}";
     }
   }
 }

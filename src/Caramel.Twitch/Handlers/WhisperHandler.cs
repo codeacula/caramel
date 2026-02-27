@@ -46,6 +46,14 @@ public sealed class WhisperHandler(
         CaramelTwitchWhisperLogs.WhisperProcessingFailed(logger, notification.FromUserLogin, result.Errors[0].Message);
       }
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      CaramelTwitchWhisperLogs.WhisperHandlerFailed(logger, notification.FromUserLogin, $"Invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       CaramelTwitchWhisperLogs.WhisperHandlerFailed(logger, notification.FromUserLogin, ex.Message);

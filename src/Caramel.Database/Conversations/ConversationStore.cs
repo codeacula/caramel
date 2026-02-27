@@ -31,9 +31,17 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
 
       return conversation.IsFailed ? conversation : Result.Ok(conversation.Value);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Conversation>($"Invalid operation adding message to conversation: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Conversation>($"Unexpected error adding message: {ex.Message}");
     }
   }
 
@@ -54,9 +62,17 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
 
       return conversation.IsFailed ? conversation : Result.Ok(conversation.Value);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Conversation>($"Invalid operation adding reply to conversation: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Conversation>($"Unexpected error adding reply: {ex.Message}");
     }
   }
 
@@ -79,9 +95,17 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
 
       return newConversation is null ? Result.Fail<Conversation>($"Failed to create new conversation for person {id.Value}") : Result.Ok((Conversation)newConversation);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Conversation>($"Invalid operation creating conversation: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Conversation>($"Unexpected error creating conversation: {ex.Message}");
     }
   }
 
@@ -92,9 +116,17 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
       var conversation = await session.Query<DbConversation>().FirstOrDefaultAsync(u => u.Id == conversationId.Value, cancellationToken);
       return conversation is null ? Result.Fail<Conversation>("No conversation found.") : Result.Ok((Conversation)conversation);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Conversation>($"Invalid operation retrieving conversation: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Conversation>($"Unexpected error retrieving conversation: {ex.Message}");
     }
   }
 
@@ -106,9 +138,17 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
         .FirstOrDefaultAsync(u => u.PersonId == personId.Value, cancellationToken);
       return conversation is null ? Result.Fail<Conversation>("No conversation found.") : Result.Ok((Conversation)conversation);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Conversation>($"Invalid operation retrieving conversation by person: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Conversation>($"Unexpected error retrieving conversation by person: {ex.Message}");
     }
   }
 
@@ -121,9 +161,17 @@ public sealed class ConversationStore(IDocumentSession session, TimeProvider tim
 
       return conversation is not null ? Result.Ok((Conversation)conversation) : await CreateAsync(personId, cancellationToken);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Conversation>($"Invalid operation retrieving or creating conversation: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail(ex.Message);
+      return Result.Fail<Conversation>($"Unexpected error retrieving or creating conversation: {ex.Message}");
     }
   }
 }

@@ -43,6 +43,14 @@ public sealed class ChannelPointRedeemHandler(
         await HandleMessageTheAiRedeemAsync(notification, cancellationToken);
       }
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      ChannelPointRedeemLogs.RedeemHandlerFailed(logger, notification.RedeemerLogin, $"Invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       ChannelPointRedeemLogs.RedeemHandlerFailed(logger, notification.RedeemerLogin, ex.Message);

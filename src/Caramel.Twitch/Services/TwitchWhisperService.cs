@@ -47,6 +47,20 @@ public sealed class TwitchWhisperService(
       TwitchWhisperServiceLogs.WhisperSendFailed(logger, recipientUserId, (int)response.StatusCode, errorBody);
       return false;
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      TwitchWhisperServiceLogs.WhisperSendError(logger, recipientUserId, $"Network error: {ex.Message}");
+      return false;
+    }
+    catch (InvalidOperationException ex)
+    {
+      TwitchWhisperServiceLogs.WhisperSendError(logger, recipientUserId, $"Invalid state: {ex.Message}");
+      return false;
+    }
     catch (Exception ex)
     {
       TwitchWhisperServiceLogs.WhisperSendError(logger, recipientUserId, ex.Message);

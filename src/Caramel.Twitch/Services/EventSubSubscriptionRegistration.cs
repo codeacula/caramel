@@ -63,6 +63,18 @@ internal sealed class EventSubSubscriptionClient(
         CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, $"{(int)response.StatusCode}: {errorBody}");
       }
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, $"Network error: {ex.Message}");
+    }
+    catch (InvalidOperationException ex)
+    {
+      CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, $"Invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, ex.Message);

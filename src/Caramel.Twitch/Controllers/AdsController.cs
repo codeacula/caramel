@@ -91,6 +91,20 @@ public sealed class AdsController(
         _ => Problem("Twitch API rejected the request.")
       };
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      AdsControllerLogs.AdsRunError(logger, $"Network error: {ex.Message}");
+      return Problem("Network error while running ads.");
+    }
+    catch (InvalidOperationException ex)
+    {
+      AdsControllerLogs.AdsRunError(logger, $"Invalid state: {ex.Message}");
+      return Problem("Invalid operation state while running ads.");
+    }
     catch (Exception ex)
     {
       AdsControllerLogs.AdsRunError(logger, ex.Message);
