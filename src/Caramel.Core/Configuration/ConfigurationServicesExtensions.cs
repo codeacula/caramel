@@ -50,12 +50,18 @@ public static class ConfigurationServicesExtensions
     // Configure the options with the IOptions<T> pattern
     services.Configure<TOptions>(configuration.GetSection(sectionName));
 
-    // Add post-configuration validation
+    // Add post-configuration validation with detailed error messages
     services.AddOptions<TOptions>()
       .Validate(options =>
       {
         var errors = options.Validate().ToList();
-        return errors.Count == 0;
+        if (errors.Count > 0)
+        {
+          // Include detailed validation errors in the exception
+          var errorDetails = string.Join("; ", errors);
+          throw ConfigurationValidationException.CreateFromErrors(sectionName, errors);
+        }
+        return true;
       }, $"Configuration validation failed for '{sectionName}'")
       .ValidateOnStart();
   }
