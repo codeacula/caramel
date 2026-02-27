@@ -48,7 +48,7 @@ public sealed class TwitchTokenManagerTests
   // ---------------------------------------------------------------------------
 
   [Fact]
-  public async Task Constructor_WithExistingAccessToken_TreatsTokenAsExpiredToForceRefresh()
+  public async Task ConstructorWithExistingAccessTokenTreatsTokenAsExpiredToForceRefreshAsync()
   {
     // Arrange – config has both an access token and a refresh token
     SetupRefreshHttpResponse(_mockHttpClientFactory, accessToken: "refreshed-access-token");

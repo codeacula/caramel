@@ -215,7 +215,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 1: When a valid token and configured setup are available, ConnectAsync is called.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenTokenAvailableAndSetupConfigured_ConnectsEventSubAsync()
+  public async Task ExecuteAsyncWhenTokenAvailableAndSetupConfiguredConnectsEventSubAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -233,7 +233,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 2: When setup is not yet configured, the service polls GetTwitchSetupAsync until it is.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenSetupNotConfigured_PollsUntilConfiguredAsync()
+  public async Task ExecuteAsyncWhenSetupNotConfiguredPollsUntilConfiguredAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -271,7 +271,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 3: When no refresh token exists, ConnectAsync is never called and the service does not crash.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenNoRefreshToken_WaitsAndRetriesWithoutCrashingAsync()
+  public async Task ExecuteAsyncWhenNoRefreshTokenWaitsAndRetriesWithoutCrashingAsync()
   {
     _ = _mockTokenManager
       .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
@@ -290,7 +290,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 4: When ConnectAsync returns false, ReconnectAsync is NEVER called (key bug fix).</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenConnectAsyncReturnsFalse_DoesNotCallReconnectAsyncAsync()
+  public async Task ExecuteAsyncWhenConnectAsyncReturnsFalseDoesNotCallReconnectAsyncAsync()
   {
     _ = _mockClient.Setup(c => c.ConnectAsync()).ReturnsAsync(false);
 
@@ -309,7 +309,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 5: When ConnectAsync returns false, the service retries and calls ConnectAsync again.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenConnectAsyncReturnsFalse_RetriesAfterDelayAsync()
+  public async Task ExecuteAsyncWhenConnectAsyncReturnsFalseRetriesAfterDelayAsync()
   {
     var secondCallTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var callCount = 0;
@@ -342,7 +342,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 6: When ConnectAsync fails after a prior success, ReconnectAsync is attempted.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenConnectAsyncFailsAfterPriorSuccess_AttemptsReconnectAsync()
+  public async Task ExecuteAsyncWhenConnectAsyncFailsAfterPriorSuccessAttemptsReconnectAsync()
   {
     var reconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var connectCount = 0;
@@ -381,7 +381,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 7: When the WebSocket disconnects, the service re-enters the loop and calls ConnectAsync again.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenWebsocketDisconnects_ReconnectsAfterDelayAsync()
+  public async Task ExecuteAsyncWhenWebsocketDisconnectsReconnectsAfterDelayAsync()
   {
     var secondConnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var callCount = 0;
@@ -419,7 +419,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 8: When the stopping token is cancelled, ExecuteAsync exits without throwing.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenStoppingTokenCancelled_ExitsCleanlyAsync()
+  public async Task ExecuteAsyncWhenStoppingTokenCancelledExitsCleanlyAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -437,7 +437,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 9: A generic exception from token retrieval is caught; ConnectAsync is eventually called.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenGenericExceptionThrown_RetriesAfterTenSecondsAsync()
+  public async Task ExecuteAsyncWhenGenericExceptionThrownRetriesAfterTenSecondsAsync()
   {
     var connectCalledTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var callCount = 0;
@@ -478,7 +478,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 10: StopAsync while connected completes within a reasonable timeout.</summary>
   [Fact]
-  public async Task StopAsync_WhileConnected_DisconnectsGracefullyAsync()
+  public async Task StopAsyncWhileConnectedDisconnectsGracefullyAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -497,7 +497,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 11: Event handlers are wired exactly once, regardless of loop iterations.</summary>
   [Fact]
-  public async Task WireEventHandlers_CalledMultipleTimes_WiresOnlyOnceAsync()
+  public async Task WireEventHandlersCalledMultipleTimesWiresOnlyOnceAsync()
   {
     var connectCount = 0;
 
@@ -525,7 +525,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 12: Simultaneous disconnect and stop-token cancellation does not throw.</summary>
   [Fact]
-  public async Task ExecuteAsync_WhenDisconnectAndStopRace_HandlesIdempotentlyAsync()
+  public async Task ExecuteAsyncWhenDisconnectAndStopRaceHandlesIdempotentlyAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -549,7 +549,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 13: When WebsocketConnected fires with IsRequestedReconnect=false, all registrars are called.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_WhenNotReconnect_RegistersAllSubscriptionsAsync()
+  public async Task OnWebsocketConnectedWhenNotReconnectRegistersAllSubscriptionsAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -571,7 +571,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 14: When WebsocketConnected fires with IsRequestedReconnect=true, no registrars are called.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_WhenIsReconnect_SkipsRegistrationAsync()
+  public async Task OnWebsocketConnectedWhenIsReconnectSkipsRegistrationAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -593,7 +593,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 15: When setup is null at event time, RegisterAsync is never called and no exception is thrown.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_WhenSetupNull_LogsAndReturnsAsync()
+  public async Task OnWebsocketConnectedWhenSetupNullLogsAndReturnsAsync()
   {
     // Override: Current is null even though IsConfigured was true at loop entry
     _ = _mockSetupState.Setup(s => s.Current).Returns((TwitchSetup?)null);
@@ -620,7 +620,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 16: When a registrar throws, the exception is caught and the service loop continues.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_WhenRegistrarThrows_CatchesAndLogsAsync()
+  public async Task OnWebsocketConnectedWhenRegistrarThrowsCatchesAndLogsAsync()
   {
     _ = _mockRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
@@ -647,7 +647,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 17: The CancellationToken passed to RegisterAsync is the stoppingToken, not CancellationToken.None.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_PassesCancellationTokenToRegistrarsAsync()
+  public async Task OnWebsocketConnectedPassesCancellationTokenToRegistrarsAsync()
   {
     CancellationToken capturedToken = default;
 
@@ -675,7 +675,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 18: Firing WebsocketReconnected does not throw and does not call registrars.</summary>
   [Fact]
-  public async Task OnWebsocketReconnected_LogsReconnectionEventAsync()
+  public async Task OnWebsocketReconnectedLogsReconnectionEventAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -700,7 +700,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 19: When WebsocketDisconnected fires, the loop re-enters and ConnectAsync is called again.</summary>
   [Fact]
-  public async Task OnWebsocketDisconnected_SignalsDisconnectTcsAsync()
+  public async Task OnWebsocketDisconnectedSignalsDisconnectTcsAsync()
   {
     var secondConnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var callCount = 0;
@@ -738,7 +738,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 20: Firing WebsocketConnected twice with IsRequestedReconnect=false does not crash.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_DuplicateNonReconnectEvents_DoNotCrashAsync()
+  public async Task OnWebsocketConnectedDuplicateNonReconnectEventsDoNotCrashAsync()
   {
     using var cts = new CancellationTokenSource();
 
@@ -769,7 +769,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
   /// Verified by ensuring only one pending disconnectTask is awaited per confirmed connection.
   /// </summary>
   [Fact]
-  public async Task ExecuteAsync_StaleDisconnectOnFreshTcs_DoesNotDoubleConnectAsync()
+  public async Task ExecuteAsyncStaleDisconnectOnFreshTcsDoesNotDoubleConnectAsync()
   {
     var firstConnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
     var secondConnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -816,7 +816,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 22: Cancelling stoppingToken during slow registration causes service to stop without hanging.</summary>
   [Fact]
-  public async Task OnWebsocketConnected_StopAsyncDuringRegistration_DoesNotHangAsync()
+  public async Task OnWebsocketConnectedStopAsyncDuringRegistrationDoesNotHangAsync()
   {
     var registrationStarted = new TaskCompletionSource();
 
@@ -852,7 +852,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 23: When mediator.Publish throws for a chat message, the background service does not crash.</summary>
   [Fact]
-  public async Task OnChannelChatMessage_WhenMediatorThrows_DoesNotCrashServiceAsync()
+  public async Task OnChannelChatMessageWhenMediatorThrowsDoesNotCrashServiceAsync()
   {
     _ = _mockMediator
       .Setup(m => m.Publish(It.IsAny<ChannelChatMessageReceived>(), It.IsAny<CancellationToken>()))
@@ -881,7 +881,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 24: When mediator.Publish throws for a whisper, the background service does not crash.</summary>
   [Fact]
-  public async Task OnUserWhisperMessage_WhenMediatorThrows_DoesNotCrashServiceAsync()
+  public async Task OnUserWhisperMessageWhenMediatorThrowsDoesNotCrashServiceAsync()
   {
     _ = _mockMediator
       .Setup(m => m.Publish(It.IsAny<UserWhisperMessageReceived>(), It.IsAny<CancellationToken>()))
@@ -910,7 +910,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
   /// when it keeps returning false, demonstrating the fixed 5-second retry behaviour.
   /// </summary>
   [Fact]
-  public async Task ExecuteAsync_ConsecutiveFailures_UsesFixedFiveSecondDelayAsync()
+  public async Task ExecuteAsyncConsecutiveFailuresUsesFixedFiveSecondDelayAsync()
   {
     var connectCallCount = 0;
 
@@ -941,7 +941,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
   /// (IHttpClientFactory manages HttpClient lifetime; manual disposal is a bug).
   /// </summary>
   [Fact]
-  public async Task OnWebsocketConnected_HttpClientNotManuallyDisposedAsync()
+  public async Task OnWebsocketConnectedHttpClientNotManuallyDisposedAsync()
   {
     var mockHttpClient = new TrackingHttpClient();
 
