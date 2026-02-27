@@ -114,19 +114,27 @@ async function handleOAuthCallback(): Promise<void> {
       ? setupData.value?.botTokens !== null
       : setupData.value?.broadcasterTokens !== null;
 
-  if (isConfigured) {
+   if (isConfigured) {
     oAuthStepRef.value = "success";
     successMessage.value = `${accountType.charAt(0).toUpperCase() + accountType.slice(1)} account authenticated successfully!`;
 
     // Clear session storage
-    sessionStorage.removeItem("oauth-return-url");
     sessionStorage.removeItem("oauth-account-type");
 
-    // Reset success message after 3 seconds
-    setTimeout(() => {
-      successMessage.value = null;
-      oAuthStepRef.value = "idle";
-    }, 3000);
+    // Redirect back to return URL if available, otherwise stay here
+    if (returnUrl) {
+      sessionStorage.removeItem("oauth-return-url");
+      // Small delay to show success message before redirecting
+      setTimeout(() => {
+        window.location.href = returnUrl;
+      }, 1500);
+    } else {
+      // Reset success message after 3 seconds if not redirecting
+      setTimeout(() => {
+        successMessage.value = null;
+        oAuthStepRef.value = "idle";
+      }, 3000);
+    }
   } else {
     oAuthStepRef.value = "error";
     errorMessage.value = `Failed to authenticate ${accountType} account. Please try again.`;
