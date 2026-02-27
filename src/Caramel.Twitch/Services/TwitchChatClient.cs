@@ -1,5 +1,6 @@
 using System.Text;
 
+using Caramel.Core;
 using Caramel.Twitch.Auth;
 
 using FluentResults;
@@ -20,56 +21,56 @@ public sealed class TwitchChatClient(
 {
   public async Task<Result> SendChatMessageAsync(string message, CancellationToken cancellationToken = default)
   {
-    try
+    return await ResultExtensions.ExecuteAsync(
+      () => SendChatMessageInternalAsync(message, cancellationToken),
+      "Network error sending chat message",
+      "Unexpected error sending chat message");
+  }
+
+  private async Task SendChatMessageInternalAsync(string message, CancellationToken cancellationToken)
+  {
+    var setup = setupState.Current;
+    if (setup is null)
     {
-      var setup = setupState.Current;
-      if (setup is null)
-      {
-        TwitchChatClientLogs.SetupNotConfigured(logger);
-        return Result.Fail("Twitch setup has not been completed.");
-      }
-
-      if (setup.Channels.Count == 0)
-      {
-        TwitchChatClientLogs.NoChannelsConfigured(logger);
-        return Result.Fail("No channels are configured.");
-      }
-
-      var broadcasterId = setup.Channels[0].UserId;
-      var senderId = setup.BotUserId;
-
-      var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
-
-      using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
-      httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
-      httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
-
-      var body = new
-      {
-        broadcaster_id = broadcasterId,
-        sender_id = senderId,
-        message,
-      };
-
-      var json = JsonSerializer.Serialize(body);
-      using var content = new StringContent(json, Encoding.UTF8, "application/json");
-      var response = await httpClient.PostAsync("https://api.twitch.tv/helix/chat/messages", content, cancellationToken);
-
-      if (response.IsSuccessStatusCode)
-      {
-        TwitchChatClientLogs.ChatMessageSent(logger, broadcasterId);
-        return Result.Ok();
-      }
-
-      var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-      TwitchChatClientLogs.ChatMessageSendFailed(logger, (int)response.StatusCode, errorBody);
-      return Result.Fail($"Twitch API rejected the message with status {(int)response.StatusCode}.");
+      TwitchChatClientLogs.SetupNotConfigured(logger);
+      throw new InvalidOperationException("Twitch setup has not been completed.");
     }
-    catch (Exception ex)
+
+    if (setup.Channels.Count == 0)
     {
-      TwitchChatClientLogs.ChatMessageSendError(logger, ex.Message);
-      return Result.Fail($"Error sending chat message: {ex.Message}");
+      TwitchChatClientLogs.NoChannelsConfigured(logger);
+      throw new InvalidOperationException("No channels are configured.");
     }
+
+    var broadcasterId = setup.Channels[0].UserId;
+    var senderId = setup.BotUserId;
+
+    var accessToken = await tokenManager.GetValidAccessTokenAsync(cancellationToken);
+
+    using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
+    httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
+    httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+
+    var body = new
+    {
+      broadcaster_id = broadcasterId,
+      sender_id = senderId,
+      message,
+    };
+
+    var json = JsonSerializer.Serialize(body);
+    using var content = new StringContent(json, Encoding.UTF8, "application/json");
+    var response = await httpClient.PostAsync("https://api.twitch.tv/helix/chat/messages", content, cancellationToken);
+
+    if (response.IsSuccessStatusCode)
+    {
+      TwitchChatClientLogs.ChatMessageSent(logger, broadcasterId);
+      return;
+    }
+
+    var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+    TwitchChatClientLogs.ChatMessageSendFailed(logger, (int)response.StatusCode, errorBody);
+    throw new InvalidOperationException($"Twitch API rejected the message with status {(int)response.StatusCode}.");
   }
 }
 

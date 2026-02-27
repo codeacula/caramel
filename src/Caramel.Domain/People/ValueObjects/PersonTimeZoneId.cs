@@ -1,5 +1,9 @@
 namespace Caramel.Domain.People.ValueObjects;
 
+/// <summary>
+/// Represents a person's timezone for scheduling and time-aware operations.
+/// Supports IANA timezone IDs and common timezone abbreviations.
+/// </summary>
 public readonly record struct PersonTimeZoneId
 {
   private static readonly Dictionary<string, string> CommonAbbreviations = new(StringComparer.OrdinalIgnoreCase)
@@ -28,6 +32,9 @@ public readonly record struct PersonTimeZoneId
     { "AEDT", "Australia/Sydney" }
   };
 
+  /// <summary>
+  /// Gets the IANA timezone ID string (e.g., "America/New_York").
+  /// </summary>
   public string Value { get; init; }
 
   private PersonTimeZoneId(string value)
@@ -35,6 +42,13 @@ public readonly record struct PersonTimeZoneId
     Value = value;
   }
 
+  /// <summary>
+  /// Parses a timezone string into a PersonTimeZoneId, supporting both IANA IDs and common abbreviations.
+  /// </summary>
+  /// <param name="input">The timezone string to parse (e.g., "America/New_York" or "EST").</param>
+  /// <param name="timeZoneId">The parsed timezone ID, if successful.</param>
+  /// <param name="error">An error message if parsing failed; otherwise null.</param>
+  /// <returns>True if parsing succeeded; false otherwise.</returns>
   public static bool TryParse(string input, out PersonTimeZoneId timeZoneId, out string? error)
   {
     timeZoneId = default;
@@ -72,16 +86,29 @@ public readonly record struct PersonTimeZoneId
     }
   }
 
+  /// <summary>
+  /// Implicitly converts a PersonTimeZoneId to its IANA timezone string.
+  /// </summary>
+  /// <param name="value">The timezone ID to convert.</param>
+  /// <returns>The IANA timezone string.</returns>
   public static implicit operator string(PersonTimeZoneId value)
   {
     return value.Value;
   }
 
+  /// <summary>
+  /// Gets the system TimeZoneInfo for this timezone.
+  /// </summary>
+  /// <returns>The TimeZoneInfo object representing this timezone.</returns>
   public TimeZoneInfo GetTimeZoneInfo()
   {
     return TimeZoneInfo.FindSystemTimeZoneById(Value);
   }
 
+  /// <summary>
+  /// Gets the display name for this timezone.
+  /// </summary>
+  /// <returns>The localized display name of the timezone.</returns>
   public string GetDisplayName()
   {
     return GetTimeZoneInfo().DisplayName;

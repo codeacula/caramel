@@ -87,6 +87,14 @@ public sealed class TwitchChatBroadcaster(
 
       TwitchChatBroadcasterLogs.MessagePublished(logger, chatterLogin, broadcasterLogin);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      TwitchChatBroadcasterLogs.PublishFailed(logger, chatterLogin, $"Invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       TwitchChatBroadcasterLogs.PublishFailed(logger, chatterLogin, ex.Message);
@@ -135,6 +143,14 @@ public sealed class TwitchChatBroadcaster(
 
       TwitchChatBroadcasterLogs.RedeemPublished(logger, redeemerLogin, rewardTitle, broadcasterLogin);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      TwitchChatBroadcasterLogs.RedeemPublishFailed(logger, redeemerLogin, $"Invalid state: {ex.Message}");
+    }
     catch (Exception ex)
     {
       TwitchChatBroadcasterLogs.RedeemPublishFailed(logger, redeemerLogin, ex.Message);
@@ -155,6 +171,14 @@ public sealed class TwitchChatBroadcaster(
         json);
 
       TwitchChatBroadcasterLogs.SystemMessagePublished(logger, type);
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      TwitchChatBroadcasterLogs.SystemPublishFailed(logger, type, $"Invalid state: {ex.Message}");
     }
     catch (Exception ex)
     {

@@ -32,9 +32,21 @@ public sealed class DiscordNotificationChannel(RestClient restClient) : INotific
 
       return Result.Ok();
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      return Result.Fail($"Discord API network error: {ex.Message}");
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail($"Invalid Discord operation state: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail($"Failed to send Discord notification: {ex.Message}");
+      return Result.Fail($"Unexpected error sending Discord notification: {ex.Message}");
     }
   }
 }

@@ -93,6 +93,16 @@ internal sealed class EventSubLifecycleService(
         CaramelTwitchProgramLogs.EventSubWaitingForOAuth(logger);
         await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
       }
+      catch (TimeoutException ex)
+      {
+        CaramelTwitchProgramLogs.EventSubConnectionError(logger, $"Connection timeout: {ex.Message}");
+        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+      }
+      catch (HttpRequestException ex)
+      {
+        CaramelTwitchProgramLogs.EventSubConnectionError(logger, $"Network error: {ex.Message}");
+        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+      }
       catch (Exception ex)
       {
         CaramelTwitchProgramLogs.EventSubConnectionError(logger, ex.Message);
@@ -152,46 +162,58 @@ internal sealed class EventSubLifecycleService(
     _handlersWired = true;
   }
 
-  private async Task OnWebsocketConnectedAsync(object? sender, WebsocketConnectedArgs args)
-  {
-    if (args.IsRequestedReconnect)
-    {
-      return;
-    }
+   private async Task OnWebsocketConnectedAsync(object? sender, WebsocketConnectedArgs args)
+   {
+     if (args.IsRequestedReconnect)
+     {
+       return;
+     }
 
-    CaramelTwitchProgramLogs.EventSubConnected(logger);
+     CaramelTwitchProgramLogs.EventSubConnected(logger);
 
-    try
-    {
-      var setup = setupState.Current;
-      if (setup is null)
-      {
-        CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
-        return;
-      }
+     try
+     {
+       var setup = setupState.Current;
+       if (setup is null)
+       {
+         CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
+         return;
+       }
 
-      var accessToken = await tokenManager.GetValidAccessTokenAsync();
+       var accessToken = await tokenManager.GetValidAccessTokenAsync();
 
-      // Numeric IDs are stored in setup — no resolver needed
-      var registrationContext = new EventSubSubscriptionRegistrationContext(
-        HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
-        SessionId: eventSubClient.SessionId,
-        BotUserId: setup.BotUserId,
-        ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)]);
+       // Numeric IDs are stored in setup — no resolver needed
+       var registrationContext = new EventSubSubscriptionRegistrationContext(
+         HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
+         SessionId: eventSubClient.SessionId,
+         BotUserId: setup.BotUserId,
+         ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)]);
 
-      registrationContext.HttpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
-      registrationContext.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+       registrationContext.HttpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
+       registrationContext.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
-      foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
-      {
-        await registrar.RegisterAsync(registrationContext, _stoppingToken);
-      }
-    }
-    catch (Exception ex)
-    {
-      CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, ex.Message);
-    }
-  }
+       foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
+       {
+         await registrar.RegisterAsync(registrationContext, _stoppingToken);
+       }
+     }
+     catch (OperationCanceledException)
+     {
+       throw;
+     }
+     catch (HttpRequestException ex)
+     {
+       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, $"Network error: {ex.Message}");
+     }
+     catch (InvalidOperationException ex)
+     {
+       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, $"Invalid state: {ex.Message}");
+     }
+     catch (Exception ex)
+     {
+       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, ex.Message);
+     }
+   }
 
   private Task OnWebsocketDisconnectedAsync(object? sender, WebsocketDisconnectedArgs args)
   {

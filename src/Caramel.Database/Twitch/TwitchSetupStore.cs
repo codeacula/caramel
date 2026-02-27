@@ -18,9 +18,17 @@ public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupSto
 
       return db is null ? Result.Ok<Domain.Twitch.TwitchSetup?>(null) : Result.Ok((Domain.Twitch.TwitchSetup?)db);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Domain.Twitch.TwitchSetup?>($"Invalid operation retrieving Twitch setup: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup?>($"Failed to retrieve Twitch setup: {ex.Message}");
+      return Result.Fail<Domain.Twitch.TwitchSetup?>($"Unexpected error retrieving Twitch setup: {ex.Message}");
     }
   }
 
@@ -76,9 +84,17 @@ public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupSto
 
       return Result.Ok((Domain.Twitch.TwitchSetup)saved);
     }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Domain.Twitch.TwitchSetup>($"Invalid operation saving Twitch setup: {ex.Message}");
+    }
     catch (Exception ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Failed to save Twitch setup: {ex.Message}");
+      return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving Twitch setup: {ex.Message}");
     }
   }
 }
