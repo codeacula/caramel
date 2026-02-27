@@ -1,6 +1,3 @@
-using Caramel.Domain.Twitch;
-using Caramel.Twitch.Services;
-
 namespace Caramel.Twitch.Tests.Handlers;
 
 /// <summary>
@@ -13,14 +10,16 @@ public sealed class ChatMessageEventHandlerTests
     Mock<IPersonCache>,
     Mock<ITwitchChatBroadcaster>,
     Mock<ITwitchSetupState>,
+    Mock<ITwitchChatClient>,
     Mock<ILogger<ChatMessageHandler>>) CreateMocks()
   {
     var serviceClientMock = new Mock<ICaramelServiceClient>();
     var personCacheMock = new Mock<IPersonCache>();
     var broadcasterMock = new Mock<ITwitchChatBroadcaster>();
     var setupStateMock = new Mock<ITwitchSetupState>();
+    var chatClientMock = new Mock<ITwitchChatClient>();
     var loggerMock = new Mock<ILogger<ChatMessageHandler>>();
-    return (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock);
+    return (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock);
   }
 
   private static Task HandleAsync(
@@ -35,7 +34,7 @@ public sealed class ChatMessageEventHandlerTests
     string color = "#FF0000",
     CancellationToken cancellationToken = default)
   {
-    return handler.HandleAsync(
+    return handler.Handle(new ChannelChatMessageReceived(
       broadcasterUserId,
       broadcasterLogin,
       chatterUserId,
@@ -43,7 +42,7 @@ public sealed class ChatMessageEventHandlerTests
       chatterDisplayName,
       messageId,
       messageText,
-      color,
+      color),
       cancellationToken);
   }
 
@@ -51,7 +50,7 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithBotSelfMessageReturnsEarlyAsync()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
 
     _ = setupStateMock.Setup(x => x.Current).Returns(new TwitchSetup
     {
@@ -67,6 +66,7 @@ public sealed class ChatMessageEventHandlerTests
       personCacheMock.Object,
       broadcasterMock.Object,
       setupStateMock.Object,
+      chatClientMock.Object,
       loggerMock.Object);
 
     // Act
@@ -85,12 +85,13 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncWithMentionPrefixProcessesCommandAsync()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
       setupStateMock.Object,
+      chatClientMock.Object,
       loggerMock.Object);
 
     _ = personCacheMock
@@ -100,6 +101,10 @@ public sealed class ChatMessageEventHandlerTests
     _ = serviceClientMock
       .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
       .Returns(Task.FromResult(Result.Ok("reply")));
+
+    _ = chatClientMock
+      .Setup(x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok());
 
     // Act
     await HandleAsync(handler, messageText: "Hey @caramel, what's up?");
@@ -114,12 +119,13 @@ public sealed class ChatMessageEventHandlerTests
   public async Task HandleAsyncAlwaysPublishesToRedisBeforeBotFilteringAsync()
   {
     // Arrange
-    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, loggerMock) = CreateMocks();
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
     var handler = new ChatMessageHandler(
       serviceClientMock.Object,
       personCacheMock.Object,
       broadcasterMock.Object,
       setupStateMock.Object,
+      chatClientMock.Object,
       loggerMock.Object);
 
     _ = personCacheMock
@@ -146,5 +152,133 @@ public sealed class ChatMessageEventHandlerTests
         It.IsAny<string>(),
         It.IsAny<CancellationToken>()),
       Times.Once);
+  }
+
+  [Fact]
+  public async Task HandleAsyncWithMentionSendsAiResponseToChatAsync()
+  {
+    // Arrange
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
+    var handler = new ChatMessageHandler(
+      serviceClientMock.Object,
+      personCacheMock.Object,
+      broadcasterMock.Object,
+      setupStateMock.Object,
+      chatClientMock.Object,
+      loggerMock.Object);
+
+    _ = personCacheMock
+      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
+      .Returns(Task.FromResult(Result.Ok<bool?>(true)));
+
+    _ = serviceClientMock
+      .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
+      .Returns(Task.FromResult(Result.Ok("I am doing great!")));
+
+    _ = chatClientMock
+      .Setup(x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok());
+
+    // Act
+    await HandleAsync(handler, chatterLogin: "coolviewer", messageText: "Hey @caramel, what's up?");
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync("@coolviewer I am doing great!", It.IsAny<CancellationToken>()),
+      Times.Once);
+  }
+
+  [Fact]
+  public async Task HandleAsyncWithCommandPrefixSendsAiResponseToChatAsync()
+  {
+    // Arrange
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
+    var handler = new ChatMessageHandler(
+      serviceClientMock.Object,
+      personCacheMock.Object,
+      broadcasterMock.Object,
+      setupStateMock.Object,
+      chatClientMock.Object,
+      loggerMock.Object);
+
+    _ = personCacheMock
+      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
+      .Returns(Task.FromResult(Result.Ok<bool?>(true)));
+
+    _ = serviceClientMock
+      .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
+      .Returns(Task.FromResult(Result.Ok("Yes, I think so.")));
+
+    _ = chatClientMock
+      .Setup(x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok());
+
+    // Act
+    await HandleAsync(handler, chatterLogin: "viewer", messageText: "!caramel should I go outside?");
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync("@viewer Yes, I think so.", It.IsAny<CancellationToken>()),
+      Times.Once);
+  }
+
+  [Fact]
+  public async Task HandleAsyncDoesNotSendToChatWhenAiFailsAsync()
+  {
+    // Arrange
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
+    var handler = new ChatMessageHandler(
+      serviceClientMock.Object,
+      personCacheMock.Object,
+      broadcasterMock.Object,
+      setupStateMock.Object,
+      chatClientMock.Object,
+      loggerMock.Object);
+
+    _ = personCacheMock
+      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
+      .Returns(Task.FromResult(Result.Ok<bool?>(true)));
+
+    _ = serviceClientMock
+      .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
+      .Returns(Task.FromResult(Result.Fail<string>("AI service unavailable")));
+
+    // Act
+    await HandleAsync(handler, messageText: "@caramel hello");
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+      Times.Never);
+  }
+
+  [Fact]
+  public async Task HandleAsyncDoesNotSendToChatWhenResponseIsEmptyAsync()
+  {
+    // Arrange
+    var (serviceClientMock, personCacheMock, broadcasterMock, setupStateMock, chatClientMock, loggerMock) = CreateMocks();
+    var handler = new ChatMessageHandler(
+      serviceClientMock.Object,
+      personCacheMock.Object,
+      broadcasterMock.Object,
+      setupStateMock.Object,
+      chatClientMock.Object,
+      loggerMock.Object);
+
+    _ = personCacheMock
+      .Setup(x => x.GetAccessAsync(It.IsAny<PlatformId>()))
+      .Returns(Task.FromResult(Result.Ok<bool?>(true)));
+
+    _ = serviceClientMock
+      .Setup(x => x.SendMessageAsync(It.IsAny<ProcessMessageRequest>(), It.IsAny<CancellationToken>()))
+      .Returns(Task.FromResult(Result.Ok("   ")));
+
+    // Act
+    await HandleAsync(handler, messageText: "@caramel hello");
+
+    // Assert
+    chatClientMock.Verify(
+      x => x.SendChatMessageAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+      Times.Never);
   }
 }

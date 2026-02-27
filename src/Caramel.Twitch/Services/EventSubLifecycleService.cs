@@ -8,100 +8,129 @@ using TwitchLib.EventSub.Core.EventArgs.User;
 namespace Caramel.Twitch.Services;
 
 internal sealed class EventSubLifecycleService(
-  EventSubWebsocketClient eventSubClient,
+  IEventSubWebsocketClientWrapper eventSubClient,
   TwitchConfig twitchConfig,
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   ITwitchSetupState setupState,
   ICaramelServiceClient serviceClient,
-  ChatMessageHandler chatHandler,
-  WhisperHandler whisperHandler,
-  ChannelPointRedeemHandler redeemHandler,
+  IEnumerable<IEventSubSubscriptionRegistrar> subscriptionRegistrars,
+  IMediator mediator,
   IHttpClientFactory httpClientFactory,
   ILogger<EventSubLifecycleService> logger) : BackgroundService
 {
   private TaskCompletionSource _disconnectTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
   private bool _handlersWired;
+  private bool _hasConnectedOnce;
+  private CancellationToken _stoppingToken;
 
   protected override async Task ExecuteAsync(CancellationToken stoppingToken)
   {
-    try
+    _stoppingToken = stoppingToken;
+
+    CaramelTwitchProgramLogs.EventSubStarting(logger);
+
+    // Wire event handlers exactly once to prevent duplicate invocations on reconnect
+    WireEventHandlers();
+
+    while (!stoppingToken.IsCancellationRequested)
     {
-      CaramelTwitchProgramLogs.EventSubStarting(logger);
-
-      // Wire event handlers exactly once to prevent duplicate invocations on reconnect
-      WireEventHandlers();
-
-      while (!stoppingToken.IsCancellationRequested)
+      try
       {
-        try
-        {
-          // Phase 1: Wait for valid OAuth tokens
-          _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
+        // Phase 1: Wait for valid OAuth tokens
+        _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
 
-          // Phase 2: Load setup from DB (retry until configured)
-          if (!setupState.IsConfigured)
+        // Phase 2: Load setup from DB (retry until configured)
+        if (!setupState.IsConfigured)
+        {
+          var setupResult = await serviceClient.GetTwitchSetupAsync(stoppingToken);
+          if (setupResult.IsSuccess && setupResult.Value is not null)
           {
-            var setupResult = await serviceClient.GetTwitchSetupAsync(stoppingToken);
-            if (setupResult.IsSuccess && setupResult.Value is not null)
-            {
-              setupState.Update(setupResult.Value);
-              CaramelTwitchProgramLogs.EventSubSetupLoaded(logger, setupResult.Value.BotLogin);
-            }
-            else
-            {
-              CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
-              await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-              continue;
-            }
+            setupState.Update(setupResult.Value);
+            CaramelTwitchProgramLogs.EventSubSetupLoaded(logger, setupResult.Value.BotLogin);
           }
-
-          // Phase 3: Connect EventSub
-          _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-          CaramelTwitchProgramLogs.EventSubConnecting(logger);
-          _ = await eventSubClient.ConnectAsync();
-
-          // Wait until either the host is stopping or the WebSocket disconnects
-          using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-          var cancelTask = Task.Delay(Timeout.Infinite, cts.Token);
-          var disconnectTask = _disconnectTcs.Task;
-          var completedTask = await Task.WhenAny(disconnectTask, cancelTask);
-
-          if (completedTask == cancelTask)
+          else
           {
-            // Host is shutting down
-            break;
+            CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            continue;
           }
+        }
 
-          // WebSocket disconnected - log and retry after a brief delay
-          CaramelTwitchProgramLogs.EventSubConnectionError(logger, "WebSocket disconnected, reconnecting...");
+        // Phase 3: Connect EventSub
+        CaramelTwitchProgramLogs.EventSubConnecting(logger);
+        if (!await TryConnectEventSubAsync(stoppingToken))
+        {
           await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+          continue;
         }
-        catch (OperationCanceledException)
+
+        // Only create the TCS after a confirmed successful connection to avoid
+        // a stale WebsocketDisconnected event completing it before we even await it
+        _disconnectTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // Wait until either the host is stopping or the WebSocket disconnects
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+        var cancelTask = Task.Delay(Timeout.Infinite, cts.Token);
+        var disconnectTask = _disconnectTcs.Task;
+        var completedTask = await Task.WhenAny(disconnectTask, cancelTask);
+
+        if (completedTask == cancelTask)
         {
-          throw;
+          // Host is shutting down
+          break;
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("refresh token"))
-        {
-          CaramelTwitchProgramLogs.EventSubWaitingForOAuth(logger);
-          await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-        }
-        catch (Exception ex)
-        {
-          CaramelTwitchProgramLogs.EventSubConnectionError(logger, ex.Message);
-          await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
-        }
+
+        // WebSocket disconnected - log and retry after a brief delay
+        CaramelTwitchProgramLogs.EventSubConnectionError(logger, "WebSocket disconnected, reconnecting...");
+        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+      }
+      catch (OperationCanceledException)
+      {
+        throw;
+      }
+      catch (InvalidOperationException ex) when (ex.Message.Contains("refresh token"))
+      {
+        CaramelTwitchProgramLogs.EventSubWaitingForOAuth(logger);
+        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+      }
+      catch (Exception ex)
+      {
+        CaramelTwitchProgramLogs.EventSubConnectionError(logger, ex.Message);
+        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
       }
     }
-    catch (OperationCanceledException)
+  }
+
+  private async Task<bool> TryConnectEventSubAsync(CancellationToken stoppingToken)
+  {
+    if (stoppingToken.IsCancellationRequested)
     {
-      CaramelTwitchProgramLogs.ServiceCancelled(logger);
+      return false;
     }
-    catch (Exception ex)
+
+    var connected = await eventSubClient.ConnectAsync();
+    if (connected)
     {
-      CaramelTwitchProgramLogs.ServiceFailed(logger, ex.Message);
-      throw;
+      _hasConnectedOnce = true;
+      return true;
     }
+
+    if (_hasConnectedOnce)
+    {
+      CaramelTwitchProgramLogs.EventSubConnectFailedAttemptingReconnect(logger);
+
+      var reconnected = await eventSubClient.ReconnectAsync();
+      if (reconnected)
+      {
+        return true;
+      }
+
+      CaramelTwitchProgramLogs.EventSubConnectionError(logger, "EventSub ReconnectAsync returned false.");
+      return false;
+    }
+
+    CaramelTwitchProgramLogs.EventSubConnectionError(logger, "EventSub ConnectAsync returned false.");
+    return false;
   }
 
   /// <summary>
@@ -116,6 +145,7 @@ internal sealed class EventSubLifecycleService(
 
     eventSubClient.WebsocketConnected += OnWebsocketConnectedAsync;
     eventSubClient.WebsocketDisconnected += OnWebsocketDisconnectedAsync;
+    eventSubClient.WebsocketReconnected += OnWebsocketReconnectedAsync;
     eventSubClient.ChannelChatMessage += OnChannelChatMessageAsync;
     eventSubClient.UserWhisperMessage += OnUserWhisperMessageAsync;
     eventSubClient.ChannelPointsCustomRewardRedemptionAdd += OnChannelPointsCustomRewardRedemptionAddAsync;
@@ -143,80 +173,23 @@ internal sealed class EventSubLifecycleService(
       var accessToken = await tokenManager.GetValidAccessTokenAsync();
 
       // Numeric IDs are stored in setup — no resolver needed
-      var botUserId = setup.BotUserId;
-      var channelIds = setup.Channels.Select(c => c.UserId).ToList();
+      var registrationContext = new EventSubSubscriptionRegistrationContext(
+        HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
+        SessionId: eventSubClient.SessionId,
+        BotUserId: setup.BotUserId,
+        ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)]);
 
-      using var httpClient = httpClientFactory.CreateClient("TwitchHelix");
-      httpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
-      httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+      registrationContext.HttpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
+      registrationContext.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
-      foreach (var channelId in channelIds)
+      foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
       {
-        // Subscribe to channel chat messages
-        await CreateEventSubSubscriptionAsync(httpClient, "channel.chat.message", "1", new Dictionary<string, string>
-        {
-          { "broadcaster_user_id", channelId },
-          { "user_id", botUserId },
-        });
-
-        // Subscribe to channel point custom reward redemptions
-        await CreateEventSubSubscriptionAsync(httpClient, "channel.channel_points_custom_reward_redemption.add", "1", new Dictionary<string, string>
-        {
-          { "broadcaster_user_id", channelId },
-        });
+        await registrar.RegisterAsync(registrationContext, _stoppingToken);
       }
-
-      // Subscribe to incoming whispers directed at the bot user
-      await CreateEventSubSubscriptionAsync(httpClient, "user.whisper.message", "1", new Dictionary<string, string>
-      {
-        { "user_id", botUserId },
-      });
     }
     catch (Exception ex)
     {
       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, ex.Message);
-    }
-  }
-
-  private async Task CreateEventSubSubscriptionAsync(
-    HttpClient httpClient,
-    string eventType,
-    string version,
-    Dictionary<string, string> condition)
-  {
-    var conditionDisplay = string.Join(", ", condition.Select(kvp => $"{kvp.Key}={kvp.Value}"));
-
-    try
-    {
-      var body = new
-      {
-        type = eventType,
-        version,
-        condition,
-        transport = new
-        {
-          method = "websocket",
-          session_id = eventSubClient.SessionId,
-        },
-      };
-
-      var json = JsonSerializer.Serialize(body);
-      using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-      var response = await httpClient.PostAsync("https://api.twitch.tv/helix/eventsub/subscriptions", content);
-
-      if (response.IsSuccessStatusCode)
-      {
-        CaramelTwitchProgramLogs.EventSubSubscribed(logger, eventType, conditionDisplay);
-      }
-      else
-      {
-        var errorBody = await response.Content.ReadAsStringAsync();
-        CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, $"{(int)response.StatusCode}: {errorBody}");
-      }
-    }
-    catch (Exception ex)
-    {
-      CaramelTwitchProgramLogs.EventSubSubscriptionFailed(logger, eventType, conditionDisplay, ex.Message);
     }
   }
 
@@ -228,10 +201,16 @@ internal sealed class EventSubLifecycleService(
     return Task.CompletedTask;
   }
 
+  private Task OnWebsocketReconnectedAsync(object? sender, WebsocketReconnectedArgs args)
+  {
+    CaramelTwitchProgramLogs.EventSubReconnected(logger);
+    return Task.CompletedTask;
+  }
+
   private async Task OnChannelChatMessageAsync(object? sender, ChannelChatMessageArgs args)
   {
     var evt = args.Payload.Event;
-    await chatHandler.HandleAsync(
+    await mediator.Publish(new ChannelChatMessageReceived(
       evt.BroadcasterUserId,
       evt.BroadcasterUserLogin,
       evt.ChatterUserId,
@@ -239,24 +218,22 @@ internal sealed class EventSubLifecycleService(
       evt.ChatterUserName,
       evt.MessageId,
       evt.Message.Text,
-      evt.Color,
-      CancellationToken.None);
+      evt.Color ?? string.Empty), CancellationToken.None);
   }
 
   private async Task OnUserWhisperMessageAsync(object? sender, UserWhisperMessageArgs args)
   {
     var evt = args.Payload.Event;
-    await whisperHandler.HandleAsync(
+    await mediator.Publish(new UserWhisperMessageReceived(
       evt.FromUserId,
       evt.FromUserLogin,
-      evt.Whisper.Text,
-      CancellationToken.None);
+      evt.Whisper.Text), CancellationToken.None);
   }
 
   private async Task OnChannelPointsCustomRewardRedemptionAddAsync(object? sender, ChannelPointsCustomRewardRedemptionArgs args)
   {
     var evt = args.Payload.Event;
-    await redeemHandler.HandleAsync(
+    await mediator.Publish(new ChannelPointsCustomRewardRedeemed(
       evt.Id,
       evt.BroadcasterUserId,
       evt.BroadcasterUserLogin,
@@ -266,9 +243,8 @@ internal sealed class EventSubLifecycleService(
       evt.Reward.Id,
       evt.Reward.Title,
       evt.Reward.Cost,
-      evt.UserInput,
-      evt.RedeemedAt,
-      CancellationToken.None);
+      evt.UserInput ?? string.Empty,
+      evt.RedeemedAt), CancellationToken.None);
   }
 
   public override async Task StopAsync(CancellationToken cancellationToken)

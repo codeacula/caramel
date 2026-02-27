@@ -33,7 +33,7 @@ public sealed class WhisperEventHandlerTests
       .Returns(Task.FromResult(Result.Ok("processed")));
 
     // Act
-    await handler.HandleAsync(fromUserId, fromUserLogin, messageText);
+    await handler.Handle(new UserWhisperMessageReceived(fromUserId, fromUserLogin, messageText), CancellationToken.None);
 
     // Assert
     serviceClientMock.Verify(
@@ -56,7 +56,7 @@ public sealed class WhisperEventHandlerTests
       .Returns(Task.FromResult(Result.Ok<bool?>(false))); // Access denied
 
     // Act
-    await handler.HandleAsync("user_123", "streamer", "message");
+    await handler.Handle(new UserWhisperMessageReceived("user_123", "streamer", "message"), CancellationToken.None);
 
     // Assert
     serviceClientMock.Verify(
@@ -79,7 +79,7 @@ public sealed class WhisperEventHandlerTests
       .Returns(Task.FromResult(Result.Fail<bool?>("Cache error")));
 
     // Act
-    await handler.HandleAsync("user_123", "streamer", "message");
+    await handler.Handle(new UserWhisperMessageReceived("user_123", "streamer", "message"), CancellationToken.None);
 
     // Assert
     serviceClientMock.Verify(
@@ -106,7 +106,7 @@ public sealed class WhisperEventHandlerTests
       .Returns(Task.FromResult(Result.Ok("success")));
 
     // Act
-    await handler.HandleAsync("user_123", "streamer", "message");
+    await handler.Handle(new UserWhisperMessageReceived("user_123", "streamer", "message"), CancellationToken.None);
 
     // Assert - Message was sent successfully
     serviceClientMock.Verify(
@@ -133,7 +133,7 @@ public sealed class WhisperEventHandlerTests
       .Returns(Task.FromResult(Result.Fail<string>("Processing error")));
 
     // Act
-    await handler.HandleAsync("user_123", "streamer", "message");
+    await handler.Handle(new UserWhisperMessageReceived("user_123", "streamer", "message"), CancellationToken.None);
 
     // Assert - Handler completes without throwing despite service failure
     serviceClientMock.Verify(

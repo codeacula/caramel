@@ -1,5 +1,4 @@
 using Caramel.Core.Twitch;
-using Caramel.Twitch.Services;
 
 using StackExchange.Redis;
 
@@ -57,7 +56,7 @@ public sealed class TwitchChatBroadcasterTests
     await broadcaster.PublishAsync("msg1", "bid", "streamer", "uid", "viewer", "Viewer", "hello", "#FF0000");
 
     _ = capturedPayload.Should().NotBeNull();
-    _ = capturedPayload!.Should().Contain("\"type\"");
+    _ = capturedPayload.Should().Contain("\"type\"");
     _ = capturedPayload.Should().Contain("chat_message");
   }
 
@@ -108,7 +107,7 @@ public sealed class TwitchChatBroadcasterTests
     await broadcaster.PublishSystemMessageAsync("setup_status", new { configured = true });
 
     _ = capturedPayload.Should().NotBeNull();
-    _ = capturedPayload!.Should().Contain("\"type\"");
+    _ = capturedPayload.Should().Contain("\"type\"");
     _ = capturedPayload.Should().Contain("setup_status");
   }
 

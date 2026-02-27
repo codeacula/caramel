@@ -355,3 +355,99 @@ public class GrpcContractConversionTests
     Assert.Equal("Remind me to buy milk", deserialized.Content);
   }
 }
+
+public class AskTheOrbGrpcRequestSerializationTests
+{
+  [Fact]
+  public void AskTheOrbGrpcRequestRoundTripSerializationPreservesAllFields()
+  {
+    // Arrange
+    var original = new AskTheOrbGrpcRequest
+    {
+      Username = "viewer",
+      PlatformUserId = "12345",
+      Platform = Platform.Twitch,
+      Content = "What should I do next?"
+    };
+
+    // Act
+    using var ms = new MemoryStream();
+    Serializer.Serialize(ms, original);
+    ms.Position = 0;
+
+    var deserialized = Serializer.Deserialize<AskTheOrbGrpcRequest>(ms);
+
+    // Assert
+    Assert.NotNull(deserialized);
+    Assert.Equal(original.Username, deserialized.Username);
+    Assert.Equal(original.PlatformUserId, deserialized.PlatformUserId);
+    Assert.Equal(original.Platform, deserialized.Platform);
+    Assert.Equal(original.Content, deserialized.Content);
+  }
+}
+
+public class TwitchSetupDTOSerializationTests
+{
+  [Fact]
+  public void TwitchSetupDTORoundTripSerializationPreservesTimestamps()
+  {
+    // Arrange
+    var configuredOn = new DateTimeOffset(2025, 1, 15, 12, 0, 0, TimeSpan.Zero);
+    var updatedOn = new DateTimeOffset(2025, 6, 20, 9, 30, 0, TimeSpan.Zero);
+
+    var original = new TwitchSetupDTO
+    {
+      BotUserId = "123456",
+      BotLogin = "caramelbot",
+      Channels = [new TwitchChannelDTO { UserId = "654321", Login = "streamer" }],
+      ConfiguredOnTicks = configuredOn.UtcTicks,
+      UpdatedOnTicks = updatedOn.UtcTicks
+    };
+
+    // Act
+    using var ms = new MemoryStream();
+    Serializer.Serialize(ms, original);
+    ms.Position = 0;
+    var deserialized = Serializer.Deserialize<TwitchSetupDTO>(ms);
+
+    // Assert: timestamp ticks survive serialization
+    Assert.NotNull(deserialized);
+    Assert.Equal(configuredOn.UtcTicks, deserialized.ConfiguredOnTicks);
+    Assert.Equal(updatedOn.UtcTicks, deserialized.UpdatedOnTicks);
+
+    // Assert: ticks round-trip back to original DateTimeOffset
+    Assert.Equal(configuredOn, new DateTimeOffset(deserialized.ConfiguredOnTicks, TimeSpan.Zero));
+    Assert.Equal(updatedOn, new DateTimeOffset(deserialized.UpdatedOnTicks, TimeSpan.Zero));
+
+    Assert.Equal(original.BotUserId, deserialized.BotUserId);
+    Assert.Equal(original.BotLogin, deserialized.BotLogin);
+  }
+
+  [Fact]
+  public void TwitchSetupDTOTimestampsAreDistinct()
+  {
+    // Arrange: ConfiguredOn and UpdatedOn should be independently preserved
+    var configuredOn = new DateTimeOffset(2024, 3, 1, 0, 0, 0, TimeSpan.Zero);
+    var updatedOn = new DateTimeOffset(2025, 9, 15, 18, 45, 0, TimeSpan.Zero);
+
+    var original = new TwitchSetupDTO
+    {
+      BotUserId = "111",
+      BotLogin = "bot",
+      Channels = [],
+      ConfiguredOnTicks = configuredOn.UtcTicks,
+      UpdatedOnTicks = updatedOn.UtcTicks
+    };
+
+    // Act
+    using var ms = new MemoryStream();
+    Serializer.Serialize(ms, original);
+    ms.Position = 0;
+    var deserialized = Serializer.Deserialize<TwitchSetupDTO>(ms);
+
+    // Assert: timestamps survive independently and are not equal to each other
+    Assert.Equal(configuredOn.UtcTicks, deserialized.ConfiguredOnTicks);
+    Assert.Equal(updatedOn.UtcTicks, deserialized.UpdatedOnTicks);
+    Assert.NotEqual(deserialized.ConfiguredOnTicks, deserialized.UpdatedOnTicks);
+  }
+}

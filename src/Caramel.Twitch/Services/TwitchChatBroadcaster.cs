@@ -2,23 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace Caramel.Twitch.Services;
 
-/// <summary>
-/// Contract for publishing messages to the Twitch WebSocket broadcast channel via Redis pub/sub.
-/// </summary>
 public interface ITwitchChatBroadcaster
 {
-  /// <summary>
-  /// Publishes a chat message to the Redis pub/sub channel wrapped in a typed envelope.
-  /// </summary>
-  /// <param name="messageId"></param>
-  /// <param name="broadcasterUserId"></param>
-  /// <param name="broadcasterLogin"></param>
-  /// <param name="chatterUserId"></param>
-  /// <param name="chatterLogin"></param>
-  /// <param name="chatterDisplayName"></param>
-  /// <param name="messageText"></param>
-  /// <param name="color"></param>
-  /// <param name="cancellationToken"></param>
   Task PublishAsync(
     string messageId,
     string broadcasterUserId,
@@ -30,9 +15,6 @@ public interface ITwitchChatBroadcaster
     string color,
     CancellationToken cancellationToken = default);
 
-  /// <summary>
-  /// Publishes a channel point custom reward redemption to the Redis pub/sub channel wrapped in a typed envelope.
-  /// </summary>
   Task PublishRedeemAsync(
     string redemptionId,
     string broadcasterUserId,
@@ -47,20 +29,9 @@ public interface ITwitchChatBroadcaster
     DateTimeOffset redeemedAt,
     CancellationToken cancellationToken = default);
 
-  /// <summary>
-  /// Publishes a system message (non-chat) to the Redis pub/sub channel.
-  /// The payload is serialized as-is alongside a <c>type</c> discriminator field.
-  /// </summary>
-  /// <param name="type"></param>
-  /// <param name="payload"></param>
-  /// <param name="cancellationToken"></param>
   Task PublishSystemMessageAsync(string type, object payload, CancellationToken cancellationToken = default);
 }
 
-/// <summary>
-/// Envelope wrapper for all messages published to the Redis pub/sub channel.
-/// The Vue client uses the <c>Type</c> field to route messages appropriately.
-/// </summary>
 internal sealed record TwitchWebSocketEnvelope
 {
   [JsonPropertyName("type")]
@@ -70,12 +41,6 @@ internal sealed record TwitchWebSocketEnvelope
   public required object Data { get; init; }
 }
 
-/// <summary>
-/// Publishes incoming Twitch chat messages and system notifications to a Redis pub/sub channel
-/// so that Caramel.API can broadcast them to connected WebSocket clients.
-/// </summary>
-/// <param name="redis"></param>
-/// <param name="logger"></param>
 public sealed class TwitchChatBroadcaster(
   IConnectionMultiplexer redis,
   ILogger<TwitchChatBroadcaster> logger) : ITwitchChatBroadcaster

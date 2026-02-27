@@ -1,47 +1,209 @@
 <script setup lang="ts">
-import TwitchChat from "./components/TwitchChat.vue";
+import { ref } from "vue";
+import { Toaster } from "vue-sonner";
 import ControlPanel from "./components/ControlPanel.vue";
+import TwitchChat from "./components/TwitchChat.vue";
+
+type ScreenId = "chat" | "settings";
+
+type ScreenNavItem = {
+  id: ScreenId;
+  label: string;
+  icon: string;
+  description: string;
+};
+
+const screenNavItems: ScreenNavItem[] = [
+  {
+    id: "chat",
+    label: "Chat",
+    icon: "💬",
+    description: "Live chat operations view",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: "⚙️",
+    description: "Configuration and future screens",
+  },
+];
+
+const activeScreen = ref<ScreenId>("chat");
 </script>
 
 <template>
-  <div class="app-layout">
-    <!-- Left sidebar -->
-    <aside class="left-sidebar">
-      <!-- Placeholder for left sidebar content -->
-    </aside>
+  <div class="app-shell">
+    <header class="top-nav" role="navigation" aria-label="Primary">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">🍯</span>
+        <span class="brand-title">Caramel Control Center</span>
+      </div>
 
-    <!-- Center column -->
-    <main class="center-column">
-      <!-- Top 2/3: Main adventure area -->
-      <section class="main-area">
-        <div class="main-placeholder">
-          <div class="placeholder-icon" aria-hidden="true">🎲</div>
-          <h1 class="placeholder-title">Adventure Awaits</h1>
-          <p class="placeholder-body">
-            No adventure is running right now.<br />
-            Use <code>!adventure start</code> in chat to begin.
+      <nav class="screen-nav" aria-label="Screens">
+        <button
+          v-for="screen in screenNavItems"
+          :key="screen.id"
+          class="nav-btn"
+          :class="{ active: activeScreen === screen.id }"
+          :aria-pressed="activeScreen === screen.id"
+          :title="screen.description"
+          @click="activeScreen = screen.id"
+        >
+          <span class="nav-icon" aria-hidden="true">{{ screen.icon }}</span>
+          <span>{{ screen.label }}</span>
+        </button>
+      </nav>
+    </header>
+
+    <div class="screen-content">
+      <div v-if="activeScreen === 'chat'" class="app-layout">
+        <!-- Left sidebar -->
+        <aside class="left-sidebar">
+          <!-- Placeholder for left sidebar content -->
+        </aside>
+
+        <!-- Center column -->
+        <main class="center-column">
+          <!-- Top 2/3: Main adventure area -->
+          <section class="main-area">
+            <div class="main-placeholder">
+              <div class="placeholder-icon" aria-hidden="true">🎲</div>
+              <h1 class="placeholder-title">Adventure Awaits</h1>
+              <p class="placeholder-body">
+                No adventure is running right now.<br />
+                Use <code>!adventure start</code> in chat to begin.
+              </p>
+            </div>
+          </section>
+
+          <!-- Bottom 1/3: Control Panel -->
+          <ControlPanel class="control-panel-container" />
+        </main>
+
+        <!-- Right sidebar (Chat) -->
+        <aside class="right-sidebar">
+          <TwitchChat />
+        </aside>
+      </div>
+
+      <main v-else class="settings-screen">
+        <section class="settings-card">
+          <h1 class="settings-title">Settings</h1>
+          <p class="settings-body">
+            Configure integrations, defaults, and behavior from here. This is now a dedicated screen so we can keep adding
+            more tools without overcrowding chat.
           </p>
-        </div>
-      </section>
+        </section>
 
-      <!-- Bottom 1/3: Control Panel -->
-      <section class="control-panel-container">
-        <ControlPanel />
-      </section>
-    </main>
-
-    <!-- Right sidebar (Chat) -->
-    <aside class="right-sidebar">
-      <TwitchChat />
-    </aside>
+        <section class="settings-card">
+          <h2 class="settings-subtitle">Navigation is extensible</h2>
+          <p class="settings-body">New screens can be added by appending to the shared navigation list.</p>
+          <ul class="settings-list">
+            <li v-for="screen in screenNavItems" :key="`future-${screen.id}`" class="settings-list-item">
+              <span class="settings-item-label">{{ screen.label }}</span>
+              <span class="settings-item-hint">{{ screen.description }}</span>
+            </li>
+          </ul>
+        </section>
+      </main>
+    </div>
+    <Toaster position="top-right" richColors />
   </div>
 </template>
 
 <style scoped>
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  block-size: 100vh;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-xl);
+  border-block-end: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-color) 90%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-inline-size: 0;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-secondary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-secondary) 35%, transparent);
+  font-size: 16px;
+}
+
+.brand-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.screen-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nav-btn:hover {
+  border-color: var(--border-color-hover);
+  color: var(--text-primary);
+}
+
+.nav-btn.active {
+  border-color: color-mix(in srgb, var(--accent-secondary) 60%, var(--border-color));
+  background: color-mix(in srgb, var(--accent-secondary) 18%, var(--surface-color));
+  color: var(--text-primary);
+}
+
+.nav-icon {
+  line-height: 1;
+}
+
+.screen-content {
+  flex: 1;
+  min-block-size: 0;
+}
+
 .app-layout {
   display: grid;
   grid-template-columns: 240px 1fr 360px;
-  block-size: 100vh;
+  block-size: 100%;
   overflow: hidden;
   background: var(--bg-color);
   color: var(--text-primary);
@@ -75,10 +237,8 @@ import ControlPanel from "./components/ControlPanel.vue";
 
 .control-panel-container {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  min-block-size: 0;
   overflow: hidden;
-  padding: var(--space-xl);
   border-block-start: 1px solid var(--border-color);
 }
 
@@ -137,8 +297,92 @@ import ControlPanel from "./components/ControlPanel.vue";
   background: var(--surface-color);
 }
 
+.settings-screen {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  block-size: 100%;
+  overflow: auto;
+  padding: var(--space-xl);
+}
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+}
+
+.settings-title,
+.settings-subtitle {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.settings-title {
+  font-size: var(--text-xl);
+}
+
+.settings-subtitle {
+  font-size: var(--text-lg);
+}
+
+.settings-body {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.settings-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+}
+
+.settings-list-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-color) 45%, transparent);
+}
+
+.settings-item-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-item-hint {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
 /* ── Responsive: collapse sidebar on narrow screens ──────────────────────── */
 @media (max-width: 1024px) {
+  .top-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: var(--space-md);
+  }
+
+  .screen-nav {
+    inline-size: 100%;
+    overflow-x: auto;
+    padding-block-end: 2px;
+  }
+
+  .nav-btn {
+    flex: 0 0 auto;
+  }
+
   .app-layout {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
@@ -160,6 +404,16 @@ import ControlPanel from "./components/ControlPanel.vue";
   .main-area {
     min-block-size: 200px;
     padding: var(--space-md);
+  }
+
+  .settings-screen {
+    grid-template-columns: 1fr;
+    padding: var(--space-md);
+  }
+
+  .settings-list-item {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

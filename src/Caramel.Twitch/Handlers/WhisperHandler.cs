@@ -5,29 +5,25 @@ namespace Caramel.Twitch.Handlers;
 public sealed class WhisperHandler(
   ICaramelServiceClient caramelServiceClient,
   IPersonCache personCache,
-  ILogger<WhisperHandler> logger)
+  ILogger<WhisperHandler> logger) : INotificationHandler<UserWhisperMessageReceived>
 {
-  public async Task HandleAsync(
-    string fromUserId,
-    string fromUserLogin,
-    string messageText,
-    CancellationToken cancellationToken = default)
+  public async Task Handle(UserWhisperMessageReceived notification, CancellationToken cancellationToken)
   {
     try
     {
-      var platformId = TwitchPlatformExtension.GetTwitchPlatformId(fromUserLogin, fromUserId);
+      var platformId = TwitchPlatformExtension.GetTwitchPlatformId(notification.FromUserLogin, notification.FromUserId);
 
       // Check access via cache (fast path)
       var accessResult = await personCache.GetAccessAsync(platformId);
       if (accessResult.IsFailed)
       {
-        CaramelTwitchWhisperLogs.AccessCheckFailed(logger, fromUserLogin, accessResult.Errors[0].Message);
+        CaramelTwitchWhisperLogs.AccessCheckFailed(logger, notification.FromUserLogin, accessResult.Errors[0].Message);
         return;
       }
 
       if (accessResult.Value is false)
       {
-        CaramelTwitchWhisperLogs.AccessDenied(logger, fromUserLogin);
+        CaramelTwitchWhisperLogs.AccessDenied(logger, notification.FromUserLogin);
         return;
       }
 
@@ -37,22 +33,22 @@ public sealed class WhisperHandler(
         Platform = Platform.Twitch,
         PlatformUserId = platformId.PlatformUserId,
         Username = platformId.Username,
-        Content = messageText
+        Content = notification.MessageText
       };
 
       var result = await caramelServiceClient.SendMessageAsync(request, cancellationToken);
       if (result.IsSuccess)
       {
-        CaramelTwitchWhisperLogs.WhisperProcessed(logger, fromUserLogin);
+        CaramelTwitchWhisperLogs.WhisperProcessed(logger, notification.FromUserLogin);
       }
       else
       {
-        CaramelTwitchWhisperLogs.WhisperProcessingFailed(logger, fromUserLogin, result.Errors[0].Message);
+        CaramelTwitchWhisperLogs.WhisperProcessingFailed(logger, notification.FromUserLogin, result.Errors[0].Message);
       }
     }
     catch (Exception ex)
     {
-      CaramelTwitchWhisperLogs.WhisperHandlerFailed(logger, fromUserLogin, ex.Message);
+      CaramelTwitchWhisperLogs.WhisperHandlerFailed(logger, notification.FromUserLogin, ex.Message);
     }
   }
 }

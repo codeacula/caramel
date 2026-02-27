@@ -11,6 +11,9 @@ public interface ICaramelGrpcService
   Task<GrpcResult<string>> SendCaramelMessageAsync(NewMessageRequest message);
 
   [OperationContract]
+  Task<GrpcResult<string>> AskTheOrbAsync(AskTheOrbGrpcRequest request);
+
+  [OperationContract]
   Task<GrpcResult<TwitchSetupDTO>> GetTwitchSetupAsync();
 
   [OperationContract]

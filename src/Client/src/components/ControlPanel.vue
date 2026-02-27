@@ -1,15 +1,38 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
+import { toast } from "vue-sonner";
 import { useObs } from "../composables/useObs";
+import { useTwitchAds } from "../composables/useTwitchAds";
 
 const { isConnected, refreshStatus, switchToScene } = useObs();
+const { adsStatus, cooldownRemaining, runAds } = useTwitchAds();
 
 onMounted(() => {
   refreshStatus();
 });
 
-const playAds = () => {
-  switchToScene("BRB");
+const playAds = async () => {
+  // Always switch to BRB scene, regardless of cooldown
+  await switchToScene("BRB");
+
+  // Skip ads API call if on cooldown
+  if (cooldownRemaining.value > 0) {
+    toast.info(`Ads on cooldown — ${cooldownRemaining.value}s remaining`);
+    return;
+  }
+
+  const result = await runAds(180);
+
+  if (result.success) {
+    const minutes = Math.floor(result.retryAfter / 60);
+    const seconds = result.retryAfter % 60;
+    const cooldownStr = result.retryAfter > 0
+      ? ` Next available in ${minutes}:${String(seconds).padStart(2, "0")}`
+      : "";
+    toast.success(`Ads started!${cooldownStr}`);
+  } else {
+    toast.error(result.errorMessage ?? "Failed to run ads");
+  }
 };
 </script>
 
@@ -24,9 +47,14 @@ const playAds = () => {
     </div>
 
     <div class="panel-actions">
-      <button class="action-btn ads-btn" @click="playAds" :disabled="!isConnected" title="Switch OBS to Ads scene">
+      <button
+        class="action-btn ads-btn"
+        @click="playAds"
+        :disabled="!isConnected || adsStatus === 'loading'"
+        :title="adsStatus === 'loading' ? 'Running ads...' : 'Switch OBS to Ads scene and run Twitch ads'"
+      >
         <span class="icon">📺</span>
-        Play Ads
+        {{ adsStatus === "loading" ? "Running..." : "Play Ads" }}
       </button>
     </div>
   </div>

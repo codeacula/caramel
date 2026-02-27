@@ -13,13 +13,13 @@ public sealed class AuthController(
   ICaramelServiceClient serviceClient,
   ITwitchSetupState setupState,
   OAuthStateManager stateManager,
-  TwitchTokenManager tokenManager,
+  ITwitchTokenManager tokenManager,
   TwitchConfig twitchConfig,
   ITwitchUserResolver userResolver
 ) : ControllerBase
 {
 
-  private const string _scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat user:manage:whispers channel:read:redemptions";
+  private const string _scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat user:manage:whispers channel:read:redemptions channel:edit:commercial";
 
   [Route("callback")]
   [HttpGet]
