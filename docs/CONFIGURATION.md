@@ -68,13 +68,18 @@ ASPNETCORE_ENVIRONMENT=Production
 
 ## Environment Variables Reference
 
+**Environment Variable Naming Convention:** Caramel uses ASP.NET Core's standard naming convention for environment variables. Use double underscores (`__`) to represent nested configuration paths:
+- JSON: `"ConnectionStrings": { "Caramel": "..." }` → Environment: `ConnectionStrings__Caramel=...`
+- JSON: `"DiscordConfig": { "Token": "..." }` → Environment: `DiscordConfig__Token=...`
+- JSON: `"GrpcHostConfig": { "Host": "..." }` → Environment: `GrpcHostConfig__Host=...`
+
 ### Database Configuration
 
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
-| `CARAMEL_DATABASE_CONNECTIONSTRING` | PostgreSQL connection string for Caramel data | `Host=localhost;Database=caramel_db;Username=caramel;Password=****` | ✅ |
-| `CARAMEL_QUARTZ_CONNECTIONSTRING` | PostgreSQL connection string for Quartz scheduler | `Host=localhost;Database=caramel_db;Username=caramel;Password=****` | ✅ |
-| `CARAMEL_REDIS_CONNECTIONSTRING` | Redis connection string for caching | `localhost:6379,password=****` | ✅ |
+| `ConnectionStrings__Caramel` | PostgreSQL connection string for Caramel data | `Host=localhost;Database=caramel_db;Username=caramel;Password=****` | ✅ |
+| `ConnectionStrings__Quartz` | PostgreSQL connection string for Quartz scheduler | `Host=localhost;Database=caramel_db;Username=caramel;Password=****` | ✅ |
+| `ConnectionStrings__Redis` | Redis connection string for caching | `localhost:6379,password=****` | ✅ |
 | `POSTGRES_USER` | PostgreSQL admin username | `caramel` | ✅ (Docker only) |
 | `POSTGRES_PASSWORD` | PostgreSQL admin password | `secure-password` | ✅ (Docker only) |
 | `POSTGRES_DB` | PostgreSQL database name | `caramel_db` | ✅ (Docker only) |
@@ -84,52 +89,52 @@ ASPNETCORE_ENVIRONMENT=Production
 
 | Variable | Description | Example | Required | Notes |
 |----------|-------------|---------|----------|-------|
-| `CARAMEL_DISCORD_TOKEN` | Discord bot token | `MTk4NjIyNDgzNzE3Mzc0OTc2.C-LXXQ.x...` | ✅ | [Get from Developer Portal](https://discord.com/developers/applications) |
-| `CARAMEL_DISCORD_PUBLICKEY` | Discord application public key | `740191cff2...` | ✅ | [Get from Developer Portal](https://discord.com/developers/applications) |
+| `DiscordConfig__Token` | Discord bot token | `MTk4NjIyNDgzNzE3Mzc0OTc2.C-LXXQ.x...` | ✅ | [Get from Developer Portal](https://discord.com/developers/applications) |
+| `DiscordConfig__PublicKey` | Discord application public key | `740191cff2...` | ✅ | [Get from Developer Portal](https://discord.com/developers/applications) |
 
 ### Twitch Integration Configuration
 
 | Variable | Description | Example | Required | Notes |
 |----------|-------------|---------|----------|-------|
-| `CARAMEL_TWITCH_CLIENTID` | Twitch application client ID | `abc123def456...` | ✅ | [Get from Dev Console](https://dev.twitch.tv/console/apps) |
-| `CARAMEL_TWITCH_CLIENTSECRET` | Twitch application client secret | `xyz789abc123...` | ✅ | [Get from Dev Console](https://dev.twitch.tv/console/apps) |
-| `CARAMEL_TWITCH_ACCESSTOKEN` | Twitch OAuth access token | `access-token-here` | ❌ | Generated via OAuth flow, can be empty on first run |
-| `CARAMEL_TWITCH_REFRESHTOKEN` | Twitch OAuth refresh token | `refresh-token-here` | ❌ | Generated via OAuth flow, can be empty on first run |
-| `CARAMEL_TWITCH_OAUTHCALLBACKURL` | OAuth callback URL | `http://localhost:8080/auth/twitch/callback` | ✅ | Must match registered callback in Twitch |
-| `CARAMEL_TWITCH_ENCRYPTIONKEY` | Session encryption key | `use-secure-random-string` | ✅ | Generate with: `openssl rand -base64 32` |
-| `CARAMEL_TWITCH_MESSAGETHEOAIREWARDID` | Channel point redeem GUID (optional) | `01abc02b-9234-56cd-ef01-23456789abc0` | ❌ | GUID of "Message The AI" reward |
+| `TwitchConfig__ClientId` | Twitch application client ID | `abc123def456...` | ✅ | [Get from Dev Console](https://dev.twitch.tv/console/apps) |
+| `TwitchConfig__ClientSecret` | Twitch application client secret | `xyz789abc123...` | ✅ | [Get from Dev Console](https://dev.twitch.tv/console/apps) |
+| `TwitchConfig__AccessToken` | Twitch OAuth access token | `access-token-here` | ❌ | Generated via OAuth flow, can be empty on first run |
+| `TwitchConfig__RefreshToken` | Twitch OAuth refresh token | `refresh-token-here` | ❌ | Generated via OAuth flow, can be empty on first run |
+| `TwitchConfig__OAuthCallbackUrl` | OAuth callback URL | `http://localhost:8080/auth/twitch/callback` | ✅ | Must match registered callback in Twitch |
+| `TwitchConfig__EncryptionKey` | Session encryption key | `use-secure-random-string` | ✅ | Generate with: `openssl rand -base64 32` |
+| `TwitchConfig__MessageTheAiRewardId` | Channel point redeem GUID (optional) | `01abc02b-9234-56cd-ef01-23456789abc0` | ❌ | GUID of "Message The AI" reward |
 
 ### Twitch Notifications Configuration
 
 | Variable | Description | Example | Required | Notes |
 |----------|-------------|---------|----------|-------|
-| `CARAMEL_TWITCH_NOTIF_ACCESSTOKEN` | Service access token for sending notifications | `access-token-here` | ❌ | Different from user token |
-| `CARAMEL_TWITCH_NOTIF_BOTUSERID` | Bot's Twitch user ID | `123456789` | ❌ | Numeric user ID of bot account |
+| `TwitchConfig__NotificationAccessToken` | Service access token for sending notifications | `access-token-here` | ❌ | Different from user token |
+| `TwitchConfig__NotificationBotUserId` | Bot's Twitch user ID | `123456789` | ❌ | Numeric user ID of bot account |
 
 ### gRPC Configuration
 
 | Variable | Description | Example | Required | Notes |
 |----------|-------------|---------|----------|-------|
-| `CARAMEL_GRPC_HOST` | gRPC service host | `localhost` (dev) or `caramel-service` (Docker) | ✅ | Use service name in Docker |
-| `CARAMEL_GRPC_PORT` | gRPC service port | `5270` | ✅ | Default is 5270 |
-| `CARAMEL_GRPC_USEHTTPS` | Use HTTPS for gRPC | `false` (dev) or `true` (prod) | ✅ | Boolean value |
-| `CARAMEL_GRPC_APITOKEN` | API token for gRPC authentication | `dev-api-token` or `prod-secure-token` | ✅ | Must match server token |
-| `CARAMEL_GRPC_VALIDATESSLCERTIFICATE` | Validate SSL certificates | `false` (dev) or `true` (prod) | ✅ | Boolean value |
+| `GrpcHostConfig__Host` | gRPC service host | `localhost` (dev) or `caramel-service` (Docker) | ✅ | Use service name in Docker |
+| `GrpcHostConfig__Port` | gRPC service port | `5270` | ✅ | Default is 5270 |
+| `GrpcHostConfig__UseHttps` | Use HTTPS for gRPC | `false` (dev) or `true` (prod) | ✅ | Boolean value |
+| `GrpcHostConfig__ApiToken` | API token for gRPC authentication | `dev-api-token` or `prod-secure-token` | ✅ | Must match server token |
+| `GrpcHostConfig__ValidateSslCertificate` | Validate SSL certificates | `false` (dev) or `true` (prod) | ✅ | Boolean value |
 
 ### AI/LLM Configuration
 
 | Variable | Description | Example | Required | Notes |
 |----------|-------------|---------|----------|-------|
-| `CARAMEL_AI_MODELID` | AI model identifier | `gpt-4` or `claude-3-sonnet` | ✅ | Depends on provider |
-| `CARAMEL_AI_ENDPOINT` | AI service endpoint | `https://api.openai.com/v1` | ✅ | Provider-specific |
-| `CARAMEL_AI_APIKEY` | AI service API key | `sk-proj-...` | ✅ | Keep this secret |
+| `CaramelAiConfig__ModelId` | AI model identifier | `gpt-4` or `claude-3-sonnet` | ✅ | Depends on provider |
+| `CaramelAiConfig__Endpoint` | AI service endpoint | `https://api.openai.com/v1` | ✅ | Provider-specific |
+| `CaramelAiConfig__ApiKey` | AI service API key | `sk-proj-...` | ✅ | Keep this secret |
 
 ### OBS Integration
 
 | Variable | Description | Example | Required | Notes |
 |----------|-------------|---------|----------|-------|
-| `CARAMEL_OBS_URL` | OBS WebSocket URL | `ws://localhost:4455` (dev) or `ws://host.docker.internal:4455` (Docker) | ✅ | WebSocket protocol |
-| `CARAMEL_OBS_PASSWORD` | OBS WebSocket password | `obs-websocket-password` | ❌ | Leave empty if OBS has no password |
+| `ObsConfig__Url` | OBS WebSocket URL | `ws://localhost:4455` (dev) or `ws://host.docker.internal:4455` (Docker) | ✅ | WebSocket protocol |
+| `ObsConfig__Password` | OBS WebSocket password | `obs-websocket-password` | ❌ | Leave empty if OBS has no password |
 
 ### Application Configuration
 
@@ -161,18 +166,18 @@ This creates a `.csproj` entry with a secret ID and stores secrets in:
 
 ```bash
 # Set individual secrets
-dotnet user-secrets set "CARAMEL_DISCORD_TOKEN" "your-discord-token"
-dotnet user-secrets set "CARAMEL_TWITCH_CLIENTID" "your-twitch-client-id"
-dotnet user-secrets set "CARAMEL_TWITCH_CLIENTSECRET" "your-twitch-client-secret"
+dotnet user-secrets set "DiscordConfig__Token" "your-discord-token"
+dotnet user-secrets set "TwitchConfig__ClientId" "your-twitch-client-id"
+dotnet user-secrets set "TwitchConfig__ClientSecret" "your-twitch-client-secret"
 
 # Set database connection strings
-dotnet user-secrets set "CARAMEL_DATABASE_CONNECTIONSTRING" "Host=localhost;Database=caramel_db;Username=caramel;Password=caramel"
-dotnet user-secrets set "CARAMEL_REDIS_CONNECTIONSTRING" "localhost:6379,password=caramel_redis"
+dotnet user-secrets set "ConnectionStrings__Caramel" "Host=localhost;Database=caramel_db;Username=caramel;Password=caramel"
+dotnet user-secrets set "ConnectionStrings__Redis" "localhost:6379,password=caramel_redis"
 
 # Set AI configuration
-dotnet user-secrets set "CARAMEL_AI_MODELID" "gpt-4"
-dotnet user-secrets set "CARAMEL_AI_ENDPOINT" "https://api.openai.com/v1"
-dotnet user-secrets set "CARAMEL_AI_APIKEY" "your-api-key"
+dotnet user-secrets set "CaramelAiConfig__ModelId" "gpt-4"
+dotnet user-secrets set "CaramelAiConfig__Endpoint" "https://api.openai.com/v1"
+dotnet user-secrets set "CaramelAiConfig__ApiKey" "your-api-key"
 ```
 
 #### Step 3: Verify Secrets
@@ -189,7 +194,7 @@ dotnet user-secrets list --show-values
 
 ```bash
 # Remove a single secret
-dotnet user-secrets remove "CARAMEL_DISCORD_TOKEN"
+dotnet user-secrets remove "DiscordConfig__Token"
 
 # Clear all secrets for the project
 dotnet user-secrets clear
@@ -208,7 +213,7 @@ docker-compose -f compose.dev.yaml up -d
 # 3. For each project that needs secrets (API, Service, Discord, Twitch):
 cd src/Caramel.API
 dotnet user-secrets init
-dotnet user-secrets set "CARAMEL_DISCORD_TOKEN" "..."
+dotnet user-secrets set "DiscordConfig__Token" "..."
 # ... set other secrets ...
 
 # 4. Set ASPNETCORE_ENVIRONMENT (Development is default)
@@ -237,9 +242,9 @@ docker build -t caramel:latest .
 docker run -d \
   --name caramel \
   -e ASPNETCORE_ENVIRONMENT=Staging \
-  -e CARAMEL_DISCORD_TOKEN="your-token" \
-  -e CARAMEL_DATABASE_CONNECTIONSTRING="Host=db;..." \
-  -e CARAMEL_REDIS_CONNECTIONSTRING="redis:6379,password=..." \
+  -e DiscordConfig__Token="your-token" \
+  -e ConnectionStrings__Caramel="Host=db;..." \
+  -e ConnectionStrings__Redis="redis:6379,password=..." \
   caramel:latest
 ```
 
@@ -254,10 +259,10 @@ metadata:
   name: caramel-config
 data:
   ASPNETCORE_ENVIRONMENT: "Production"
-  CARAMEL_GRPC_HOST: "caramel-service"
-  CARAMEL_GRPC_PORT: "5270"
-  CARAMEL_GRPC_USEHTTPS: "true"
-  CARAMEL_OBS_URL: "ws://obs-service:4455"
+  GrpcHostConfig__Host: "caramel-service"
+  GrpcHostConfig__Port: "5270"
+  GrpcHostConfig__UseHttps: "true"
+  ObsConfig__Url: "ws://obs-service:4455"
 ```
 
 Create a Secret for sensitive data:
@@ -269,12 +274,12 @@ metadata:
   name: caramel-secrets
 type: Opaque
 stringData:
-  CARAMEL_DISCORD_TOKEN: "your-token"
-  CARAMEL_TWITCH_CLIENTID: "your-id"
-  CARAMEL_TWITCH_CLIENTSECRET: "your-secret"
-  CARAMEL_DATABASE_CONNECTIONSTRING: "Host=db-service;..."
-  CARAMEL_REDIS_CONNECTIONSTRING: "redis-service:6379,password=..."
-  CARAMEL_AI_APIKEY: "your-api-key"
+  DiscordConfig__Token: "your-token"
+  TwitchConfig__ClientId: "your-id"
+  TwitchConfig__ClientSecret: "your-secret"
+  ConnectionStrings__Caramel: "Host=db-service;..."
+  ConnectionStrings__Redis: "redis-service:6379,password=..."
+  CaramelAiConfig__ApiKey: "your-api-key"
 ```
 
 Reference in Deployment:
@@ -363,10 +368,10 @@ Example - setting the Discord token:
 # 1. In appsettings.json: "DiscordConfig": { "Token": "base-value" }
 # 2. In appsettings.Development.json: "DiscordConfig": { "Token": "dev-value" }
 # 3. Via user-secrets: dotnet user-secrets set "DiscordConfig:Token" "secret-value"
-# 4. Via environment variable: CARAMEL_DISCORD_TOKEN=env-value
+# 4. Via environment variable: DiscordConfig__Token=env-value
 
 # The environment variable always wins
-echo $CARAMEL_DISCORD_TOKEN  # This value is used
+echo $DiscordConfig__Token  # This value is used
 ```
 
 ## Troubleshooting
@@ -388,7 +393,7 @@ echo $CARAMEL_DISCORD_TOKEN  # This value is used
 **Solution:**
 ```bash
 # Check the connection string format
-echo $CARAMEL_DATABASE_CONNECTIONSTRING
+echo $ConnectionStrings__Caramel
 
 # Test connection with psql
 psql -h localhost -U caramel -d caramel_db
@@ -434,7 +439,7 @@ ls -la ~/.microsoft/usersecrets/*/secrets.json
 1. Check variable name format - use `_` for nested keys:
    ```
    # For "ConnectionStrings:Caramel", use:
-   CARAMEL_DATABASE_CONNECTIONSTRING
+   ConnectionStrings__Caramel
    # OR
    ConnectionStrings__Caramel
    ```

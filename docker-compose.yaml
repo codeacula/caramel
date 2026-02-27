@@ -13,6 +13,9 @@ services:
       - caramel-twitch
     networks:
       - caramel
+    environment:
+      # Production environment configuration
+      - ASPNETCORE_ENVIRONMENT=Production
 
   caramel-api:
     image: caramel-api
@@ -23,6 +26,17 @@ services:
       - "5144"
     env_file:
       - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Database
+      - CARAMEL_DATABASE_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      - CARAMEL_QUARTZ_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      # Redis
+      - CARAMEL_REDIS_CONNECTIONSTRING=redis:6379,password=${REDIS_PASSWORD:-caramel_redis}
+      # gRPC
+      - CARAMEL_GRPC_HOST=caramel-service
+      - CARAMEL_GRPC_PORT=5270
+      - CARAMEL_GRPC_USEHTTPS=false
     restart: unless-stopped
     depends_on:
       caramel-service:
@@ -41,6 +55,17 @@ services:
       - "5145"
     env_file:
       - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Database
+      - CARAMEL_DATABASE_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      - CARAMEL_QUARTZ_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      # Redis
+      - CARAMEL_REDIS_CONNECTIONSTRING=redis:6379,password=${REDIS_PASSWORD:-caramel_redis}
+      # gRPC
+      - CARAMEL_GRPC_HOST=caramel-service
+      - CARAMEL_GRPC_PORT=5270
+      - CARAMEL_GRPC_USEHTTPS=false
     restart: unless-stopped
     depends_on:
       caramel-service:
@@ -59,6 +84,17 @@ services:
       - "5146"
     env_file:
       - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Database
+      - CARAMEL_DATABASE_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      - CARAMEL_QUARTZ_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      # Redis
+      - CARAMEL_REDIS_CONNECTIONSTRING=redis:6379,password=${REDIS_PASSWORD:-caramel_redis}
+      # gRPC
+      - CARAMEL_GRPC_HOST=caramel-service
+      - CARAMEL_GRPC_PORT=5270
+      - CARAMEL_GRPC_USEHTTPS=false
     restart: unless-stopped
     depends_on:
       caramel-service:
@@ -77,6 +113,13 @@ services:
       - "5270"
     env_file:
       - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Database
+      - CARAMEL_DATABASE_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      - CARAMEL_QUARTZ_CONNECTIONSTRING=Host=pgsql;Database=${POSTGRES_DB:-caramel_db};Username=${POSTGRES_USER:-caramel};Password=${POSTGRES_PASSWORD:-caramel}
+      # Redis
+      - CARAMEL_REDIS_CONNECTIONSTRING=redis:6379,password=${REDIS_PASSWORD:-caramel_redis}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

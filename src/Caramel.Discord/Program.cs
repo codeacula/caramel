@@ -1,4 +1,5 @@
 using Caramel.Cache;
+using Caramel.Core.Configuration;
 using Caramel.Discord;
 using Caramel.GRPC;
 
@@ -14,6 +15,7 @@ var redisConnection = builder.Configuration.GetConnectionString("Redis")
   ?? throw new InvalidOperationException("Redis connection string not found");
 
 // Add services to the container.
+_ = builder.Services.AddCaramelOptions(builder.Configuration);
 _ = builder.Services
   .AddCacheServices(redisConnection)
       .AddGrpcClientServices()

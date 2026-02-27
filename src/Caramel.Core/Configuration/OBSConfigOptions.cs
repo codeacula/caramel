@@ -17,9 +17,9 @@ public sealed class OBSConfigOptions : ConfigurationOptions
   /// WebSocket URL for connecting to OBS.
   /// Format: ws://hostname:port or wss://hostname:port for secure connections.
   /// Example: ws://localhost:4455
+  /// Validation: Must use 'ws' or 'wss' protocol (custom validation in Validate() method)
   /// </summary>
   [Required(ErrorMessage = "Url is required")]
-  [Url(ErrorMessage = "Url must be a valid WebSocket URL")]
   public string Url { get; set; } = string.Empty;
 
   /// <summary>
