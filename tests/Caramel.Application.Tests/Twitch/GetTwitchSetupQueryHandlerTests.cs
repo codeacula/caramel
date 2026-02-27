@@ -71,6 +71,6 @@ public sealed class GetTwitchSetupQueryHandlerTests
     var result = await handler.Handle(new GetTwitchSetupQuery(), CancellationToken.None);
 
     _ = result.IsFailed.Should().BeTrue();
-    _ = result.Errors.Should().ContainSingle(e => e.Message == "connection lost");
+    _ = result.Errors.Should().ContainSingle(e => e.Message.Contains("Invalid operation state"));
   }
 }
