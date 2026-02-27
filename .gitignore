@@ -53,5 +53,43 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
+# Environment and Configuration Files
+# SECURITY: Never commit actual secrets or local configuration files
 .env
+.env.local
+.env.*.local
+*.local.json
+user-secrets/
+user-secrets/**
+
+# Launch Settings
+# Contains local development paths and environment-specific settings
+Properties/launchSettings.json
+*/Properties/launchSettings.json
+
+# Application Settings with Secrets
+# Only appsettings.json (base) and appsettings.Development.json (example) should be committed
+# Never commit Production/Staging files with actual secrets
+appsettings.Production.json
+appsettings.Staging.json
+!src/Caramel.API/appsettings.Production.json
+!src/Caramel.API/appsettings.Staging.json
+!src/Caramel.Service/appsettings.Production.json
+!src/Caramel.Service/appsettings.Staging.json
+!src/Caramel.Discord/appsettings.Production.json
+!src/Caramel.Discord/appsettings.Staging.json
+!src/Caramel.Twitch/appsettings.Production.json
+!src/Caramel.Twitch/appsettings.Staging.json
+
+# Built-in .NET user secrets directory
+/src/**/appsettings.local.json
+
+# IDE and OS
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
 src/Caramel.API/wwwroot/**

@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using Caramel.API.Services;
 
 using Caramel.Cache;
+using Caramel.Core.Configuration;
 using Caramel.GRPC;
 
 WebApplicationBuilder webAppBuilder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,7 @@ string redisConnectionString = configuration.GetConnectionString("Redis")
   ?? throw new InvalidOperationException("Redis connection string is missing.");
 
 _ = webAppBuilder.Services.AddControllers();
+_ = webAppBuilder.Services.AddCaramelOptions(configuration);
 _ = webAppBuilder.Services
   .AddCacheServices(redisConnectionString);
 _ = webAppBuilder.Services.AddGrpcClientServices();

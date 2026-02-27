@@ -1,6 +1,7 @@
 using Caramel.AI;
 using Caramel.Application;
 using Caramel.Cache;
+using Caramel.Core.Configuration;
 using Caramel.Database;
 using Caramel.GRPC;
 using Caramel.Service;
@@ -9,6 +10,7 @@ WebApplicationBuilder webAppBuilder = WebApplication.CreateBuilder(args);
 var configuration = webAppBuilder.Configuration;
 
 _ = webAppBuilder.Services.AddControllers();
+_ = webAppBuilder.Services.AddCaramelOptions(configuration);
 _ = webAppBuilder.Services
   .AddDatabaseServices(configuration)
   .AddCacheServices(configuration.GetConnectionString("Redis")!)

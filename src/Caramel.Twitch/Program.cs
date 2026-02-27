@@ -1,3 +1,4 @@
+using Caramel.Core.Configuration;
 using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
@@ -21,6 +22,7 @@ _ = builder.Services.AddLogging(config =>
 // Register Redis, cache, gRPC, and Twitch-specific services
 string redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new InvalidOperationException("Redis connection string is missing.");
 _ = builder.Services
+  .AddCaramelOptions(builder.Configuration)
   .AddCacheServices(redisConnectionString)
   .AddGrpcClientServices()
   .AddTwitchServices();
