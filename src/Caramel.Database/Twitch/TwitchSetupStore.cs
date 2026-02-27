@@ -1,5 +1,7 @@
+using Caramel.Core.Security;
 using Caramel.Core.Twitch;
 using Caramel.Database.Twitch.Events;
+using Caramel.Domain.Twitch;
 
 using FluentResults;
 
@@ -7,7 +9,9 @@ using Marten;
 
 namespace Caramel.Database.Twitch;
 
-public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupStore
+public sealed class TwitchSetupStore(
+  IDocumentSession session,
+  ITokenEncryptionService encryptionService) : ITwitchSetupStore
 {
   public async Task<Result<Domain.Twitch.TwitchSetup?>> GetAsync(CancellationToken cancellationToken = default)
   {
@@ -95,6 +99,104 @@ public sealed class TwitchSetupStore(IDocumentSession session) : ITwitchSetupSto
     catch (Exception ex)
     {
       return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving Twitch setup: {ex.Message}");
+    }
+  }
+
+  public async Task<Result<Domain.Twitch.TwitchSetup>> SaveBotTokensAsync(
+    TwitchAccountTokens tokens,
+    CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      // Encrypt token data
+      var encryptedAccessToken = encryptionService.Encrypt(tokens.AccessToken);
+      var encryptedRefreshToken = tokens.RefreshToken is not null
+        ? encryptionService.Encrypt(tokens.RefreshToken)
+        : null;
+
+      var now = DateTime.UtcNow;
+
+      // Append bot token update event
+      var tokenEvent = new TwitchBotTokensUpdatedEvent
+      {
+        Id = DbTwitchSetup.WellKnownId,
+        CreatedOn = now,
+        BotUserId = tokens.UserId,
+        BotLogin = tokens.Login,
+        AccessToken = encryptedAccessToken,
+        RefreshToken = encryptedRefreshToken,
+        ExpiresAt = tokens.ExpiresAt,
+      };
+
+      _ = session.Events.Append(DbTwitchSetup.WellKnownId, tokenEvent);
+      await session.SaveChangesAsync(cancellationToken);
+
+      // Re-read the updated projection
+      var updated = await session.Query<DbTwitchSetup>()
+        .FirstAsync(s => s.Id == DbTwitchSetup.WellKnownId, cancellationToken);
+
+      return Result.Ok((Domain.Twitch.TwitchSetup)updated);
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Domain.Twitch.TwitchSetup>($"Invalid operation saving bot tokens: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving bot tokens: {ex.Message}");
+    }
+  }
+
+  public async Task<Result<Domain.Twitch.TwitchSetup>> SaveBroadcasterTokensAsync(
+    TwitchAccountTokens tokens,
+    CancellationToken cancellationToken = default)
+  {
+    try
+    {
+      // Encrypt token data
+      var encryptedAccessToken = encryptionService.Encrypt(tokens.AccessToken);
+      var encryptedRefreshToken = tokens.RefreshToken is not null
+        ? encryptionService.Encrypt(tokens.RefreshToken)
+        : null;
+
+      var now = DateTime.UtcNow;
+
+      // Append broadcaster token update event
+      var tokenEvent = new TwitchBroadcasterTokensUpdatedEvent
+      {
+        Id = DbTwitchSetup.WellKnownId,
+        CreatedOn = now,
+        BroadcasterUserId = tokens.UserId,
+        BroadcasterLogin = tokens.Login,
+        AccessToken = encryptedAccessToken,
+        RefreshToken = encryptedRefreshToken,
+        ExpiresAt = tokens.ExpiresAt,
+      };
+
+      _ = session.Events.Append(DbTwitchSetup.WellKnownId, tokenEvent);
+      await session.SaveChangesAsync(cancellationToken);
+
+      // Re-read the updated projection
+      var updated = await session.Query<DbTwitchSetup>()
+        .FirstAsync(s => s.Id == DbTwitchSetup.WellKnownId, cancellationToken);
+
+      return Result.Ok((Domain.Twitch.TwitchSetup)updated);
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (InvalidOperationException ex)
+    {
+      return Result.Fail<Domain.Twitch.TwitchSetup>($"Invalid operation saving broadcaster tokens: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+      return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving broadcaster tokens: {ex.Message}");
     }
   }
 }

@@ -1,6 +1,7 @@
 using Caramel.Core.Conversations;
 using Caramel.Core.Data;
 using Caramel.Core.People;
+using Caramel.Core.Security;
 using Caramel.Core.Twitch;
 using Caramel.Database.Conversations;
 using Caramel.Database.Conversations.Events;
@@ -65,6 +66,8 @@ public static class ServiceCollectionExtensions
 
         _ = options.Events.AddEventType<TwitchSetupCreatedEvent>();
         _ = options.Events.AddEventType<TwitchSetupUpdatedEvent>();
+        _ = options.Events.AddEventType<TwitchBotTokensUpdatedEvent>();
+        _ = options.Events.AddEventType<TwitchBroadcasterTokensUpdatedEvent>();
 
         _ = options.Projections.Snapshot<DbPerson>(Marten.Events.Projections.SnapshotLifecycle.Inline);
         _ = options.Projections.Snapshot<DbConversation>(Marten.Events.Projections.SnapshotLifecycle.Inline);

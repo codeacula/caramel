@@ -10,7 +10,7 @@ namespace Caramel.Twitch.Services;
 internal sealed class EventSubLifecycleService(
   IEventSubWebsocketClientWrapper eventSubClient,
   TwitchConfig twitchConfig,
-  ITwitchTokenManager tokenManager,
+  IDualOAuthTokenManager tokenManager,
   ITwitchSetupState setupState,
   ICaramelServiceClient serviceClient,
   IEnumerable<IEventSubSubscriptionRegistrar> subscriptionRegistrars,
@@ -32,12 +32,15 @@ internal sealed class EventSubLifecycleService(
     // Wire event handlers exactly once to prevent duplicate invocations on reconnect
     WireEventHandlers();
 
+    // Initialize the dual token manager (loads tokens from database)
+    await tokenManager.InitializeAsync(stoppingToken);
+
     while (!stoppingToken.IsCancellationRequested)
     {
       try
       {
-        // Phase 1: Wait for valid OAuth tokens
-        _ = await tokenManager.GetValidAccessTokenAsync(stoppingToken);
+        // Phase 1: Wait for valid OAuth tokens (bot required at minimum)
+        _ = await tokenManager.GetValidBotTokenAsync(stoppingToken);
 
         // Phase 2: Load setup from DB (retry until configured)
         if (!setupState.IsConfigured)
@@ -180,17 +183,32 @@ internal sealed class EventSubLifecycleService(
          return;
        }
 
-       var accessToken = await tokenManager.GetValidAccessTokenAsync();
+       // Get bot token (required for all EventSub subscriptions)
+       var botAccessToken = await tokenManager.GetValidBotTokenAsync();
+
+       // Try to get broadcaster token (optional, needed for channel points)
+       string? broadcasterAccessToken = null;
+       try
+       {
+         broadcasterAccessToken = await tokenManager.GetValidBroadcasterTokenAsync();
+       }
+       catch (InvalidOperationException)
+       {
+         // Broadcaster token not available - channel points subscriptions will be skipped
+         EventSubLifecycleServiceLogs.NoBroadcasterTokenWarning(logger);
+       }
 
        // Numeric IDs are stored in setup — no resolver needed
        var registrationContext = new EventSubSubscriptionRegistrationContext(
          HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
          SessionId: eventSubClient.SessionId,
          BotUserId: setup.BotUserId,
-         ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)]);
+         BroadcasterUserId: setup.BroadcasterTokens?.UserId,
+         ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)],
+         BotAccessToken: botAccessToken,
+         BroadcasterAccessToken: broadcasterAccessToken);
 
        registrationContext.HttpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
-       registrationContext.HttpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
        foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
        {
@@ -274,4 +292,10 @@ internal sealed class EventSubLifecycleService(
     CaramelTwitchProgramLogs.DisconnectingEventSub(logger);
     await base.StopAsync(cancellationToken);
   }
+}
+
+internal static partial class EventSubLifecycleServiceLogs
+{
+  [LoggerMessage(Level = LogLevel.Warning, Message = "Broadcaster token not available; channel points subscriptions will be skipped")]
+  public static partial void NoBroadcasterTokenWarning(ILogger logger);
 }

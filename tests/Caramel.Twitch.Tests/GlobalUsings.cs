@@ -8,6 +8,8 @@ global using System.Threading.Tasks;
 global using Caramel.Core.API;
 global using Caramel.Core.Conversations;
 global using Caramel.Core.People;
+global using Caramel.Core.Security;
+global using Caramel.Core.Twitch;
 global using Caramel.Domain.Common.Enums;
 global using Caramel.Domain.People.ValueObjects;
 global using Caramel.Domain.Twitch;

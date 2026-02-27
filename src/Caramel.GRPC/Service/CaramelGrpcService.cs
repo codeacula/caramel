@@ -62,7 +62,21 @@ public sealed class CaramelGrpcService(
       BotLogin = setup.BotLogin,
       Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })],
       ConfiguredOnTicks = setup.ConfiguredOn.UtcTicks,
-      UpdatedOnTicks = setup.UpdatedOn.UtcTicks
+      UpdatedOnTicks = setup.UpdatedOn.UtcTicks,
+      BotTokens = setup.BotTokens is not null ? new TwitchAccountTokensDTO
+      {
+        UserId = setup.BotTokens.UserId,
+        Login = setup.BotTokens.Login,
+        HasRefreshToken = setup.BotTokens.RefreshToken is not null,
+        ExpiresAtTicks = setup.BotTokens.ExpiresAt.Ticks,
+      } : null,
+      BroadcasterTokens = setup.BroadcasterTokens is not null ? new TwitchAccountTokensDTO
+      {
+        UserId = setup.BroadcasterTokens.UserId,
+        Login = setup.BroadcasterTokens.Login,
+        HasRefreshToken = setup.BroadcasterTokens.RefreshToken is not null,
+        ExpiresAtTicks = setup.BroadcasterTokens.ExpiresAt.Ticks,
+      } : null,
     };
   }
 
@@ -91,6 +105,49 @@ public sealed class CaramelGrpcService(
       Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })],
       ConfiguredOnTicks = setup.ConfiguredOn.UtcTicks,
       UpdatedOnTicks = setup.UpdatedOn.UtcTicks
+    };
+  }
+
+  public async Task<GrpcResult<TwitchSetupDTO>> LinkBroadcasterTokenAsync(LinkBroadcasterTokenRequest request)
+  {
+    var command = new LinkBroadcasterTokenCommand
+    {
+      BroadcasterUserId = request.BroadcasterUserId,
+      BroadcasterLogin = request.BroadcasterLogin,
+      AccessToken = request.AccessToken,
+      RefreshToken = request.RefreshToken,
+      ExpiresAt = new DateTime(request.ExpiresAtTicks, DateTimeKind.Utc),
+    };
+
+    var result = await mediator.Send(command);
+
+    if (result.IsFailed)
+    {
+      return result.Errors.Select(e => new GrpcError(e.Message)).ToArray();
+    }
+
+    var setup = result.Value;
+    return new TwitchSetupDTO
+    {
+      BotUserId = setup.BotUserId,
+      BotLogin = setup.BotLogin,
+      Channels = [.. setup.Channels.Select(c => new TwitchChannelDTO { UserId = c.UserId, Login = c.Login })],
+      ConfiguredOnTicks = setup.ConfiguredOn.UtcTicks,
+      UpdatedOnTicks = setup.UpdatedOn.UtcTicks,
+      BotTokens = setup.BotTokens is not null ? new TwitchAccountTokensDTO
+      {
+        UserId = setup.BotTokens.UserId,
+        Login = setup.BotTokens.Login,
+        HasRefreshToken = setup.BotTokens.RefreshToken is not null,
+        ExpiresAtTicks = setup.BotTokens.ExpiresAt.Ticks,
+      } : null,
+      BroadcasterTokens = setup.BroadcasterTokens is not null ? new TwitchAccountTokensDTO
+      {
+        UserId = setup.BroadcasterTokens.UserId,
+        Login = setup.BroadcasterTokens.Login,
+        HasRefreshToken = setup.BroadcasterTokens.RefreshToken is not null,
+        ExpiresAtTicks = setup.BroadcasterTokens.ExpiresAt.Ticks,
+      } : null,
     };
   }
 

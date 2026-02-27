@@ -4,7 +4,10 @@ internal sealed record EventSubSubscriptionRegistrationContext(
   HttpClient HttpClient,
   string SessionId,
   string BotUserId,
-  IReadOnlyList<string> ChannelUserIds);
+  string? BroadcasterUserId,
+  IReadOnlyList<string> ChannelUserIds,
+  string BotAccessToken,
+  string? BroadcasterAccessToken);
 
 internal interface IEventSubSubscriptionRegistrar
 {

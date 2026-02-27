@@ -26,7 +26,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
   // -------------------------------------------------------------------------
 
   private readonly Mock<IEventSubWebsocketClientWrapper> _mockClient = new();
-  private readonly Mock<ITwitchTokenManager> _mockTokenManager = new();
+  private readonly Mock<IDualOAuthTokenManager> _mockTokenManager = new();
   private readonly Mock<ITwitchSetupState> _mockSetupState = new();
   private readonly Mock<ICaramelServiceClient> _mockServiceClient = new();
   private readonly Mock<IEventSubSubscriptionRegistrar> _mockRegistrar = new();
@@ -62,14 +62,30 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   public EventSubLifecycleServiceTests()
   {
-    // Default: token is always available
+    // Default: token manager is initialized and bot token is available
     _ = _mockTokenManager
-      .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync("valid-token");
+      .Setup(m => m.InitializeAsync(It.IsAny<CancellationToken>()))
+      .Returns(Task.CompletedTask);
 
     _ = _mockTokenManager
-      .Setup(m => m.GetValidAccessTokenAsync())
-      .ReturnsAsync("valid-token");
+      .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync("valid-bot-token");
+
+    _ = _mockTokenManager
+      .Setup(m => m.GetValidBotTokenAsync())
+      .ReturnsAsync("valid-bot-token");
+
+    _ = _mockTokenManager
+      .Setup(m => m.GetValidBroadcasterTokenAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync("valid-broadcaster-token");
+
+    _ = _mockTokenManager
+      .Setup(m => m.GetCurrentBotAccessToken())
+      .Returns("valid-bot-token");
+
+    _ = _mockTokenManager
+      .Setup(m => m.GetCurrentBroadcasterAccessToken())
+      .Returns("valid-broadcaster-token");
 
     // Default: setup is configured
     _ = _mockSetupState.Setup(s => s.IsConfigured).Returns(true);
@@ -271,11 +287,11 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 3: When no refresh token exists, ConnectAsync is never called and the service does not crash.</summary>
   [Fact]
-  public async Task ExecuteAsyncWhenNoRefreshTokenWaitsAndRetriesWithoutCrashingAsync()
-  {
-    _ = _mockTokenManager
-      .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
-      .ThrowsAsync(new InvalidOperationException("No refresh token available"));
+   public async Task ExecuteAsyncWhenNoRefreshTokenWaitsAndRetriesWithoutCrashingAsync()
+   {
+     _ = _mockTokenManager
+       .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+       .ThrowsAsync(new InvalidOperationException("No refresh token available"));
 
     using var cts = new CancellationTokenSource(500);
 
@@ -437,20 +453,20 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 9: A generic exception from token retrieval is caught; ConnectAsync is eventually called.</summary>
   [Fact]
-  public async Task ExecuteAsyncWhenGenericExceptionThrownRetriesAfterTenSecondsAsync()
-  {
-    var connectCalledTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-    var callCount = 0;
+   public async Task ExecuteAsyncWhenGenericExceptionThrownRetriesAfterTenSecondsAsync()
+   {
+     var connectCalledTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+     var callCount = 0;
 
-    _ = _mockTokenManager
-      .Setup(m => m.GetValidAccessTokenAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync(() =>
-      {
-        callCount++;
-        if (callCount == 1)
-        {
-          throw new Exception("transient error");
-        }
+     _ = _mockTokenManager
+       .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+       .ReturnsAsync(() =>
+       {
+         callCount++;
+         if (callCount == 1)
+         {
+           throw new Exception("transient error");
+         }
 
         return "valid-token";
       });

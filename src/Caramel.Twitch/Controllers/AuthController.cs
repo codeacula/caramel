@@ -1,3 +1,4 @@
+using Caramel.Domain.Twitch;
 using Caramel.Twitch.Auth;
 
 using Microsoft.AspNetCore.Mvc;
@@ -12,14 +13,14 @@ public sealed class AuthController(
   ILogger<AuthController> logger,
   ICaramelServiceClient serviceClient,
   ITwitchSetupState setupState,
-  OAuthStateManager stateManager,
-  ITwitchTokenManager tokenManager,
+  DualOAuthStateManager stateManager,
+  IDualOAuthTokenManager tokenManager,
   TwitchConfig twitchConfig,
   ITwitchUserResolver userResolver
 ) : ControllerBase
 {
-
-  private const string _scopes = "chat:read chat:edit whispers:read whispers:edit moderator:manage:banned_users moderator:manage:chat_messages channel:moderate user:bot user:read:chat user:write:chat user:manage:whispers channel:read:redemptions channel:edit:commercial";
+  private const string BotScopes = "user:bot user:read:chat user:write:chat user:manage:whispers chat:read chat:edit whispers:read whispers:edit";
+  private const string BroadcasterScopes = "channel:read:redemptions channel:edit:commercial moderator:manage:banned_users moderator:manage:chat_messages channel:moderate";
 
   [Route("callback")]
   [HttpGet]
@@ -27,9 +28,10 @@ public sealed class AuthController(
   {
     try
     {
-      if (!stateManager.ValidateAndConsumeState(state))
+      var accountType = stateManager.ValidateAndConsumeState(state);
+      if (accountType == null)
       {
-        CaramelTwitchProgramLogs.OAuthStateMismatch(logger);
+        AuthControllerLogs.OAuthStateMismatch(logger);
         return Results.BadRequest("Invalid or expired state parameter");
       }
 
@@ -47,7 +49,7 @@ public sealed class AuthController(
       if (!tokenResponse.IsSuccessStatusCode)
       {
         var error = await tokenResponse.Content.ReadAsStringAsync(ct);
-        CaramelTwitchProgramLogs.OAuthTokenExchangeFailed(logger, (int)tokenResponse.StatusCode, error);
+        AuthControllerLogs.OAuthTokenExchangeFailed(logger, (int)tokenResponse.StatusCode, error);
         return Results.BadRequest($"Token exchange failed: {error}");
       }
 
@@ -59,62 +61,42 @@ public sealed class AuthController(
       var expiresIn = root.GetProperty("expires_in").GetInt32();
       var refreshToken = root.TryGetProperty("refresh_token", out var rtElement) ? rtElement.GetString() : null;
 
-      tokenManager.SetTokens(accessToken, refreshToken, expiresIn);
-      CaramelTwitchProgramLogs.OAuthSucceeded(logger);
+      // Resolve the authorized user's identity
+      var (userId, login) = await userResolver.ResolveCurrentUserAsync(ct);
 
-      // Resolve the authorized user's identity and auto-configure setup (bot = user, channel = their own channel)
-      try
+      // Create token account object and route to correct account type
+      var tokens = new TwitchAccountTokens
       {
-        var (userId, login) = await userResolver.ResolveCurrentUserAsync(ct);
-        var setup = new TwitchSetup
-        {
-          BotUserId = userId,
-          BotLogin = login,
-          Channels = [new TwitchChannel { UserId = userId, Login = login }],
-          ConfiguredOn = DateTimeOffset.UtcNow,
-          UpdatedOn = DateTimeOffset.UtcNow,
-        };
+        UserId = userId,
+        Login = login,
+        AccessToken = accessToken,
+        RefreshToken = refreshToken,
+        ExpiresAt = DateTime.UtcNow.AddSeconds(expiresIn),
+        LastRefreshedOn = DateTimeOffset.UtcNow,
+      };
 
-        var saveResult = await serviceClient.SaveTwitchSetupAsync(setup, ct);
-        if (saveResult.IsSuccess)
-        {
-          setupState.Update(saveResult.Value);
-          CaramelTwitchProgramLogs.OAuthSetupConfigured(logger, login);
-          await broadcaster.PublishSystemMessageAsync("setup_status", new { configured = true }, ct);
-        }
-        else
-        {
-          CaramelTwitchProgramLogs.OAuthSetupFailed(logger, string.Join("; ", saveResult.Errors.Select(e => e.Message)));
-        }
-      }
-      catch (OperationCanceledException)
+      if (accountType == TwitchAccountType.Bot)
       {
-        throw;
+        await tokenManager.SetBotTokensAsync(tokens, ct);
+        AuthControllerLogs.OAuthSucceeded(logger, "Bot");
       }
-      catch (HttpRequestException ex)
+      else if (accountType == TwitchAccountType.Broadcaster)
       {
-        CaramelTwitchProgramLogs.OAuthSetupFailed(logger, $"Network error: {ex.Message}");
-      }
-      catch (InvalidOperationException ex)
-      {
-        CaramelTwitchProgramLogs.OAuthSetupFailed(logger, $"Invalid state: {ex.Message}");
-      }
-      catch (Exception ex)
-      {
-        CaramelTwitchProgramLogs.OAuthSetupFailed(logger, ex.Message);
+        await tokenManager.SetBroadcasterTokensAsync(tokens, ct);
+        AuthControllerLogs.OAuthSucceeded(logger, "Broadcaster");
       }
 
-      // Push auth_status notification to all connected WebSocket clients
-      await broadcaster.PublishSystemMessageAsync("auth_status", new { authorized = true }, ct);
+      // Publish notification
+      await broadcaster.PublishSystemMessageAsync("auth_status", new { authorized = true, accountType = accountType.ToString() }, ct);
 
       return Results.Content("""
-      <!doctype html>
-      <html><head><title>Caramel - Authorized</title></head>
-      <body style="font-family:sans-serif;text-align:center;padding:4rem">
-        <h1>Twitch authorized successfully</h1>
-        <p>You can close this window and return to Caramel.</p>
-      </body></html>
-      """, "text/html");
+       <!doctype html>
+       <html><head><title>Caramel - Authorized</title></head>
+       <body style="font-family:sans-serif;text-align:center;padding:4rem">
+         <h1>Twitch authorized successfully</h1>
+         <p>You can close this window and return to Caramel.</p>
+       </body></html>
+       """, "text/html");
     }
     catch (OperationCanceledException)
     {
@@ -122,31 +104,52 @@ public sealed class AuthController(
     }
     catch (HttpRequestException ex)
     {
-      CaramelTwitchProgramLogs.OAuthCallbackError(logger, $"Network error: {ex.Message}");
+      AuthControllerLogs.OAuthCallbackError(logger, $"Network error: {ex.Message}");
       return Results.StatusCode(500);
     }
     catch (InvalidOperationException ex)
     {
-      CaramelTwitchProgramLogs.OAuthCallbackError(logger, $"Invalid state: {ex.Message}");
+      AuthControllerLogs.OAuthCallbackError(logger, $"Invalid state: {ex.Message}");
       return Results.StatusCode(500);
     }
     catch (Exception ex)
     {
-      CaramelTwitchProgramLogs.OAuthCallbackError(logger, ex.Message);
+      AuthControllerLogs.OAuthCallbackError(logger, ex.Message);
       return Results.StatusCode(500);
     }
   }
 
-  [Route("login")]
+  /// <summary>
+  /// Initiates OAuth flow for bot account with bot-specific scopes.
+  /// </summary>
+  [Route("login/bot")]
   [HttpGet]
-  public IResult Login()
+  public IResult LoginBot()
   {
-    var state = stateManager.GenerateState();
+    var state = stateManager.GenerateState(TwitchAccountType.Bot);
     var oauthUrl = "https://id.twitch.tv/oauth2/authorize?" +
       $"client_id={Uri.EscapeDataString(twitchConfig.ClientId)}&" +
       $"redirect_uri={Uri.EscapeDataString(twitchConfig.OAuthCallbackUrl)}&" +
       "response_type=code&" +
-      $"scope={Uri.EscapeDataString(_scopes)}&" +
+      $"scope={Uri.EscapeDataString(BotScopes)}&" +
+      $"state={Uri.EscapeDataString(state)}";
+
+    return Results.Redirect(oauthUrl);
+  }
+
+  /// <summary>
+  /// Initiates OAuth flow for broadcaster account with broadcaster-specific scopes.
+  /// </summary>
+  [Route("login/broadcaster")]
+  [HttpGet]
+  public IResult LoginBroadcaster()
+  {
+    var state = stateManager.GenerateState(TwitchAccountType.Broadcaster);
+    var oauthUrl = "https://id.twitch.tv/oauth2/authorize?" +
+      $"client_id={Uri.EscapeDataString(twitchConfig.ClientId)}&" +
+      $"redirect_uri={Uri.EscapeDataString(twitchConfig.OAuthCallbackUrl)}&" +
+      "response_type=code&" +
+      $"scope={Uri.EscapeDataString(BroadcasterScopes)}&" +
       $"state={Uri.EscapeDataString(state)}";
 
     return Results.Redirect(oauthUrl);
@@ -156,7 +159,28 @@ public sealed class AuthController(
   [HttpGet]
   public IResult Status()
   {
-    var hasToken = tokenManager.CanRefresh() || tokenManager.GetCurrentAccessToken() is { Length: > 0 };
-    return Results.Ok(new { authorized = hasToken });
+    var botToken = tokenManager.GetCurrentBotAccessToken();
+    var broadcasterToken = tokenManager.GetCurrentBroadcasterAccessToken();
+    
+    return Results.Ok(new
+    {
+      bot = new { authorized = !string.IsNullOrWhiteSpace(botToken), canRefresh = tokenManager.CanRefreshBotToken() },
+      broadcaster = new { authorized = !string.IsNullOrWhiteSpace(broadcasterToken), canRefresh = tokenManager.CanRefreshBroadcasterToken() },
+    });
   }
+}
+
+internal static partial class AuthControllerLogs
+{
+  [LoggerMessage(Level = LogLevel.Warning, Message = "OAuth state validation failed - state mismatch or expired")]
+  public static partial void OAuthStateMismatch(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Error, Message = "OAuth token exchange failed with status {StatusCode}: {Error}")]
+  public static partial void OAuthTokenExchangeFailed(ILogger logger, int statusCode, string error);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "OAuth authorization succeeded for {AccountType} account")]
+  public static partial void OAuthSucceeded(ILogger logger, string accountType);
+
+  [LoggerMessage(Level = LogLevel.Error, Message = "OAuth callback processing error: {Error}")]
+  public static partial void OAuthCallbackError(ILogger logger, string error);
 }
