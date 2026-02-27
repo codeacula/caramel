@@ -95,10 +95,10 @@ public static class ResultExtensions
   public static async Task<Result<TNext>> BindAsync<T, TNext>(
     this Task<Result<T>> result,
     Func<T, Task<Result<TNext>>> nextOperation)
-   {
-     var awaitedResult = await result;
+  {
+    var awaitedResult = await result;
 
-     if (awaitedResult.IsFailed)
+    if (awaitedResult.IsFailed)
     {
       return Result.Fail<TNext>(awaitedResult.Errors);
     }
@@ -115,10 +115,10 @@ public static class ResultExtensions
   public static async Task<Result> BindAsync<T>(
     this Task<Result<T>> result,
     Func<T, Task<Result>> nextOperation)
-   {
-     var awaitedResult = await result;
+  {
+    var awaitedResult = await result;
 
-     if (awaitedResult.IsFailed)
+    if (awaitedResult.IsFailed)
     {
       return Result.Fail(awaitedResult.Errors);
     }
@@ -172,10 +172,10 @@ public static class ResultExtensions
   public static async Task<Result<TNext>> MapAsync<T, TNext>(
     this Task<Result<T>> result,
     Func<T, Task<TNext>> mapping)
-   {
-     var awaitedResult = await result;
+  {
+    var awaitedResult = await result;
 
-     if (awaitedResult.IsFailed)
+    if (awaitedResult.IsFailed)
     {
       return Result.Fail<TNext>(awaitedResult.Errors);
     }
@@ -232,7 +232,7 @@ public static class ResultExtensions
     Func<T, Task> sideEffect)
   {
     var awaitedResult = await result;
-    
+
     if (awaitedResult.IsSuccess)
     {
       await sideEffect(awaitedResult.Value);
@@ -270,7 +270,7 @@ public static class ResultExtensions
     Func<Task> sideEffect)
   {
     var awaitedResult = await result;
-    
+
     if (awaitedResult.IsSuccess)
     {
       await sideEffect();
@@ -289,10 +289,10 @@ public static class ResultExtensions
   public static async Task<Result<T>> RecoverAsync<T>(
     this Task<Result<T>> result,
     Func<IReadOnlyList<IError>, Task<Result<T>>> recovery)
-   {
-     var awaitedResult = await result;
+  {
+    var awaitedResult = await result;
 
-     if (awaitedResult.IsFailed)
+    if (awaitedResult.IsFailed)
     {
       return await recovery(awaitedResult.Errors);
     }
