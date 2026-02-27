@@ -22,13 +22,17 @@ services:
       - opencode-data:/home/developer/.local/share/opencode
     environment:
       - BRANCH
-      # Database connection for .NET apps
-      - ConnectionStrings__Caramel=Host=pgsql;Database=caramel_db;Username=caramel;Password=caramel
-      - ConnectionStrings__Redis=redis:6379,password=caramel_redis
-      - ConnectionStrings__Quartz=Host=pgsql;Database=caramel_db;Username=caramel;Password=caramel
-      # gRPC config
-      - GrpcHostConfig__Host=localhost
-      - GrpcHostConfig__Port=5270
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Database - standardized configuration names
+      - CARAMEL_DATABASE_CONNECTIONSTRING=Host=pgsql;Database=caramel_db;Username=caramel;Password=caramel
+      - CARAMEL_QUARTZ_CONNECTIONSTRING=Host=pgsql;Database=caramel_db;Username=caramel;Password=caramel
+      # Redis - standardized configuration names
+      - CARAMEL_REDIS_CONNECTIONSTRING=redis:6379,password=caramel_redis
+      # gRPC config - standardized configuration names
+      - CARAMEL_GRPC_HOST=caramel-service
+      - CARAMEL_GRPC_PORT=5270
+      - CARAMEL_GRPC_USEHTTPS=false
+      - CARAMEL_GRPC_VALIDATESSLCERTIFICATE=false
     stdin_open: true
     tty: true
     depends_on:
