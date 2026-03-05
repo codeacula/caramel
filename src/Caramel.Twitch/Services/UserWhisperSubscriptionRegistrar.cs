@@ -12,7 +12,7 @@ internal sealed class UserWhisperSubscriptionRegistrar(
       var accessToken = context.BotAccessToken;
 
       var httpClient = context.HttpClient;
-      httpClient.DefaultRequestHeaders.Remove("Authorization");
+      _ = httpClient.DefaultRequestHeaders.Remove("Authorization");
       httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
       await subscriptionClient.CreateSubscriptionAsync(

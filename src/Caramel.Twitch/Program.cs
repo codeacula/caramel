@@ -4,6 +4,7 @@ using Caramel.Database;
 using Caramel.Notifications;
 using Caramel.Twitch;
 using Caramel.Twitch.Auth;
+
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
