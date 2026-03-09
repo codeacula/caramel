@@ -29,7 +29,7 @@ public sealed record TwitchConfig
   public string? RefreshToken { get; init; }
 
   /// <summary>
-  /// OAuth callback URL for the authorization code flow (e.g., http://localhost:8080/auth/callback).
+  /// OAuth callback URL for the authorization code flow (e.g., https://localhost:8083/auth/twitch/callback).
   /// </summary>
   public required string OAuthCallbackUrl { get; init; }
 

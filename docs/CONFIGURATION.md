@@ -100,7 +100,7 @@ ASPNETCORE_ENVIRONMENT=Production
 | `TwitchConfig__ClientSecret` | Twitch application client secret | `xyz789abc123...` | ✅ | [Get from Dev Console](https://dev.twitch.tv/console/apps) |
 | `TwitchConfig__AccessToken` | Twitch OAuth access token | `access-token-here` | ❌ | Generated via OAuth flow, can be empty on first run |
 | `TwitchConfig__RefreshToken` | Twitch OAuth refresh token | `refresh-token-here` | ❌ | Generated via OAuth flow, can be empty on first run |
-| `TwitchConfig__OAuthCallbackUrl` | OAuth callback URL | `http://localhost:8080/auth/twitch/callback` | ✅ | Must match registered callback in Twitch |
+| `TwitchConfig__OAuthCallbackUrl` | OAuth callback URL | `https://localhost:8083/auth/twitch/callback` | ✅ | Must match registered callback in Twitch |
 | `TwitchConfig__EncryptionKey` | Session encryption key | `use-secure-random-string` | ✅ | Generate with: `openssl rand -base64 32` |
 | `TwitchConfig__MessageTheAiRewardId` | Channel point redeem GUID (optional) | `01abc02b-9234-56cd-ef01-23456789abc0` | ❌ | GUID of "Message The AI" reward |
 

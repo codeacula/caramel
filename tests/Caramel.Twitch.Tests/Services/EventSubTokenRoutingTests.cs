@@ -34,7 +34,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
     ClientSecret = "test-client-secret",
     AccessToken = "test-access-token",
     RefreshToken = "test-refresh-token",
-    OAuthCallbackUrl = "http://localhost:8080/auth/callback",
+    OAuthCallbackUrl = "https://localhost:8083/auth/callback",
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
 

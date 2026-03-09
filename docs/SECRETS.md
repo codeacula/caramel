@@ -63,7 +63,7 @@ dotnet user-secrets set "CARAMEL_DISCORD_PUBLICKEY" "your-discord-public-key"
 # Twitch
 dotnet user-secrets set "CARAMEL_TWITCH_CLIENTID" "your-twitch-client-id"
 dotnet user-secrets set "CARAMEL_TWITCH_CLIENTSECRET" "your-twitch-client-secret"
-dotnet user-secrets set "CARAMEL_TWITCH_OAUTHCALLBACKURL" "http://localhost:8080/auth/twitch/callback"
+dotnet user-secrets set "CARAMEL_TWITCH_OAUTHCALLBACKURL" "https://localhost:8083/auth/twitch/callback"
 dotnet user-secrets set "CARAMEL_TWITCH_ENCRYPTIONKEY" "$(openssl rand -base64 32)"
 
 # gRPC

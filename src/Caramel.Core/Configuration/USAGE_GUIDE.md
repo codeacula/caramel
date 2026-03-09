@@ -94,7 +94,7 @@ public class MyService
     "AccessToken": "...",
     "RefreshToken": "...",
     "EncryptionKey": "...",
-    "OAuthCallbackUrl": "http://localhost:5146/auth/twitch/callback",
+    "OAuthCallbackUrl": "https://localhost:8083/auth/twitch/callback",
     "BotUserId": "123456",
     "ChannelIds": "987654,555555",
     "MessageTheAiRewardId": "guid-here"

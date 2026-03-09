@@ -40,7 +40,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
     ClientSecret = "test-client-secret",
     AccessToken = "test-access-token",
     RefreshToken = "test-refresh-token",
-    OAuthCallbackUrl = "http://localhost:8080/auth/callback",
+    OAuthCallbackUrl = "https://localhost:8083/auth/callback",
     EncryptionKey = Convert.ToBase64String(new byte[32]),
   };
 
@@ -287,11 +287,11 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 3: When no refresh token exists, ConnectAsync is never called and the service does not crash.</summary>
   [Fact]
-   public async Task ExecuteAsyncWhenNoRefreshTokenWaitsAndRetriesWithoutCrashingAsync()
-   {
-     _ = _mockTokenManager
-       .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
-       .ThrowsAsync(new InvalidOperationException("No refresh token available"));
+  public async Task ExecuteAsyncWhenNoRefreshTokenWaitsAndRetriesWithoutCrashingAsync()
+  {
+    _ = _mockTokenManager
+      .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new InvalidOperationException("No refresh token available"));
 
     using var cts = new CancellationTokenSource(500);
 
@@ -453,20 +453,20 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
   /// <summary>Test 9: A generic exception from token retrieval is caught; ConnectAsync is eventually called.</summary>
   [Fact]
-   public async Task ExecuteAsyncWhenGenericExceptionThrownRetriesAfterTenSecondsAsync()
-   {
-     var connectCalledTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-     var callCount = 0;
+  public async Task ExecuteAsyncWhenGenericExceptionThrownRetriesAfterTenSecondsAsync()
+  {
+    var connectCalledTcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+    var callCount = 0;
 
-     _ = _mockTokenManager
-       .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
-       .ReturnsAsync(() =>
-       {
-         callCount++;
-         if (callCount == 1)
-         {
-           throw new Exception("transient error");
-         }
+    _ = _mockTokenManager
+      .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(() =>
+      {
+        callCount++;
+        if (callCount == 1)
+        {
+          throw new Exception("transient error");
+        }
 
         return "valid-token";
       });

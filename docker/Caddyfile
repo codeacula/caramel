@@ -1,8 +1,9 @@
 # Caramel reverse proxy - single entry point for all services
-# In development: http://localhost:8080
-# In production: replace :8080 with your domain for automatic HTTPS
+# In development: https://localhost:8083
+# In production: replace localhost:8083 with your domain for automatic HTTPS
 
-:8080 {
+https://localhost:8083 {
+  tls internal
   # Twitch OAuth, setup, and chat send endpoints -> Caramel.Twitch
   handle /auth/twitch/* {
     reverse_proxy caramel-twitch:5146

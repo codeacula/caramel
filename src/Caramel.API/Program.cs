@@ -31,7 +31,7 @@ _ = webAppBuilder.Services.AddCors(options =>
 {
   options.AddPolicy("ViteDev", policy =>
     policy
-      .WithOrigins("http://localhost:5173", "http://localhost:8080")
+      .WithOrigins("https://localhost:8083")
       .AllowAnyHeader()
       .AllowAnyMethod());
 });
@@ -48,7 +48,7 @@ if (app.Environment.IsDevelopment())
 }
 
 _ = app.MapControllers();
-_ = app.UseHttpsRedirection();
+
 _ = app.UseDefaultFiles();
 _ = app.UseStaticFiles();
 
