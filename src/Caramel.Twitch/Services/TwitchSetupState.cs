@@ -9,6 +9,7 @@ public interface ITwitchSetupState
   TwitchSetup? Current { get; }
   bool IsConfigured { get; }
   void Update(TwitchSetup setup);
+  void Clear();
 }
 
 /// <summary>
@@ -22,5 +23,10 @@ public sealed class TwitchSetupState : ITwitchSetupState
   public void Update(TwitchSetup setup)
   {
     Current = setup;
+  }
+
+  public void Clear()
+  {
+    Current = null;
   }
 }

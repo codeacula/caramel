@@ -4,29 +4,19 @@ namespace Caramel.Twitch.Auth;
 /// Manages the bot's OAuth tokens (access and refresh).
 /// Handles automatic token refresh when expiry approaches.
 /// </summary>
-public sealed class TwitchTokenManager : ITwitchTokenManager
+/// <param name="config"></param>
+/// <param name="httpClientFactory"></param>
+/// <param name="logger"></param>
+public sealed class TwitchTokenManager(TwitchConfig config, IHttpClientFactory httpClientFactory, ILogger<TwitchTokenManager> logger) : ITwitchTokenManager
 {
-  private readonly TwitchConfig _config;
-  private readonly IHttpClientFactory _httpClientFactory;
-  private readonly ILogger<TwitchTokenManager> _logger;
+  private readonly TwitchConfig _config = config;
+  private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+  private readonly ILogger<TwitchTokenManager> _logger = logger;
   private readonly Lock _lock = new();
-  private string _accessToken;
-  private string? _refreshToken;
+  private string _accessToken = config.AccessToken;
+  private string? _refreshToken = config.RefreshToken;
   private DateTime _expiresAt = DateTime.MinValue;
   private const int RefreshThresholdSeconds = 300;
-
-  public TwitchTokenManager(TwitchConfig config, IHttpClientFactory httpClientFactory, ILogger<TwitchTokenManager> logger)
-  {
-    _config = config;
-    _httpClientFactory = httpClientFactory;
-    _logger = logger;
-    _accessToken = config.AccessToken;
-    _refreshToken = config.RefreshToken;
-
-    // Treat startup token as expired to force validation/refresh on first use.
-    // We cannot know how old the token from config is, so always refresh.
-    _expiresAt = DateTime.MinValue;
-  }
 
   public async Task<string> GetValidAccessTokenAsync(CancellationToken cancellationToken = default)
   {

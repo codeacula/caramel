@@ -19,6 +19,10 @@ public sealed class TwitchTokenManagerTests
   /// Configures <paramref name="factory"/> to return an <see cref="HttpClient"/> whose handler
   /// replies with a successful Twitch token-refresh response body.
   /// </summary>
+  /// <param name="factory"></param>
+  /// <param name="accessToken"></param>
+  /// <param name="refreshToken"></param>
+  /// <param name="expiresIn"></param>
   private static void SetupRefreshHttpResponse(
     Mock<IHttpClientFactory> factory,
     string accessToken = "refreshed-access-token",
@@ -38,7 +42,7 @@ public sealed class TwitchTokenManagerTests
         Content = new StringContent(json, Encoding.UTF8, "application/json"),
       });
 
-    factory
+    _ = factory
       .Setup(f => f.CreateClient(It.IsAny<string>()))
       .Returns(new HttpClient(handler));
   }
@@ -195,7 +199,9 @@ public sealed class TwitchTokenManagerTests
   {
     protected override Task<HttpResponseMessage> SendAsync(
       HttpRequestMessage request,
-      CancellationToken cancellationToken) =>
-      Task.FromResult(response);
+      CancellationToken cancellationToken)
+    {
+      return Task.FromResult(response);
+    }
   }
 }

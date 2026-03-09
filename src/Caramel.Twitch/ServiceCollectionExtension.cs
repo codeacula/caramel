@@ -31,6 +31,10 @@ public static class ServiceCollectionExtension
     _ = services.AddSingleton<EventSubWebsocketClient>();
     _ = services.AddSingleton<IEventSubWebsocketClientWrapper, EventSubWebsocketClientWrapper>();
 
+    // Register Twitch setup change notification services
+    _ = services.AddSingleton<ITwitchSetupChangedNotifier, TwitchSetupChangedNotifier>();
+    _ = services.AddSingleton<ITwitchSetupChangedSubscriber, TwitchSetupChangedSubscriber>();
+
     // Register chat broadcaster for Redis pub/sub
     _ = services.AddSingleton<ITwitchChatBroadcaster, TwitchChatBroadcaster>();
 

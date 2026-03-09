@@ -13,7 +13,7 @@ public abstract class ConfigurationOptions
   /// <returns>A collection of validation error messages. Empty if valid.</returns>
   public virtual IEnumerable<string> Validate()
   {
-    return Enumerable.Empty<string>();
+    return [];
   }
 
   /// <summary>

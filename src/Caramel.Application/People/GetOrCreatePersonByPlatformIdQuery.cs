@@ -15,6 +15,7 @@ public sealed record GetOrCreatePersonByPlatformIdQuery(PlatformId PlatformId) :
 /// <summary>
 /// Handles the execution of GetOrCreatePersonByPlatformIdQuery requests.
 /// </summary>
+/// <param name="personStore"></param>
 public sealed class GetOrCreatePersonByPlatformIdQueryHandler(IPersonStore personStore)
   : IRequestHandler<GetOrCreatePersonByPlatformIdQuery, Result<Person>>
 {

@@ -33,6 +33,7 @@ internal static class EventSubSubscriptionAccountTypeMap
   /// <summary>
   /// Determines which account type is required for the given subscription type.
   /// </summary>
+  /// <param name="subscriptionType"></param>
   internal static EventSubSubscriptionAccountType GetAccountType(string subscriptionType)
   {
     return SubscriptionTypeMap.TryGetValue(subscriptionType, out var accountType)

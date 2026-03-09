@@ -21,7 +21,9 @@ public sealed record DbTwitchSetup
   public required DateTime CreatedOn { get; init; }
   public required DateTime UpdatedOn { get; init; }
 
-  // Token fields (encrypted in database)
+  /// <summary>
+  /// Token fields (encrypted in database)
+  /// </summary>
   public string? BotAccessToken { get; init; }
   public string? BotRefreshToken { get; init; }
   public DateTime? BotTokenExpiresAt { get; init; }

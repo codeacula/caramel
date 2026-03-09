@@ -11,9 +11,10 @@ namespace Caramel.Database.Twitch;
 
 public sealed class TwitchSetupStore(
   IDocumentSession session,
-  ITokenEncryptionService encryptionService) : ITwitchSetupStore
+  ITokenEncryptionService encryptionService,
+  ITwitchSetupChangedNotifier setupChangedNotifier) : ITwitchSetupStore
 {
-  public async Task<Result<Domain.Twitch.TwitchSetup?>> GetAsync(CancellationToken cancellationToken = default)
+  public async Task<Result<TwitchSetup?>> GetAsync(CancellationToken cancellationToken = default)
   {
     try
     {
@@ -86,7 +87,10 @@ public sealed class TwitchSetupStore(
       var saved = await session.Query<DbTwitchSetup>()
         .FirstAsync(s => s.Id == DbTwitchSetup.WellKnownId, cancellationToken);
 
-      return Result.Ok((Domain.Twitch.TwitchSetup)saved);
+      var savedSetup = (TwitchSetup)saved;
+      await setupChangedNotifier.PublishAsync(savedSetup, cancellationToken);
+
+      return Result.Ok(savedSetup);
     }
     catch (OperationCanceledException)
     {
@@ -135,7 +139,10 @@ public sealed class TwitchSetupStore(
       var updated = await session.Query<DbTwitchSetup>()
         .FirstAsync(s => s.Id == DbTwitchSetup.WellKnownId, cancellationToken);
 
-      return Result.Ok((Domain.Twitch.TwitchSetup)updated);
+      var updatedSetup = (TwitchSetup)updated;
+      await setupChangedNotifier.PublishAsync(updatedSetup, cancellationToken);
+
+      return Result.Ok(updatedSetup);
     }
     catch (OperationCanceledException)
     {
@@ -184,7 +191,10 @@ public sealed class TwitchSetupStore(
       var updated = await session.Query<DbTwitchSetup>()
         .FirstAsync(s => s.Id == DbTwitchSetup.WellKnownId, cancellationToken);
 
-      return Result.Ok((Domain.Twitch.TwitchSetup)updated);
+      var updatedSetup = (TwitchSetup)updated;
+      await setupChangedNotifier.PublishAsync(updatedSetup, cancellationToken);
+
+      return Result.Ok(updatedSetup);
     }
     catch (OperationCanceledException)
     {

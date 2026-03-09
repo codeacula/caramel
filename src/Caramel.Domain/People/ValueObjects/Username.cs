@@ -3,6 +3,7 @@ namespace Caramel.Domain.People.ValueObjects;
 /// <summary>
 /// Represents a person's username on a platform.
 /// </summary>
+/// <param name="Value"></param>
 public readonly record struct Username(string Value)
 {
   /// <summary>

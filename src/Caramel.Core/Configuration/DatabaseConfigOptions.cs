@@ -6,7 +6,7 @@ namespace Caramel.Core.Configuration;
 /// Configuration options for database connections.
 /// Supports both primary database and Quartz scheduler database connections.
 /// </summary>
-public sealed class DatabaseConfigOptions : ConfigurationOptions
+public sealed partial class DatabaseConfigOptions : ConfigurationOptions
 {
   /// <summary>
   /// Configuration section name in appsettings.json
@@ -73,12 +73,14 @@ public sealed class DatabaseConfigOptions : ConfigurationOptions
   /// <summary>
   /// Validates a PostgreSQL connection string format.
   /// </summary>
+  /// <param name="connectionString"></param>
+  /// <param name="name"></param>
   private static IEnumerable<string> ValidatePostgresConnectionString(string connectionString, string name)
   {
     var errors = new List<string>();
 
     // Basic validation: should contain required components
-    var lowerConnStr = connectionString.ToLower();
+    var lowerConnStr = connectionString.ToLower(System.Globalization.CultureInfo.CurrentCulture);
     if (!lowerConnStr.Contains("host") && !lowerConnStr.Contains("server"))
     {
       errors.Add($"{name} connection string must contain 'Host' parameter");
@@ -105,12 +107,13 @@ public sealed class DatabaseConfigOptions : ConfigurationOptions
   /// <summary>
   /// Validates a Redis connection string format.
   /// </summary>
+  /// <param name="connectionString"></param>
   private static IEnumerable<string> ValidateRedisConnectionString(string connectionString)
   {
     var errors = new List<string>();
 
     // Basic validation: should be in format host:port
-    if (!connectionString.Contains(":"))
+    if (!connectionString.Contains(':'))
     {
       errors.Add("Redis connection string must contain a port (format: host:port)");
     }
@@ -121,7 +124,7 @@ public sealed class DatabaseConfigOptions : ConfigurationOptions
     {
       errors.Add("Redis connection string must be in format: host:port");
     }
-    else if (!int.TryParse(parts[parts.Length - 1], out var port) || port < 1 || port > 65535)
+    else if (!int.TryParse(parts[^1], out var port) || port < 1 || port > 65535)
     {
       errors.Add("Redis connection string has invalid port number");
     }
@@ -139,16 +142,19 @@ public sealed class DatabaseConfigOptions : ConfigurationOptions
   /// <summary>
   /// Masks sensitive information in a connection string for safe logging.
   /// </summary>
+  /// <param name="connectionString"></param>
   private static string MaskConnectionString(string connectionString)
   {
     if (string.IsNullOrEmpty(connectionString))
+    {
       return string.Empty;
+    }
 
     try
     {
       // Simple approach: show host and database, hide password
       const string pattern = @"Password\s*=\s*[^;]*";
-      return System.Text.RegularExpressions.Regex.Replace(connectionString, pattern, "Password=***", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+      return MyRegex().Replace(connectionString, "Password=***");
     }
     catch
     {
@@ -157,4 +163,7 @@ public sealed class DatabaseConfigOptions : ConfigurationOptions
   }
 
   public override bool IsRequired => true;
+
+  [System.Text.RegularExpressions.GeneratedRegex(@"Password\s*=\s*[^;]*", System.Text.RegularExpressions.RegexOptions.IgnoreCase, "en-US")]
+  private static partial System.Text.RegularExpressions.Regex MyRegex();
 }

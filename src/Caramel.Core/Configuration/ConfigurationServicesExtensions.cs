@@ -21,11 +21,9 @@ public static class ConfigurationServicesExtensions
     this IServiceCollection services,
     IConfiguration configuration)
   {
-    if (services == null)
-      throw new ArgumentNullException(nameof(services));
+    ArgumentNullException.ThrowIfNull(services);
 
-    if (configuration == null)
-      throw new ArgumentNullException(nameof(configuration));
+    ArgumentNullException.ThrowIfNull(configuration);
 
     // Register all configuration option classes
     RegisterAndValidateOption<CaramelAiConfigOptions>(services, configuration, CaramelAiConfigOptions.SectionName);
@@ -41,6 +39,9 @@ public static class ConfigurationServicesExtensions
   /// <summary>
   /// Registers a single configuration option type with validation.
   /// </summary>
+  /// <param name="services"></param>
+  /// <param name="configuration"></param>
+  /// <param name="sectionName"></param>
   private static void RegisterAndValidateOption<TOptions>(
     IServiceCollection services,
     IConfiguration configuration,
@@ -48,10 +49,10 @@ public static class ConfigurationServicesExtensions
     where TOptions : ConfigurationOptions, new()
   {
     // Configure the options with the IOptions<T> pattern
-    services.Configure<TOptions>(configuration.GetSection(sectionName));
+    _ = services.Configure<TOptions>(configuration.GetSection(sectionName));
 
     // Add post-configuration validation with detailed error messages
-    services.AddOptions<TOptions>()
+    _ = services.AddOptions<TOptions>()
       .Validate(options =>
       {
         var errors = options.Validate().ToList();
@@ -74,18 +75,13 @@ public static class ConfigurationServicesExtensions
   /// <param name="options">The options instance to validate.</param>
   /// <param name="sectionName">The name of the configuration section (for error messages).</param>
   /// <returns>True if validation passes, false otherwise.</returns>
+  /// <exception cref="ConfigurationValidationException"></exception>
   public static bool ValidateOptions<TOptions>(TOptions options, string sectionName)
     where TOptions : ConfigurationOptions
   {
-    if (options == null)
-      throw new ArgumentNullException(nameof(options));
+    ArgumentNullException.ThrowIfNull(options);
 
     var errors = options.Validate().ToList();
-    if (errors.Count > 0)
-    {
-      throw ConfigurationValidationException.CreateFromErrors(sectionName, errors);
-    }
-
-    return true;
+    return errors.Count > 0 ? throw ConfigurationValidationException.CreateFromErrors(sectionName, errors) : true;
   }
 }

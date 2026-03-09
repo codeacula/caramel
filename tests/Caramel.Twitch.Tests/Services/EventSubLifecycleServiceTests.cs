@@ -1,7 +1,5 @@
 using MediatR;
 
-using Microsoft.Extensions.Logging;
-
 using TwitchLib.EventSub.Core;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.User;
@@ -11,8 +9,6 @@ using TwitchLib.EventSub.Core.Models.Whisper;
 using TwitchLib.EventSub.Core.SubscriptionTypes.Channel;
 using TwitchLib.EventSub.Core.SubscriptionTypes.User;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
-
-using Caramel.Twitch.Auth;
 
 namespace Caramel.Twitch.Tests.Services;
 
@@ -33,6 +29,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
   private readonly Mock<IMediator> _mockMediator = new();
   private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new();
   private readonly Mock<ILogger<EventSubLifecycleService>> _mockLogger = new();
+  private readonly Mock<ITwitchSetupChangedSubscriber> _mockSetupChangedSubscriber = new();
 
   private readonly TwitchConfig _twitchConfig = new()
   {
@@ -53,7 +50,9 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
     UpdatedOn = DateTimeOffset.UtcNow,
   };
 
-  // Captured event-handler delegates — populated when WireEventHandlers() fires
+  /// <summary>
+  /// Captured event-handler delegates — populated when WireEventHandlers() fires
+  /// </summary>
   private AsyncEventHandler<WebsocketConnectedArgs>? _capturedConnectedHandler;
   private AsyncEventHandler<WebsocketDisconnectedArgs>? _capturedDisconnectedHandler;
   private AsyncEventHandler<WebsocketReconnectedArgs>? _capturedReconnectedHandler;
@@ -113,33 +112,33 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       .Returns(new HttpClient());
 
     // Capture event-handler registrations so tests can fire events directly
-    _mockClient
+    _ = _mockClient
       .SetupAdd(m => m.WebsocketConnected += It.IsAny<AsyncEventHandler<WebsocketConnectedArgs>>())
       .Callback<AsyncEventHandler<WebsocketConnectedArgs>>(h => _capturedConnectedHandler = h);
 
-    _mockClient
+    _ = _mockClient
       .SetupAdd(m => m.WebsocketDisconnected += It.IsAny<AsyncEventHandler<WebsocketDisconnectedArgs>>())
       .Callback<AsyncEventHandler<WebsocketDisconnectedArgs>>(h => _capturedDisconnectedHandler = h);
 
-    _mockClient
+    _ = _mockClient
       .SetupAdd(m => m.WebsocketReconnected += It.IsAny<AsyncEventHandler<WebsocketReconnectedArgs>>())
       .Callback<AsyncEventHandler<WebsocketReconnectedArgs>>(h => _capturedReconnectedHandler = h);
 
-    _mockClient
+    _ = _mockClient
       .SetupAdd(m => m.ChannelChatMessage += It.IsAny<AsyncEventHandler<ChannelChatMessageArgs>>())
       .Callback<AsyncEventHandler<ChannelChatMessageArgs>>(h => _capturedChatHandler = h);
 
-    _mockClient
+    _ = _mockClient
       .SetupAdd(m => m.UserWhisperMessage += It.IsAny<AsyncEventHandler<UserWhisperMessageArgs>>())
       .Callback<AsyncEventHandler<UserWhisperMessageArgs>>(h => _capturedWhisperHandler = h);
 
     // Wire remove stubs so Moq doesn't complain
-    _mockClient.SetupRemove(m => m.WebsocketConnected -= It.IsAny<AsyncEventHandler<WebsocketConnectedArgs>>());
-    _mockClient.SetupRemove(m => m.WebsocketDisconnected -= It.IsAny<AsyncEventHandler<WebsocketDisconnectedArgs>>());
-    _mockClient.SetupRemove(m => m.WebsocketReconnected -= It.IsAny<AsyncEventHandler<WebsocketReconnectedArgs>>());
-    _mockClient.SetupRemove(m => m.ChannelChatMessage -= It.IsAny<AsyncEventHandler<ChannelChatMessageArgs>>());
-    _mockClient.SetupRemove(m => m.UserWhisperMessage -= It.IsAny<AsyncEventHandler<UserWhisperMessageArgs>>());
-    _mockClient.SetupRemove(m => m.ChannelPointsCustomRewardRedemptionAdd -= It.IsAny<AsyncEventHandler<ChannelPointsCustomRewardRedemptionArgs>>());
+    _ = _mockClient.SetupRemove(m => m.WebsocketConnected -= It.IsAny<AsyncEventHandler<WebsocketConnectedArgs>>());
+    _ = _mockClient.SetupRemove(m => m.WebsocketDisconnected -= It.IsAny<AsyncEventHandler<WebsocketDisconnectedArgs>>());
+    _ = _mockClient.SetupRemove(m => m.WebsocketReconnected -= It.IsAny<AsyncEventHandler<WebsocketReconnectedArgs>>());
+    _ = _mockClient.SetupRemove(m => m.ChannelChatMessage -= It.IsAny<AsyncEventHandler<ChannelChatMessageArgs>>());
+    _ = _mockClient.SetupRemove(m => m.UserWhisperMessage -= It.IsAny<AsyncEventHandler<UserWhisperMessageArgs>>());
+    _ = _mockClient.SetupRemove(m => m.ChannelPointsCustomRewardRedemptionAdd -= It.IsAny<AsyncEventHandler<ChannelPointsCustomRewardRedemptionArgs>>());
   }
 
   public void Dispose()
@@ -163,6 +162,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       registrars ?? [_mockRegistrar.Object],
       _mockMediator.Object,
       _mockHttpClientFactory.Object,
+      _mockSetupChangedSubscriber.Object,
       _mockLogger.Object);
   }
 
@@ -170,12 +170,20 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
   // Helpers
   // -------------------------------------------------------------------------
 
-  private static WebsocketConnectedArgs MakeConnectedArgs(bool isRequestedReconnect = false) =>
-    new() { IsRequestedReconnect = isRequestedReconnect };
+  private static WebsocketConnectedArgs MakeConnectedArgs(bool isRequestedReconnect = false)
+  {
+    return new() { IsRequestedReconnect = isRequestedReconnect };
+  }
 
-  private static WebsocketDisconnectedArgs MakeDisconnectedArgs() => new();
+  private static WebsocketDisconnectedArgs MakeDisconnectedArgs()
+  {
+    return new();
+  }
 
-  private static WebsocketReconnectedArgs MakeReconnectedArgs() => new();
+  private static WebsocketReconnectedArgs MakeReconnectedArgs()
+  {
+    return new();
+  }
 
   private static ChannelChatMessageArgs MakeChatArgs(
     string broadcasterUserId = "999",
@@ -335,7 +343,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       callCount++;
       if (callCount >= 2)
       {
-        secondCallTcs.TrySetResult();
+        _ = secondCallTcs.TrySetResult();
         return true;
       }
 
@@ -371,7 +379,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
     _ = _mockClient.Setup(c => c.ReconnectAsync()).ReturnsAsync(() =>
     {
-      reconnectTcs.TrySetResult();
+      _ = reconnectTcs.TrySetResult();
       return true;
     });
 
@@ -407,7 +415,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       callCount++;
       if (callCount >= 2)
       {
-        secondConnectTcs.TrySetResult();
+        _ = secondConnectTcs.TrySetResult();
       }
 
       return true;
@@ -463,17 +471,12 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       .ReturnsAsync(() =>
       {
         callCount++;
-        if (callCount == 1)
-        {
-          throw new Exception("transient error");
-        }
-
-        return "valid-token";
+        return callCount == 1 ? throw new Exception("transient error") : "valid-token";
       });
 
     _ = _mockClient.Setup(c => c.ConnectAsync()).ReturnsAsync(() =>
     {
-      connectCalledTcs.TrySetResult();
+      _ = connectCalledTcs.TrySetResult();
       return true;
     });
 
@@ -726,7 +729,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       callCount++;
       if (callCount >= 2)
       {
-        secondConnectTcs.TrySetResult();
+        _ = secondConnectTcs.TrySetResult();
       }
 
       return true;
@@ -769,7 +772,114 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       await _capturedConnectedHandler!.Invoke(null, MakeConnectedArgs(isRequestedReconnect: false));
     };
 
-    _ = await act.Should().NotThrowAsync("duplicate connected events should be absorbed gracefully");
+    _ = await act.Should().NotThrowAsync();
+
+    await cts.CancelAsync();
+    await service.StopAsync(CancellationToken.None);
+  }
+
+  /// <summary>Test 21: When a setup change notification is received, the service reloads setup from the service client.</summary>
+  [Fact]
+  public async Task OnSetupChangedWhenSetupAvailableReloadsSetupStateAsync()
+  {
+    using var cts = new CancellationTokenSource();
+
+    Func<CancellationToken, Task>? capturedHandler = null;
+    _ = _mockSetupChangedSubscriber
+      .Setup(s => s.SubscribeAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
+      .Callback<Func<CancellationToken, Task>, CancellationToken>((handler, _) => capturedHandler = handler)
+      .Returns(Task.CompletedTask);
+
+    var updatedSetup = _twitchSetup with
+    {
+      BotLogin = "updated_bot",
+      UpdatedOn = DateTimeOffset.UtcNow.AddMinutes(1),
+    };
+
+    _ = _mockServiceClient
+      .Setup(sc => sc.GetTwitchSetupAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok<TwitchSetup?>(updatedSetup));
+
+    var service = CreateService();
+    await service.StartAsync(cts.Token);
+
+    await Task.Delay(100);
+
+    _ = capturedHandler.Should().NotBeNull();
+    await capturedHandler!(CancellationToken.None);
+
+    _mockServiceClient.Verify(sc => sc.GetTwitchSetupAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+    _mockSetupState.Verify(s => s.Update(It.Is<TwitchSetup>(setup => setup.BotLogin == "updated_bot")), Times.AtLeastOnce);
+
+    await cts.CancelAsync();
+    await service.StopAsync(CancellationToken.None);
+  }
+
+  /// <summary>Test 22: When a setup change notification is received but setup is unavailable, the state is not updated.</summary>
+  [Fact]
+  public async Task OnSetupChangedWhenSetupUnavailableDoesNotUpdateStateAsync()
+  {
+    using var cts = new CancellationTokenSource();
+
+    Func<CancellationToken, Task>? capturedHandler = null;
+    _ = _mockSetupChangedSubscriber
+      .Setup(s => s.SubscribeAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
+      .Callback<Func<CancellationToken, Task>, CancellationToken>((handler, _) => capturedHandler = handler)
+      .Returns(Task.CompletedTask);
+
+    _ = _mockServiceClient
+      .Setup(sc => sc.GetTwitchSetupAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok<TwitchSetup?>(null));
+
+    var service = CreateService();
+    await service.StartAsync(cts.Token);
+
+    await Task.Delay(100);
+
+    _ = capturedHandler.Should().NotBeNull();
+    await capturedHandler!(CancellationToken.None);
+
+    _mockSetupState.Verify(s => s.Update(It.IsAny<TwitchSetup>()), Times.Never);
+
+    await cts.CancelAsync();
+    await service.StopAsync(CancellationToken.None);
+  }
+
+  /// <summary>Test 23: When subscription registration throws after a setup reload, the reload callback does not propagate exceptions.</summary>
+  [Fact]
+  public async Task OnSetupChangedWhenRegistrarThrowsDoesNotPropagateAsync()
+  {
+    using var cts = new CancellationTokenSource();
+
+    Func<CancellationToken, Task>? capturedHandler = null;
+    _ = _mockSetupChangedSubscriber
+      .Setup(s => s.SubscribeAsync(It.IsAny<Func<CancellationToken, Task>>(), It.IsAny<CancellationToken>()))
+      .Callback<Func<CancellationToken, Task>, CancellationToken>((handler, _) => capturedHandler = handler)
+      .Returns(Task.CompletedTask);
+
+    var updatedSetup = _twitchSetup with
+    {
+      BotLogin = "reloaded_bot",
+      UpdatedOn = DateTimeOffset.UtcNow.AddMinutes(2),
+    };
+
+    _ = _mockServiceClient
+      .Setup(sc => sc.GetTwitchSetupAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync(Result.Ok<TwitchSetup?>(updatedSetup));
+
+    _ = _mockRegistrar
+      .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
+      .ThrowsAsync(new Exception("registration failed after reload"));
+
+    var service = CreateService();
+    await service.StartAsync(cts.Token);
+
+    await Task.Delay(100);
+
+    _ = capturedHandler.Should().NotBeNull();
+    var act = async () => await capturedHandler!(CancellationToken.None);
+
+    _ = await act.Should().NotThrowAsync();
 
     await cts.CancelAsync();
     await service.StopAsync(CancellationToken.None);
@@ -796,11 +906,11 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       connectCallCount++;
       if (connectCallCount == 1)
       {
-        firstConnectTcs.TrySetResult();
+        _ = firstConnectTcs.TrySetResult();
       }
       else if (connectCallCount == 2)
       {
-        secondConnectTcs.TrySetResult();
+        _ = secondConnectTcs.TrySetResult();
       }
 
       return true;
@@ -840,7 +950,7 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Returns(async (EventSubSubscriptionRegistrationContext _, CancellationToken ct) =>
       {
-        registrationStarted.TrySetResult();
+        _ = registrationStarted.TrySetResult();
         await Task.Delay(Timeout.Infinite, ct); // Blocked until cancelled
       });
 

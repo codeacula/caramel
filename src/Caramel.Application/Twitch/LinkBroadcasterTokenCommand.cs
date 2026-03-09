@@ -39,6 +39,7 @@ public sealed record LinkBroadcasterTokenCommand : IRequest<Result<TwitchSetup>>
 /// <summary>
 /// Handles the execution of LinkBroadcasterTokenCommand requests.
 /// </summary>
+/// <param name="store"></param>
 public sealed class LinkBroadcasterTokenCommandHandler(ITwitchSetupStore store) : IRequestHandler<LinkBroadcasterTokenCommand, Result<TwitchSetup>>
 {
   /// <summary>

@@ -102,17 +102,23 @@ public class ResultExtensionsTests
     Assert.Equal(string.Empty, errorMessages);
   }
 
-  // Pattern 1: ExecuteAsync Tests
+  /// <summary>
+  /// Pattern 1: ExecuteAsync Tests
+  /// </summary>
+  /// <returns></returns>
   [Fact]
-  public async Task ExecuteAsyncWithValueSucceedsWhenOperationCompletes()
+  public async Task ExecuteAsyncWithValueSucceedsWhenOperationCompletesAsync()
   {
     // Arrange
-    var expectedValue = 42;
-    async Task<int> operation() => expectedValue;
+    const int expectedValue = 42;
+    async Task<int> operationAsync()
+    {
+      return expectedValue;
+    }
 
     // Act
     var result = await ResultExtensions.ExecuteAsync(
-      operation,
+      operationAsync,
       "Invalid operation",
       "Unexpected error");
 
@@ -122,14 +128,17 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task ExecuteAsyncWithValueFailsOnInvalidOperationException()
+  public async Task ExecuteAsyncWithValueFailsOnInvalidOperationExceptionAsync()
   {
     // Arrange
-    async Task<int> operation() => throw new InvalidOperationException("Invalid state");
+    static async Task<int> operationAsync()
+    {
+      throw new InvalidOperationException("Invalid state");
+    }
 
     // Act
     var result = await ResultExtensions.ExecuteAsync(
-      operation,
+      operationAsync,
       "Invalid operation",
       "Unexpected error");
 
@@ -139,14 +148,17 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task ExecuteAsyncWithValueFailsOnGeneralException()
+  public async Task ExecuteAsyncWithValueFailsOnGeneralExceptionAsync()
   {
     // Arrange
-    async Task<int> operation() => throw new Exception("General error");
+    static async Task<int> operationAsync()
+    {
+      throw new Exception("General error");
+    }
 
     // Act
     var result = await ResultExtensions.ExecuteAsync(
-      operation,
+      operationAsync,
       "Invalid operation",
       "Unexpected error");
 
@@ -156,26 +168,26 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task ExecuteAsyncRethrowsOperationCanceledException()
+  public async Task ExecuteAsyncRethrowsOperationCanceledExceptionAsync()
   {
     // Arrange
-    async Task<int> operation()
+    static async Task<int> operationAsync()
     {
       await Task.Delay(10);
       throw new OperationCanceledException();
     }
 
     // Act & Assert
-    await Assert.ThrowsAsync<OperationCanceledException>(
-      () => ResultExtensions.ExecuteAsync(operation, "Invalid", "Unexpected"));
+    _ = await Assert.ThrowsAsync<OperationCanceledException>(
+      () => ResultExtensions.ExecuteAsync(operationAsync, "Invalid", "Unexpected"));
   }
 
   [Fact]
-  public async Task ExecuteAsyncWithoutValueSucceedsWhenOperationCompletes()
+  public async Task ExecuteAsyncWithoutValueSucceedsWhenOperationCompletesAsync()
   {
     // Arrange
     var operationCalled = false;
-    async Task operation()
+    async Task operationAsync()
     {
       operationCalled = true;
       await Task.Delay(0);
@@ -183,7 +195,7 @@ public class ResultExtensionsTests
 
     // Act
     var result = await ResultExtensions.ExecuteAsync(
-      operation,
+      operationAsync,
       "Invalid operation",
       "Unexpected error");
 
@@ -193,14 +205,17 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task ExecuteAsyncWithoutValueFailsOnException()
+  public async Task ExecuteAsyncWithoutValueFailsOnExceptionAsync()
   {
     // Arrange
-    async Task operation() => throw new Exception("Error occurred");
+    static async Task operationAsync()
+    {
+      throw new Exception("Error occurred");
+    }
 
     // Act
     var result = await ResultExtensions.ExecuteAsync(
-      operation,
+      operationAsync,
       "Invalid operation",
       "Unexpected error");
 
@@ -208,9 +223,12 @@ public class ResultExtensionsTests
     Assert.True(result.IsFailed);
   }
 
-  // Pattern 2: Bind Tests
+  /// <summary>
+  /// Pattern 2: Bind Tests
+  /// </summary>
+  /// <returns></returns>
   [Fact]
-  public async Task BindAsyncWithValueChainsSuccessfulResults()
+  public async Task BindAsyncWithValueChainsSuccessfulResultsAsync()
   {
     // Arrange
     var initialTask = Task.FromResult(Result.Ok(10));
@@ -225,7 +243,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task BindAsyncWithValueReturnFailureFromSecondOperation()
+  public async Task BindAsyncWithValueReturnFailureFromSecondOperationAsync()
   {
     // Arrange
     var initialTask = Task.FromResult(Result.Ok(10));
@@ -240,7 +258,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task BindAsyncWithValuePropagatesInitialFailure()
+  public async Task BindAsyncWithValuePropagatesInitialFailureAsync()
   {
     // Arrange
     var initialTask = Task.FromResult(Result.Fail<int>("Initial failure"));
@@ -255,7 +273,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task BindAsyncWithoutValueChainsResults()
+  public async Task BindAsyncWithoutValueChainsResultsAsync()
   {
     // Arrange
     var initialTask = Task.FromResult(Result.Ok(10));
@@ -301,7 +319,9 @@ public class ResultExtensionsTests
     Assert.Equal("Initial failure", result.GetErrorMessages());
   }
 
-  // Pattern 3: Map Tests
+  /// <summary>
+  /// Pattern 3: Map Tests
+  /// </summary>
   [Fact]
   public void MapTransformsSuccessValue()
   {
@@ -330,7 +350,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task MapAsyncTransformsValueAsynchronously()
+  public async Task MapAsyncTransformsValueAsynchronouslyAsync()
   {
     // Arrange
     var resultTask = Task.FromResult(Result.Ok(10));
@@ -348,7 +368,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task MapAsyncPreservesFailure()
+  public async Task MapAsyncPreservesFailureAsync()
   {
     // Arrange
     var resultTask = Task.FromResult(Result.Fail<int>("Error"));
@@ -364,7 +384,9 @@ public class ResultExtensionsTests
     Assert.True(mapped.IsFailed);
   }
 
-  // Pattern 4: ToResult Tests
+  /// <summary>
+  /// Pattern 4: ToResult Tests
+  /// </summary>
   [Fact]
   public void ToResultConvertTypesOnSuccess()
   {
@@ -407,9 +429,12 @@ public class ResultExtensionsTests
     Assert.NotNull(converted.Value);
   }
 
-  // Pattern 5: Then Tests
+  /// <summary>
+  /// Pattern 5: Then Tests
+  /// </summary>
+  /// <returns></returns>
   [Fact]
-  public async Task ThenAsyncExecutesSideEffectAndReturnsOriginalResult()
+  public async Task ThenAsyncExecutesSideEffectAndReturnsOriginalResultAsync()
   {
     // Arrange
     var sideEffectCalled = false;
@@ -429,7 +454,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task ThenAsyncDoesNotExecuteSideEffectOnFailure()
+  public async Task ThenAsyncDoesNotExecuteSideEffectOnFailureAsync()
   {
     // Arrange
     var sideEffectCalled = false;
@@ -455,7 +480,7 @@ public class ResultExtensionsTests
     var result = Result.Ok(10);
 
     // Act
-    var finalResult = result.Then(x => { sideEffectCalled = true; });
+    var finalResult = result.Then(x => sideEffectCalled = true);
 
     // Assert
     Assert.True(finalResult.IsSuccess);
@@ -464,7 +489,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task ThenAsyncWithoutValueExecutesSideEffect()
+  public async Task ThenAsyncWithoutValueExecutesSideEffectAsync()
   {
     // Arrange
     var sideEffectCalled = false;
@@ -482,9 +507,12 @@ public class ResultExtensionsTests
     Assert.True(sideEffectCalled);
   }
 
-  // Pattern 6: Recover Tests
+  /// <summary>
+  /// Pattern 6: Recover Tests
+  /// </summary>
+  /// <returns></returns>
   [Fact]
-  public async Task RecoverAsyncReturnsOriginalSuccessResult()
+  public async Task RecoverAsyncReturnsOriginalSuccessResultAsync()
   {
     // Arrange
     var recoveryUsed = false;
@@ -505,7 +533,7 @@ public class ResultExtensionsTests
   }
 
   [Fact]
-  public async Task RecoverAsyncExecutesRecoveryOnFailure()
+  public async Task RecoverAsyncExecutesRecoveryOnFailureAsync()
   {
     // Arrange
     var recoveryUsed = false;
@@ -565,9 +593,10 @@ public class ResultExtensionsTests
     Assert.True(recoveryUsed);
   }
 
-  // Test data class
-  private class TestData
+  /// <summary>
+  /// Test data class
+  /// </summary>
+  private sealed class TestData
   {
-    public TestData() { }
   }
 }

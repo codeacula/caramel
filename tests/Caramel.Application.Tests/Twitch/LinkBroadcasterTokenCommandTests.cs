@@ -36,14 +36,14 @@ public sealed class LinkBroadcasterTokenCommandTests
   };
 
   [Fact]
-  public async Task Handle_WithValidRequest_UpdatesSetupWithBroadcasterTokensAsync()
+  public async Task HandleWithValidRequestUpdatesSetupWithBroadcasterTokensAsync()
   {
     // Arrange
     var getResult = Result.Ok<TwitchSetup?>(_existingSetup);
-    _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
+    _ = _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
 
     TwitchSetup? capturedSetup = null;
-    _mockStore
+    _ = _mockStore
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .Callback<TwitchSetup, CancellationToken>((setup, _) => capturedSetup = setup)
       .ReturnsAsync((TwitchSetup setup, CancellationToken _) => Result.Ok(setup));
@@ -63,24 +63,24 @@ public sealed class LinkBroadcasterTokenCommandTests
     var result = await handler.Handle(command, CancellationToken.None);
 
     // Assert
-    result.IsSuccess.Should().BeTrue();
-    result.Value.Should().NotBeNull();
-    result.Value.BroadcasterTokens.Should().NotBeNull();
-    result.Value.BroadcasterTokens!.UserId.Should().Be("broadcaster-999");
-    result.Value.BroadcasterTokens!.Login.Should().Be("streamer");
-    result.Value.BroadcasterTokens!.AccessToken.Should().Be("broadcaster-access-token");
-    result.Value.BroadcasterTokens!.RefreshToken.Should().Be("broadcaster-refresh-token");
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = result.Value.Should().NotBeNull();
+    _ = result.Value.BroadcasterTokens.Should().NotBeNull();
+    _ = result.Value.BroadcasterTokens!.UserId.Should().Be("broadcaster-999");
+    _ = result.Value.BroadcasterTokens!.Login.Should().Be("streamer");
+    _ = result.Value.BroadcasterTokens!.AccessToken.Should().Be("broadcaster-access-token");
+    _ = result.Value.BroadcasterTokens!.RefreshToken.Should().Be("broadcaster-refresh-token");
 
-    capturedSetup.Should().NotBeNull();
-    capturedSetup!.BroadcasterTokens.Should().NotBeNull();
+    _ = capturedSetup.Should().NotBeNull();
+    _ = capturedSetup!.BroadcasterTokens.Should().NotBeNull();
   }
 
   [Fact]
-  public async Task Handle_WhenSetupNotConfigured_ReturnsFailureAsync()
+  public async Task HandleWhenSetupNotConfiguredReturnsFailureAsync()
   {
     // Arrange
     var getResult = Result.Ok<TwitchSetup?>(null);
-    _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
+    _ = _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
 
     var command = new LinkBroadcasterTokenCommand
     {
@@ -97,17 +97,17 @@ public sealed class LinkBroadcasterTokenCommandTests
     var result = await handler.Handle(command, CancellationToken.None);
 
     // Assert
-    result.IsFailed.Should().BeTrue();
-    result.Errors.Should().HaveCount(1);
-    result.Errors[0].Message.Should().Contain("not configured");
+    _ = result.IsFailed.Should().BeTrue();
+    _ = result.Errors.Should().HaveCount(1);
+    _ = result.Errors[0].Message.Should().Contain("not configured");
   }
 
   [Fact]
-  public async Task Handle_WhenGetSetupFails_ReturnsFailureAsync()
+  public async Task HandleWhenGetSetupFailsReturnsFailureAsync()
   {
     // Arrange
     var getResult = Result.Fail<TwitchSetup?>("Database error");
-    _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
+    _ = _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
 
     var command = new LinkBroadcasterTokenCommand
     {
@@ -124,19 +124,19 @@ public sealed class LinkBroadcasterTokenCommandTests
     var result = await handler.Handle(command, CancellationToken.None);
 
     // Assert
-    result.IsFailed.Should().BeTrue();
-    result.Errors.Should().HaveCount(1);
+    _ = result.IsFailed.Should().BeTrue();
+    _ = result.Errors.Should().HaveCount(1);
   }
 
   [Fact]
-  public async Task Handle_PreservesExistingBotTokensAsync()
+  public async Task HandlePreservesExistingBotTokensAsync()
   {
     // Arrange
     var getResult = Result.Ok<TwitchSetup?>(_existingSetup);
-    _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
+    _ = _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
 
     TwitchSetup? capturedSetup = null;
-    _mockStore
+    _ = _mockStore
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .Callback<TwitchSetup, CancellationToken>((setup, _) => capturedSetup = setup)
       .ReturnsAsync((TwitchSetup setup, CancellationToken _) => Result.Ok(setup));
@@ -156,21 +156,21 @@ public sealed class LinkBroadcasterTokenCommandTests
     var result = await handler.Handle(command, CancellationToken.None);
 
     // Assert
-    result.IsSuccess.Should().BeTrue();
-    result.Value.BotTokens.Should().NotBeNull();
-    result.Value.BotTokens!.UserId.Should().Be("bot-111");
-    result.Value.BotTokens!.Login.Should().Be("caramel_bot");
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = result.Value.BotTokens.Should().NotBeNull();
+    _ = result.Value.BotTokens!.UserId.Should().Be("bot-111");
+    _ = result.Value.BotTokens!.Login.Should().Be("caramel_bot");
   }
 
   [Fact]
-  public async Task Handle_WithoutRefreshToken_StoresNullRefreshTokenAsync()
+  public async Task HandleWithoutRefreshTokenStoresNullRefreshTokenAsync()
   {
     // Arrange
     var getResult = Result.Ok<TwitchSetup?>(_existingSetup);
-    _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
+    _ = _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
 
     TwitchSetup? capturedSetup = null;
-    _mockStore
+    _ = _mockStore
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .Callback<TwitchSetup, CancellationToken>((setup, _) => capturedSetup = setup)
       .ReturnsAsync((TwitchSetup setup, CancellationToken _) => Result.Ok(setup));
@@ -190,20 +190,20 @@ public sealed class LinkBroadcasterTokenCommandTests
     var result = await handler.Handle(command, CancellationToken.None);
 
     // Assert
-    result.IsSuccess.Should().BeTrue();
-    result.Value.BroadcasterTokens.Should().NotBeNull();
-    result.Value.BroadcasterTokens!.RefreshToken.Should().BeNull();
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = result.Value.BroadcasterTokens.Should().NotBeNull();
+    _ = result.Value.BroadcasterTokens!.RefreshToken.Should().BeNull();
   }
 
   [Fact]
-  public async Task Handle_UpdatesTimestampsAsync()
+  public async Task HandleUpdatesTimestampsAsync()
   {
     // Arrange
     var getResult = Result.Ok<TwitchSetup?>(_existingSetup);
-    _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
+    _ = _mockStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>())).ReturnsAsync(getResult);
 
     TwitchSetup? capturedSetup = null;
-    _mockStore
+    _ = _mockStore
       .Setup(s => s.SaveAsync(It.IsAny<TwitchSetup>(), It.IsAny<CancellationToken>()))
       .Callback<TwitchSetup, CancellationToken>((setup, _) => capturedSetup = setup)
       .ReturnsAsync((TwitchSetup setup, CancellationToken _) => Result.Ok(setup));
@@ -226,10 +226,10 @@ public sealed class LinkBroadcasterTokenCommandTests
     var afterHandle = DateTimeOffset.UtcNow;
 
     // Assert
-    result.IsSuccess.Should().BeTrue();
-    capturedSetup.Should().NotBeNull();
-    capturedSetup!.UpdatedOn.Should().BeOnOrAfter(beforeHandle.AddSeconds(-1));
-    capturedSetup!.UpdatedOn.Should().BeOnOrBefore(afterHandle.AddSeconds(1));
-    capturedSetup!.ConfiguredOn.Should().Be(_existingSetup.ConfiguredOn); // ConfiguredOn should not change
+    _ = result.IsSuccess.Should().BeTrue();
+    _ = capturedSetup.Should().NotBeNull();
+    _ = capturedSetup!.UpdatedOn.Should().BeOnOrAfter(beforeHandle.AddSeconds(-1));
+    _ = capturedSetup!.UpdatedOn.Should().BeOnOrBefore(afterHandle.AddSeconds(1));
+    _ = capturedSetup!.ConfiguredOn.Should().Be(_existingSetup.ConfiguredOn); // ConfiguredOn should not change
   }
 }

@@ -215,9 +215,9 @@ public sealed class AdsControllerTests
   {
     // Arrange
     _ = _mockSetupState.Setup(s => s.Current).Returns(MakeSetup());
-     _ = _mockTokenManager
-         .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
-         .ReturnsAsync("initial-access-token");
+    _ = _mockTokenManager
+        .Setup(m => m.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+        .ReturnsAsync("initial-access-token");
     _ = _mockHttpClientFactory
         .Setup(f => f.CreateClient(It.IsAny<string>()))
         .Throws(new InvalidOperationException("Connection failed"));

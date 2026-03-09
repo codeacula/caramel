@@ -8,6 +8,7 @@ namespace Caramel.API.Controllers;
 /// API controller for OBS (Open Broadcaster Software) integration and control.
 /// Provides endpoints to query OBS status and control scenes.
 /// </summary>
+/// <param name="caramelClient"></param>
 [ApiController]
 [Route("api/obs")]
 public sealed class OBSController(IOBSServiceClient caramelClient) : ControllerBase

@@ -1,12 +1,3 @@
-using Caramel.Core.Security;
-using Caramel.Core.Twitch;
-using Caramel.Database.Twitch;
-using Caramel.Domain.Twitch;
-
-using FluentAssertions;
-
-using Moq;
-
 namespace Caramel.Database.Tests.Twitch;
 
 /// <summary>
@@ -16,14 +7,14 @@ namespace Caramel.Database.Tests.Twitch;
 public class TwitchSetupStoreTokenTests
 {
   [Fact]
-  public void TokenEncryptionService_HasEncryptMethod()
+  public void TokenEncryptionServiceHasEncryptMethod()
   {
     // Arrange
     var mockEncryption = new Mock<ITokenEncryptionService>();
     const string plainText = "token_value";
     const string cipherText = "encrypted_value";
 
-    mockEncryption
+    _ = mockEncryption
       .Setup(s => s.Encrypt(plainText))
       .Returns(cipherText);
 
@@ -31,19 +22,19 @@ public class TwitchSetupStoreTokenTests
     var result = mockEncryption.Object.Encrypt(plainText);
 
     // Assert
-    result.Should().Be(cipherText, "Encryption should transform plain text to cipher text");
+    _ = result.Should().Be(cipherText, "Encryption should transform plain text to cipher text");
     mockEncryption.Verify(s => s.Encrypt(plainText), Times.Once);
   }
 
   [Fact]
-  public void TokenEncryptionService_HasTryDecryptMethod()
+  public void TokenEncryptionServiceHasTryDecryptMethod()
   {
     // Arrange
     var mockEncryption = new Mock<ITokenEncryptionService>();
     const string cipherText = "encrypted_value";
     const string plainText = "token_value";
 
-    mockEncryption
+    _ = mockEncryption
       .Setup(s => s.TryDecrypt(cipherText))
       .Returns(plainText);
 
@@ -51,18 +42,18 @@ public class TwitchSetupStoreTokenTests
     var result = mockEncryption.Object.TryDecrypt(cipherText);
 
     // Assert
-    result.Should().Be(plainText, "Decryption should return decrypted plain text");
+    _ = result.Should().Be(plainText, "Decryption should return decrypted plain text");
     mockEncryption.Verify(s => s.TryDecrypt(cipherText), Times.Once);
   }
 
   [Fact]
-  public void TokenEncryptionService_TryDecryptReturnsNullOnFailure()
+  public void TokenEncryptionServiceTryDecryptReturnsNullOnFailure()
   {
     // Arrange
     var mockEncryption = new Mock<ITokenEncryptionService>();
     const string invalidCipherText = "corrupted_or_invalid_ciphertext";
 
-    mockEncryption
+    _ = mockEncryption
       .Setup(s => s.TryDecrypt(invalidCipherText))
       .Returns((string?)null);
 
@@ -70,11 +61,11 @@ public class TwitchSetupStoreTokenTests
     var result = mockEncryption.Object.TryDecrypt(invalidCipherText);
 
     // Assert
-    result.Should().BeNull("Decryption should return null for invalid cipher text");
+    _ = result.Should().BeNull("Decryption should return null for invalid cipher text");
   }
 
   [Fact]
-  public void TwitchAccountTokens_CanBeCreatedWithAllFields()
+  public void TwitchAccountTokensCanBeCreatedWithAllFields()
   {
     // Arrange
     var now = DateTime.UtcNow;
@@ -95,15 +86,15 @@ public class TwitchSetupStoreTokenTests
     };
 
     // Assert
-    tokens.UserId.Should().Be(userId);
-    tokens.Login.Should().Be(login);
-    tokens.AccessToken.Should().Be(accessToken);
-    tokens.RefreshToken.Should().Be(refreshToken);
-    tokens.ExpiresAt.Should().BeCloseTo(now.AddHours(1), TimeSpan.FromSeconds(1));
+    _ = tokens.UserId.Should().Be(userId);
+    _ = tokens.Login.Should().Be(login);
+    _ = tokens.AccessToken.Should().Be(accessToken);
+    _ = tokens.RefreshToken.Should().Be(refreshToken);
+    _ = tokens.ExpiresAt.Should().BeCloseTo(now.AddHours(1), TimeSpan.FromSeconds(1));
   }
 
   [Fact]
-  public void TwitchAccountTokens_RefreshTokenCanBeNull()
+  public void TwitchAccountTokensRefreshTokenCanBeNull()
   {
     // Arrange
     var now = DateTime.UtcNow;
@@ -120,11 +111,11 @@ public class TwitchSetupStoreTokenTests
     };
 
     // Assert
-    tokens.RefreshToken.Should().BeNull();
+    _ = tokens.RefreshToken.Should().BeNull();
   }
 
   [Fact]
-  public void DbTwitchSetup_CanStoreEncryptedBotTokens()
+  public void DbTwitchSetupCanStoreEncryptedBotTokens()
   {
     // Arrange
     var now = DateTime.UtcNow;
@@ -146,13 +137,13 @@ public class TwitchSetupStoreTokenTests
     };
 
     // Assert
-    setup.BotAccessToken.Should().Be(encryptedAccessToken);
-    setup.BotRefreshToken.Should().Be(encryptedRefreshToken);
-    setup.BotTokenExpiresAt.Should().Be(now.AddHours(1));
+    _ = setup.BotAccessToken.Should().Be(encryptedAccessToken);
+    _ = setup.BotRefreshToken.Should().Be(encryptedRefreshToken);
+    _ = setup.BotTokenExpiresAt.Should().Be(now.AddHours(1));
   }
 
   [Fact]
-  public void DbTwitchSetup_CanStoreEncryptedBroadcasterTokens()
+  public void DbTwitchSetupCanStoreEncryptedBroadcasterTokens()
   {
     // Arrange
     var now = DateTime.UtcNow;
@@ -176,13 +167,13 @@ public class TwitchSetupStoreTokenTests
     };
 
     // Assert
-    setup.BroadcasterAccessToken.Should().Be(encryptedAccessToken);
-    setup.BroadcasterRefreshToken.Should().Be(encryptedRefreshToken);
-    setup.BroadcasterTokenExpiresAt.Should().Be(now.AddHours(1));
+    _ = setup.BroadcasterAccessToken.Should().Be(encryptedAccessToken);
+    _ = setup.BroadcasterRefreshToken.Should().Be(encryptedRefreshToken);
+    _ = setup.BroadcasterTokenExpiresAt.Should().Be(now.AddHours(1));
   }
 
   [Fact]
-  public void DbTwitchSetup_Cast_ConvertsEncryptedBotTokensToDomain()
+  public void DbTwitchSetupCastConvertsEncryptedBotTokensToDomain()
   {
     // Arrange
     var now = DateTime.UtcNow;
@@ -203,17 +194,17 @@ public class TwitchSetupStoreTokenTests
     };
 
     // Act
-    var domainSetup = (Domain.Twitch.TwitchSetup)dbSetup;
+    var domainSetup = (TwitchSetup)dbSetup;
 
     // Assert
-    domainSetup.BotTokens.Should().NotBeNull("Bot tokens should be converted from DB model");
-    domainSetup.BotTokens!.UserId.Should().Be("bot_123");
-    domainSetup.BotTokens.Login.Should().Be("bot_login");
-    domainSetup.BotTokens.AccessToken.Should().Be(encryptedAccessToken);
+    _ = domainSetup.BotTokens.Should().NotBeNull("Bot tokens should be converted from DB model");
+    _ = domainSetup.BotTokens!.UserId.Should().Be("bot_123");
+    _ = domainSetup.BotTokens.Login.Should().Be("bot_login");
+    _ = domainSetup.BotTokens.AccessToken.Should().Be(encryptedAccessToken);
   }
 
   [Fact]
-  public void DbTwitchSetup_Cast_ConvertsEncryptedBroadcasterTokensToDomain()
+  public void DbTwitchSetupCastConvertsEncryptedBroadcasterTokensToDomain()
   {
     // Arrange
     var now = DateTime.UtcNow;
@@ -235,35 +226,35 @@ public class TwitchSetupStoreTokenTests
     };
 
     // Act
-    var domainSetup = (Domain.Twitch.TwitchSetup)dbSetup;
+    var domainSetup = (TwitchSetup)dbSetup;
 
     // Assert
-    domainSetup.BroadcasterTokens.Should().NotBeNull("Broadcaster tokens should be converted from DB model");
-    domainSetup.BroadcasterTokens!.UserId.Should().Be("bc_123");
-    domainSetup.BroadcasterTokens.Login.Should().Be("bc_login");
-    domainSetup.BroadcasterTokens.AccessToken.Should().Be(encryptedAccessToken);
+    _ = domainSetup.BroadcasterTokens.Should().NotBeNull("Broadcaster tokens should be converted from DB model");
+    _ = domainSetup.BroadcasterTokens!.UserId.Should().Be("bc_123");
+    _ = domainSetup.BroadcasterTokens.Login.Should().Be("bc_login");
+    _ = domainSetup.BroadcasterTokens.AccessToken.Should().Be(encryptedAccessToken);
   }
 
   [Fact]
-  public void ITwitchSetupStore_HasSaveBotTokensMethod()
+  public void ITwitchSetupStoreHasSaveBotTokensMethod()
   {
     // Act
     var method = typeof(ITwitchSetupStore)
       .GetMethod("SaveBotTokensAsync");
 
     // Assert
-    method.Should().NotBeNull("ITwitchSetupStore should have SaveBotTokensAsync method");
+    _ = method.Should().NotBeNull("ITwitchSetupStore should have SaveBotTokensAsync method");
   }
 
   [Fact]
-  public void ITwitchSetupStore_HasSaveBroadcasterTokensMethod()
+  public void ITwitchSetupStoreHasSaveBroadcasterTokensMethod()
   {
     // Act
     var method = typeof(ITwitchSetupStore)
       .GetMethod("SaveBroadcasterTokensAsync");
 
     // Assert
-    method.Should().NotBeNull("ITwitchSetupStore should have SaveBroadcasterTokensAsync method");
+    _ = method.Should().NotBeNull("ITwitchSetupStore should have SaveBroadcasterTokensAsync method");
   }
 }
 

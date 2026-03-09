@@ -1,5 +1,3 @@
-using Caramel.Core.Twitch;
-
 using StackExchange.Redis;
 
 namespace Caramel.Twitch.Tests.Services;

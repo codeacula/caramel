@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using Caramel.Domain.Twitch;
 
 namespace Caramel.Twitch.Auth;
 
@@ -16,6 +15,7 @@ public sealed class DualOAuthStateManager()
   /// Generates a state token for the given account type.
   /// State includes the account type so it can be routed correctly on callback.
   /// </summary>
+  /// <param name="accountType"></param>
   public string GenerateState(TwitchAccountType accountType)
   {
     var randomBytes = new byte[32];
@@ -37,6 +37,7 @@ public sealed class DualOAuthStateManager()
   /// Validates and consumes a state token, returning the associated account type.
   /// Returns null if state is invalid, expired, or missing.
   /// </summary>
+  /// <param name="state"></param>
   public TwitchAccountType? ValidateAndConsumeState(string state)
   {
     lock (_activeStates)

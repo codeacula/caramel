@@ -13,6 +13,7 @@ public sealed record GetTwitchSetupQuery : IRequest<Result<TwitchSetup?>>;
 /// <summary>
 /// Handles the execution of GetTwitchSetupQuery requests.
 /// </summary>
+/// <param name="store"></param>
 public sealed class GetTwitchSetupQueryHandler(ITwitchSetupStore store) : IRequestHandler<GetTwitchSetupQuery, Result<TwitchSetup?>>
 {
   /// <summary>

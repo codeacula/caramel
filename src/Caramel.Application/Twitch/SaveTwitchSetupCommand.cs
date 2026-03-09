@@ -29,6 +29,7 @@ public sealed record SaveTwitchSetupCommand : IRequest<Result<TwitchSetup>>
 /// <summary>
 /// Handles the execution of SaveTwitchSetupCommand requests.
 /// </summary>
+/// <param name="store"></param>
 public sealed class SaveTwitchSetupCommandHandler(ITwitchSetupStore store) : IRequestHandler<SaveTwitchSetupCommand, Result<TwitchSetup>>
 {
   /// <summary>

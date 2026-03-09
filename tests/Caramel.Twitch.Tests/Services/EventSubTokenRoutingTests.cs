@@ -1,15 +1,9 @@
 using MediatR;
 
-using Microsoft.Extensions.Logging;
-
 using TwitchLib.EventSub.Core;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.User;
-using TwitchLib.EventSub.Core.Models;
 using TwitchLib.EventSub.Websockets.Core.EventArgs;
-
-using Caramel.Domain.Twitch;
-using Caramel.Twitch.Auth;
 
 namespace Caramel.Twitch.Tests.Services;
 
@@ -23,9 +17,9 @@ public sealed class EventSubTokenRoutingTests : IDisposable
   private readonly Mock<IDualOAuthTokenManager> _mockTokenManager = new();
   private readonly Mock<ITwitchSetupState> _mockSetupState = new();
   private readonly Mock<ICaramelServiceClient> _mockServiceClient = new();
-  private readonly Mock<IEventSubSubscriptionClient> _mockEventSubSubscriptionClient = new();
   private readonly Mock<IMediator> _mockMediator = new();
   private readonly Mock<IHttpClientFactory> _mockHttpClientFactory = new();
+  private readonly Mock<ITwitchSetupChangedSubscriber> _mockSetupChangedSubscriber = new();
   private readonly Mock<ILogger<EventSubLifecycleService>> _mockLogger = new();
 
   private readonly TwitchConfig _twitchConfig = new()
@@ -102,16 +96,16 @@ public sealed class EventSubTokenRoutingTests : IDisposable
     _ = _mockClient.Setup(c => c.ConnectAsync()).ReturnsAsync(true);
     _ = _mockClient.Setup(c => c.SessionId).Returns("test-session-id");
 
-    _mockClient
+    _ = _mockClient
       .SetupAdd(m => m.WebsocketConnected += It.IsAny<AsyncEventHandler<WebsocketConnectedArgs>>())
       .Callback<AsyncEventHandler<WebsocketConnectedArgs>>(h => _capturedConnectedHandler = h);
 
-    _mockClient.SetupRemove(m => m.WebsocketConnected -= It.IsAny<AsyncEventHandler<WebsocketConnectedArgs>>());
-    _mockClient.SetupRemove(m => m.WebsocketDisconnected -= It.IsAny<AsyncEventHandler<WebsocketDisconnectedArgs>>());
-    _mockClient.SetupRemove(m => m.WebsocketReconnected -= It.IsAny<AsyncEventHandler<WebsocketReconnectedArgs>>());
-    _mockClient.SetupRemove(m => m.ChannelChatMessage -= It.IsAny<AsyncEventHandler<ChannelChatMessageArgs>>());
-    _mockClient.SetupRemove(m => m.UserWhisperMessage -= It.IsAny<AsyncEventHandler<UserWhisperMessageArgs>>());
-    _mockClient.SetupRemove(m => m.ChannelPointsCustomRewardRedemptionAdd -= It.IsAny<AsyncEventHandler<ChannelPointsCustomRewardRedemptionArgs>>());
+    _ = _mockClient.SetupRemove(m => m.WebsocketConnected -= It.IsAny<AsyncEventHandler<WebsocketConnectedArgs>>());
+    _ = _mockClient.SetupRemove(m => m.WebsocketDisconnected -= It.IsAny<AsyncEventHandler<WebsocketDisconnectedArgs>>());
+    _ = _mockClient.SetupRemove(m => m.WebsocketReconnected -= It.IsAny<AsyncEventHandler<WebsocketReconnectedArgs>>());
+    _ = _mockClient.SetupRemove(m => m.ChannelChatMessage -= It.IsAny<AsyncEventHandler<ChannelChatMessageArgs>>());
+    _ = _mockClient.SetupRemove(m => m.UserWhisperMessage -= It.IsAny<AsyncEventHandler<UserWhisperMessageArgs>>());
+    _ = _mockClient.SetupRemove(m => m.ChannelPointsCustomRewardRedemptionAdd -= It.IsAny<AsyncEventHandler<ChannelPointsCustomRewardRedemptionArgs>>());
 
     // Setup mediator
     _ = _mockMediator
@@ -126,7 +120,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
     // Setup service client
     _ = _mockServiceClient
       .Setup(sc => sc.GetTwitchSetupAsync(It.IsAny<CancellationToken>()))
-      .ReturnsAsync(FluentResults.Result.Ok(_twitchSetup));
+      .ReturnsAsync(Result.Ok(_twitchSetup));
   }
 
   public void Dispose()
@@ -141,7 +135,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
   {
     var registrationContext = (EventSubSubscriptionRegistrationContext?)null;
     var chatRegistrar = new Mock<IEventSubSubscriptionRegistrar>();
-    chatRegistrar
+    _ = chatRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((ctx, _) => registrationContext = ctx)
       .Returns(Task.CompletedTask);
@@ -155,6 +149,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       [chatRegistrar.Object],
       _mockMediator.Object,
       _mockHttpClientFactory.Object,
+      _mockSetupChangedSubscriber.Object,
       _mockLogger.Object);
 
     using var cts = new CancellationTokenSource(2000);
@@ -175,8 +170,8 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()),
       Times.Once);
 
-    registrationContext.Should().NotBeNull();
-    registrationContext!.BotAccessToken.Should().Be("bot-token-123");
+    _ = registrationContext.Should().NotBeNull();
+    _ = registrationContext!.BotAccessToken.Should().Be("bot-token-123");
   }
 
   /// <summary>
@@ -187,7 +182,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
   {
     var registrationContext = (EventSubSubscriptionRegistrationContext?)null;
     var pointsRegistrar = new Mock<IEventSubSubscriptionRegistrar>();
-    pointsRegistrar
+    _ = pointsRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((ctx, _) => registrationContext = ctx)
       .Returns(Task.CompletedTask);
@@ -201,6 +196,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       [pointsRegistrar.Object],
       _mockMediator.Object,
       _mockHttpClientFactory.Object,
+      _mockSetupChangedSubscriber.Object,
       _mockLogger.Object);
 
     using var cts = new CancellationTokenSource(2000);
@@ -221,8 +217,8 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()),
       Times.Once);
 
-    registrationContext.Should().NotBeNull();
-    registrationContext!.BroadcasterAccessToken.Should().Be("broadcaster-token-456");
+    _ = registrationContext.Should().NotBeNull();
+    _ = registrationContext!.BroadcasterAccessToken.Should().Be("broadcaster-token-456");
   }
 
   /// <summary>
@@ -243,7 +239,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
 
     var registrationContext = (EventSubSubscriptionRegistrationContext?)null;
     var pointsRegistrar = new Mock<IEventSubSubscriptionRegistrar>();
-    pointsRegistrar
+    _ = pointsRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((ctx, _) => registrationContext = ctx)
       .Returns(Task.CompletedTask);
@@ -257,6 +253,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       [pointsRegistrar.Object],
       _mockMediator.Object,
       _mockHttpClientFactory.Object,
+      _mockSetupChangedSubscriber.Object,
       _mockLogger.Object);
 
     using var cts = new CancellationTokenSource(2000);
@@ -278,9 +275,9 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       Times.Once);
 
     // Verify broadcaster token is null in context
-    registrationContext.Should().NotBeNull();
-    registrationContext!.BroadcasterAccessToken.Should().BeNull();
-    registrationContext!.BotAccessToken.Should().Be("bot-token-123");
+    _ = registrationContext.Should().NotBeNull();
+    _ = registrationContext!.BroadcasterAccessToken.Should().BeNull();
+    _ = registrationContext!.BotAccessToken.Should().Be("bot-token-123");
   }
 
   /// <summary>
@@ -293,13 +290,13 @@ public sealed class EventSubTokenRoutingTests : IDisposable
     var pointsRegistrationContext = (EventSubSubscriptionRegistrationContext?)null;
 
     var chatRegistrar = new Mock<IEventSubSubscriptionRegistrar>();
-    chatRegistrar
+    _ = chatRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((ctx, _) => chatRegistrationContext = ctx)
       .Returns(Task.CompletedTask);
 
     var pointsRegistrar = new Mock<IEventSubSubscriptionRegistrar>();
-    pointsRegistrar
+    _ = pointsRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((ctx, _) => pointsRegistrationContext = ctx)
       .Returns(Task.CompletedTask);
@@ -313,6 +310,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       [chatRegistrar.Object, pointsRegistrar.Object],
       _mockMediator.Object,
       _mockHttpClientFactory.Object,
+      _mockSetupChangedSubscriber.Object,
       _mockLogger.Object);
 
     using var cts = new CancellationTokenSource(2000);
@@ -338,13 +336,13 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       Times.Once);
 
     // Verify both received the correct tokens
-    chatRegistrationContext.Should().NotBeNull();
-    chatRegistrationContext!.BotAccessToken.Should().Be("bot-token-123");
-    chatRegistrationContext!.BroadcasterAccessToken.Should().Be("broadcaster-token-456");
+    _ = chatRegistrationContext.Should().NotBeNull();
+    _ = chatRegistrationContext!.BotAccessToken.Should().Be("bot-token-123");
+    _ = chatRegistrationContext!.BroadcasterAccessToken.Should().Be("broadcaster-token-456");
 
-    pointsRegistrationContext.Should().NotBeNull();
-    pointsRegistrationContext!.BotAccessToken.Should().Be("bot-token-123");
-    pointsRegistrationContext!.BroadcasterAccessToken.Should().Be("broadcaster-token-456");
+    _ = pointsRegistrationContext.Should().NotBeNull();
+    _ = pointsRegistrationContext!.BotAccessToken.Should().Be("bot-token-123");
+    _ = pointsRegistrationContext!.BroadcasterAccessToken.Should().Be("broadcaster-token-456");
   }
 
   /// <summary>
@@ -355,7 +353,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
   {
     var registrationContext = (EventSubSubscriptionRegistrationContext?)null;
     var registrar = new Mock<IEventSubSubscriptionRegistrar>();
-    registrar
+    _ = registrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
       .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((ctx, _) => registrationContext = ctx)
       .Returns(Task.CompletedTask);
@@ -369,6 +367,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
       [registrar.Object],
       _mockMediator.Object,
       _mockHttpClientFactory.Object,
+      _mockSetupChangedSubscriber.Object,
       _mockLogger.Object);
 
     using var cts = new CancellationTokenSource(2000);
@@ -385,7 +384,7 @@ public sealed class EventSubTokenRoutingTests : IDisposable
     }
 
     // Verify context includes broadcaster user ID
-    registrationContext.Should().NotBeNull();
-    registrationContext!.BroadcasterUserId.Should().Be("999"); // From the channel in _twitchSetup
+    _ = registrationContext.Should().NotBeNull();
+    _ = registrationContext!.BroadcasterUserId.Should().Be("999"); // From the channel in _twitchSetup
   }
 }

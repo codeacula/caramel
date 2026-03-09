@@ -1,7 +1,6 @@
 using TwitchLib.EventSub.Core;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.User;
-using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
 namespace Caramel.Twitch.Services;
 

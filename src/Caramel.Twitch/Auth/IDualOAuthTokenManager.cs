@@ -1,5 +1,3 @@
-using Caramel.Domain.Twitch;
-
 namespace Caramel.Twitch.Auth;
 
 /// <summary>
@@ -11,28 +9,35 @@ public interface IDualOAuthTokenManager
   /// <summary>
   /// Initializes the token manager by loading tokens from the database.
   /// </summary>
+  /// <param name="cancellationToken"></param>
   Task InitializeAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Returns a valid access token for the bot account, refreshing if near expiry.
   /// Throws <see cref="InvalidOperationException"/> if no bot token is available.
   /// </summary>
+  /// <param name="cancellationToken"></param>
   Task<string> GetValidBotTokenAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Returns a valid access token for the broadcaster account, refreshing if near expiry.
   /// Throws <see cref="InvalidOperationException"/> if no broadcaster token is available.
   /// </summary>
+  /// <param name="cancellationToken"></param>
   Task<string> GetValidBroadcasterTokenAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Stores new bot account tokens (loaded from OAuth or refreshed).
   /// </summary>
+  /// <param name="tokens"></param>
+  /// <param name="cancellationToken"></param>
   Task SetBotTokensAsync(TwitchAccountTokens tokens, CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Stores new broadcaster account tokens (loaded from OAuth or refreshed).
   /// </summary>
+  /// <param name="tokens"></param>
+  /// <param name="cancellationToken"></param>
   Task SetBroadcasterTokensAsync(TwitchAccountTokens tokens, CancellationToken cancellationToken = default);
 
   /// <summary>

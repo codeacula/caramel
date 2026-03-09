@@ -9,11 +9,15 @@ public interface ITwitchTokenManager
   /// Returns a valid access token, refreshing it first if it is near expiry.
   /// Throws <see cref="InvalidOperationException"/> when no refresh token is available.
   /// </summary>
+  /// <param name="cancellationToken"></param>
   Task<string> GetValidAccessTokenAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Stores a new access token (and optionally a new refresh token) with the given expiry.
   /// </summary>
+  /// <param name="accessToken"></param>
+  /// <param name="refreshToken"></param>
+  /// <param name="expiresInSeconds"></param>
   void SetTokens(string accessToken, string? refreshToken = null, int expiresInSeconds = 3600);
 
   /// <summary>

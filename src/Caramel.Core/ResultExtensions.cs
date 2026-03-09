@@ -23,7 +23,7 @@ public static class ResultExtensions
 
   /// <summary>
   /// Pattern 1: Safely wraps an async operation in a try-catch block, returning a Result with proper error handling.
-  /// Automatically handles OperationCanceledException by re-throwing it, and catches InvalidOperationException 
+  /// Automatically handles OperationCanceledException by re-throwing it, and catches InvalidOperationException
   /// and general Exception separately for different error messages.
   /// </summary>
   /// <param name="operation">The async operation to execute.</param>
@@ -86,7 +86,7 @@ public static class ResultExtensions
   }
 
   /// <summary>
-  /// Pattern 2: Chains Result operations using bind semantics. If the first result fails, 
+  /// Pattern 2: Chains Result operations using bind semantics. If the first result fails,
   /// returns the failure. Otherwise, applies the next operation to the success value.
   /// </summary>
   /// <param name="result">The initial result.</param>
@@ -98,12 +98,7 @@ public static class ResultExtensions
   {
     var awaitedResult = await result;
 
-    if (awaitedResult.IsFailed)
-    {
-      return Result.Fail<TNext>(awaitedResult.Errors);
-    }
-
-    return await nextOperation(awaitedResult.Value);
+    return awaitedResult.IsFailed ? Result.Fail<TNext>(awaitedResult.Errors) : await nextOperation(awaitedResult.Value);
   }
 
   /// <summary>
@@ -118,12 +113,7 @@ public static class ResultExtensions
   {
     var awaitedResult = await result;
 
-    if (awaitedResult.IsFailed)
-    {
-      return Result.Fail(awaitedResult.Errors);
-    }
-
-    return await nextOperation(awaitedResult.Value);
+    return awaitedResult.IsFailed ? Result.Fail(awaitedResult.Errors) : await nextOperation(awaitedResult.Value);
   }
 
   /// <summary>
@@ -136,12 +126,7 @@ public static class ResultExtensions
     this Result<T> result,
     Func<T, Result<TNext>> nextOperation)
   {
-    if (result.IsFailed)
-    {
-      return Result.Fail<TNext>(result.Errors);
-    }
-
-    return nextOperation(result.Value);
+    return result.IsFailed ? Result.Fail<TNext>(result.Errors) : nextOperation(result.Value);
   }
 
   /// <summary>
@@ -155,12 +140,7 @@ public static class ResultExtensions
     this Result<T> result,
     Func<T, TNext> mapping)
   {
-    if (result.IsFailed)
-    {
-      return Result.Fail<TNext>(result.Errors);
-    }
-
-    return Result.Ok(mapping(result.Value));
+    return result.IsFailed ? Result.Fail<TNext>(result.Errors) : Result.Ok(mapping(result.Value));
   }
 
   /// <summary>
@@ -195,12 +175,7 @@ public static class ResultExtensions
     this Result<T> result,
     TNext valueIfSuccess)
   {
-    if (result.IsFailed)
-    {
-      return Result.Fail<TNext>(result.Errors);
-    }
-
-    return Result.Ok(valueIfSuccess);
+    return result.IsFailed ? Result.Fail<TNext>(result.Errors) : Result.Ok(valueIfSuccess);
   }
 
   /// <summary>
@@ -212,12 +187,7 @@ public static class ResultExtensions
   public static Result<TNext> ToResult<T, TNext>(this Result<T> result)
     where TNext : new()
   {
-    if (result.IsFailed)
-    {
-      return Result.Fail<TNext>(result.Errors);
-    }
-
-    return Result.Ok(new TNext());
+    return result.IsFailed ? Result.Fail<TNext>(result.Errors) : Result.Ok(new TNext());
   }
 
   /// <summary>
@@ -292,12 +262,7 @@ public static class ResultExtensions
   {
     var awaitedResult = await result;
 
-    if (awaitedResult.IsFailed)
-    {
-      return await recovery(awaitedResult.Errors);
-    }
-
-    return awaitedResult;
+    return awaitedResult.IsFailed ? await recovery(awaitedResult.Errors) : awaitedResult;
   }
 
   /// <summary>
@@ -310,11 +275,6 @@ public static class ResultExtensions
     this Result<T> result,
     Func<IReadOnlyList<IError>, Result<T>> recovery)
   {
-    if (result.IsFailed)
-    {
-      return recovery(result.Errors);
-    }
-
-    return result;
+    return result.IsFailed ? recovery(result.Errors) : result;
   }
 }

@@ -163,9 +163,9 @@ public sealed class TwitchChatClientTests
       .Setup(f => f.CreateClient(It.IsAny<string>()))
       .Returns(httpClient);
 
-     _ = _tokenManagerMock
-       .Setup(t => t.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
-       .ReturnsAsync("initial-access-token");
+    _ = _tokenManagerMock
+      .Setup(t => t.GetValidBotTokenAsync(It.IsAny<CancellationToken>()))
+      .ReturnsAsync("initial-access-token");
 
     return new TwitchChatClient(
       _httpClientFactoryMock.Object,

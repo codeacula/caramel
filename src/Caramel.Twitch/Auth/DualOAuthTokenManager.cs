@@ -1,6 +1,4 @@
 using Caramel.Core.Security;
-using Caramel.Core.Twitch;
-using Caramel.Domain.Twitch;
 
 namespace Caramel.Twitch.Auth;
 
@@ -8,6 +6,11 @@ namespace Caramel.Twitch.Auth;
 /// Manages OAuth tokens for dual accounts (bot and broadcaster).
 /// Loads tokens from database on initialization, handles refresh, and persists updates back to database.
 /// </summary>
+/// <param name="setupStore"></param>
+/// <param name="encryptionService"></param>
+/// <param name="httpClientFactory"></param>
+/// <param name="twitchConfig"></param>
+/// <param name="logger"></param>
 public sealed class DualOAuthTokenManager(
   ITwitchSetupStore setupStore,
   ITokenEncryptionService encryptionService,
@@ -29,6 +32,7 @@ public sealed class DualOAuthTokenManager(
   /// <summary>
   /// Initializes the token manager by loading tokens from the database.
   /// </summary>
+  /// <param name="cancellationToken"></param>
   public async Task InitializeAsync(CancellationToken cancellationToken = default)
   {
     try

@@ -1,4 +1,3 @@
-using Caramel.Domain.Twitch;
 using Caramel.Twitch.Auth;
 
 using Microsoft.AspNetCore.Mvc;
@@ -161,7 +160,7 @@ public sealed class AuthController(
   {
     var botToken = tokenManager.GetCurrentBotAccessToken();
     var broadcasterToken = tokenManager.GetCurrentBroadcasterAccessToken();
-    
+
     return Results.Ok(new
     {
       bot = new { authorized = !string.IsNullOrWhiteSpace(botToken), canRefresh = tokenManager.CanRefreshBotToken() },

@@ -16,18 +16,18 @@ public sealed class TwitchConfigOptions : ConfigurationOptions
   /// <summary>
   /// Current OAuth access token for Twitch API authentication.
   /// Obtained through OAuth flow and is time-limited.
+  /// Optional at startup because runtime tokens may be provided later through the UI.
   /// Sensitive data - never log or expose in output.
   /// </summary>
-  [Required(ErrorMessage = "AccessToken is required")]
   [StringLength(500, MinimumLength = 10, ErrorMessage = "AccessToken must be between 10 and 500 characters")]
   public string AccessToken { get; set; } = string.Empty;
 
   /// <summary>
   /// OAuth refresh token for obtaining new access tokens.
   /// Used to refresh the access token when it expires.
+  /// Optional at startup because runtime tokens may be provided later through the UI.
   /// Sensitive data - never log or expose in output.
   /// </summary>
-  [Required(ErrorMessage = "RefreshToken is required")]
   [StringLength(500, MinimumLength = 10, ErrorMessage = "RefreshToken must be between 10 and 500 characters")]
   public string RefreshToken { get; set; } = string.Empty;
 
@@ -67,17 +67,15 @@ public sealed class TwitchConfigOptions : ConfigurationOptions
 
   /// <summary>
   /// User ID of the bot account for Twitch notifications.
-  /// This bot is used to send notifications and interact with chat.
+  /// This may be provisioned later through the UI-driven setup flow.
   /// </summary>
-  [Required(ErrorMessage = "BotUserId is required")]
   [StringLength(100, MinimumLength = 1, ErrorMessage = "BotUserId must be between 1 and 100 characters")]
   public string BotUserId { get; set; } = string.Empty;
 
   /// <summary>
   /// Comma-separated list of Twitch channel IDs to monitor.
-  /// Used to configure which channels the bot listens to.
+  /// This may be provisioned later through the UI-driven setup flow.
   /// </summary>
-  [Required(ErrorMessage = "ChannelIds is required")]
   public string ChannelIds { get; set; } = string.Empty;
 
   /// <summary>
@@ -90,12 +88,28 @@ public sealed class TwitchConfigOptions : ConfigurationOptions
   {
     var errors = new List<string>();
 
-    // Use data annotations validation
+    // Use data annotations validation for required fields and values that are present.
+    // Optional runtime fields are validated manually below so empty values can be skipped.
     var context = new ValidationContext(this);
     var results = new List<ValidationResult>();
-    if (!Validator.TryValidateObject(this, context, results, validateAllProperties: true))
+    if (!Validator.TryValidateObject(this, context, results, validateAllProperties: false))
     {
       errors.AddRange(results.Select(r => r.ErrorMessage ?? "Unknown validation error"));
+    }
+
+    if (!string.IsNullOrWhiteSpace(AccessToken) && (AccessToken.Length < 10 || AccessToken.Length > 500))
+    {
+      errors.Add("AccessToken must be between 10 and 500 characters");
+    }
+
+    if (!string.IsNullOrWhiteSpace(RefreshToken) && (RefreshToken.Length < 10 || RefreshToken.Length > 500))
+    {
+      errors.Add("RefreshToken must be between 10 and 500 characters");
+    }
+
+    if (!string.IsNullOrWhiteSpace(BotUserId) && (BotUserId.Length < 1 || BotUserId.Length > 100))
+    {
+      errors.Add("BotUserId must be between 1 and 100 characters");
     }
 
     // Custom validation for callback URL
@@ -117,7 +131,7 @@ public sealed class TwitchConfigOptions : ConfigurationOptions
       }
     }
 
-    // Validate channel IDs format
+    // Validate channel IDs format when runtime setup has provided them
     if (!string.IsNullOrWhiteSpace(ChannelIds))
     {
       var channelList = ChannelIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -141,7 +155,7 @@ public sealed class TwitchConfigOptions : ConfigurationOptions
 
   public override string ToString()
   {
-    return $"TwitchConfig {{ ClientId = {ClientId}, BotUserId = {BotUserId}, " +
+    return $"TwitchConfig {{ ClientId = {ClientId}, BotUserId = {(string.IsNullOrEmpty(BotUserId) ? "(runtime)" : BotUserId)}, " +
            $"ChannelCount = {(string.IsNullOrEmpty(ChannelIds) ? 0 : ChannelIds.Split(',').Length)}, " +
            $"MessageTheAiRewardId = {(string.IsNullOrEmpty(MessageTheAiRewardId) ? "(disabled)" : "***")} }}";
   }

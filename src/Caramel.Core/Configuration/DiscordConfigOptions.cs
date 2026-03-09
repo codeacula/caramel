@@ -75,12 +75,9 @@ public sealed class DiscordConfigOptions : ConfigurationOptions
     }
 
     // Validate public key hex format
-    if (!string.IsNullOrWhiteSpace(PublicKey))
+    if (!string.IsNullOrWhiteSpace(PublicKey) && !PublicKey.All("0123456789abcdefABCDEF".Contains))
     {
-      if (!PublicKey.All(c => "0123456789abcdefABCDEF".Contains(c)))
-      {
-        errors.Add("PublicKey must be a valid hexadecimal string");
-      }
+      errors.Add("PublicKey must be a valid hexadecimal string");
     }
 
     return errors;
@@ -88,7 +85,7 @@ public sealed class DiscordConfigOptions : ConfigurationOptions
 
   public override string ToString()
   {
-    return $"DiscordConfig {{ Token = ***, PublicKey = ***, " +
+    return "DiscordConfig { Token = ***, PublicKey = ***, " +
            $"BotName = {(string.IsNullOrEmpty(BotName) ? "(unset)" : BotName)}, " +
            $"CommandPrefix = {(string.IsNullOrEmpty(CommandPrefix) ? "(none)" : CommandPrefix)} }}";
   }

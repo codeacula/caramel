@@ -35,7 +35,7 @@ public sealed class DualOAuthTokenManagerTests
       BotTokens = botTokens,
       BroadcasterTokens = broadcasterTokens,
     };
-    setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(setup));
 
     var tokenManager = CreateTokenManager(setupStore);
@@ -51,11 +51,11 @@ public sealed class DualOAuthTokenManagerTests
   }
 
   [Fact]
-  public async Task InitializeAsyncHandlesNoSetupInDatabase()
+  public async Task InitializeAsyncHandlesNoSetupInDatabaseAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
-    setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(null));
 
     var tokenManager = CreateTokenManager(setupStore);
@@ -69,7 +69,7 @@ public sealed class DualOAuthTokenManagerTests
   }
 
   [Fact]
-  public async Task SetBotTokensAsyncPersistsTokensToDatabase()
+  public async Task SetBotTokensAsyncPersistsTokensToDatabaseAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -91,7 +91,7 @@ public sealed class DualOAuthTokenManagerTests
       UpdatedOn = DateTimeOffset.UtcNow,
       BotTokens = tokens,
     };
-    setupStore.Setup(s => s.SaveBotTokensAsync(tokens, It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.SaveBotTokensAsync(tokens, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(updatedSetup));
 
     var tokenManager = CreateTokenManager(setupStore);
@@ -105,7 +105,7 @@ public sealed class DualOAuthTokenManagerTests
   }
 
   [Fact]
-  public async Task SetBroadcasterTokensAsyncPersistsTokensToDatabase()
+  public async Task SetBroadcasterTokensAsyncPersistsTokensToDatabaseAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -127,7 +127,7 @@ public sealed class DualOAuthTokenManagerTests
       UpdatedOn = DateTimeOffset.UtcNow,
       BroadcasterTokens = tokens,
     };
-    setupStore.Setup(s => s.SaveBroadcasterTokensAsync(tokens, It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.SaveBroadcasterTokensAsync(tokens, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok(updatedSetup));
 
     var tokenManager = CreateTokenManager(setupStore);
@@ -141,7 +141,7 @@ public sealed class DualOAuthTokenManagerTests
   }
 
   [Fact]
-  public async Task SetBotTokensAsyncThrowsWhenPersistenceFails()
+  public async Task SetBotTokensAsyncThrowsWhenPersistenceFailsAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -154,18 +154,18 @@ public sealed class DualOAuthTokenManagerTests
       ExpiresAt = DateTime.UtcNow.AddHours(1),
       LastRefreshedOn = DateTimeOffset.UtcNow,
     };
-    setupStore.Setup(s => s.SaveBotTokensAsync(tokens, It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.SaveBotTokensAsync(tokens, It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Fail("Database error"));
 
     var tokenManager = CreateTokenManager(setupStore);
 
     // Act & Assert
-    await tokenManager.Invoking(tm => tm.SetBotTokensAsync(tokens))
+    _ = await tokenManager.Invoking(tm => tm.SetBotTokensAsync(tokens))
       .Should().ThrowAsync<InvalidOperationException>();
   }
 
   [Fact]
-  public async Task CanRefreshBotTokenReturnsFalseWhenNoRefreshToken()
+  public async Task CanRefreshBotTokenReturnsFalseWhenNoRefreshTokenAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -187,7 +187,7 @@ public sealed class DualOAuthTokenManagerTests
       UpdatedOn = DateTimeOffset.UtcNow,
       BotTokens = botTokens,
     };
-    setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(setup));
 
     var tokenManager = CreateTokenManager(setupStore);
@@ -198,7 +198,7 @@ public sealed class DualOAuthTokenManagerTests
   }
 
   [Fact]
-  public async Task CanRefreshBroadcasterTokenReturnsFalseWhenNoRefreshToken()
+  public async Task CanRefreshBroadcasterTokenReturnsFalseWhenNoRefreshTokenAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -220,7 +220,7 @@ public sealed class DualOAuthTokenManagerTests
       UpdatedOn = DateTimeOffset.UtcNow,
       BroadcasterTokens = broadcasterTokens,
     };
-    setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(setup));
 
     var tokenManager = CreateTokenManager(setupStore);
@@ -231,7 +231,7 @@ public sealed class DualOAuthTokenManagerTests
   }
 
   [Fact]
-  public async Task GetValidBotTokenAsyncThrowsWhenNoRefreshTokenAvailable()
+  public async Task GetValidBotTokenAsyncThrowsWhenNoRefreshTokenAvailableAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -253,20 +253,20 @@ public sealed class DualOAuthTokenManagerTests
       UpdatedOn = DateTimeOffset.UtcNow,
       BotTokens = botTokens,
     };
-    setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(setup));
 
     var tokenManager = CreateTokenManager(setupStore);
     await tokenManager.InitializeAsync();
 
     // Act & Assert
-    await tokenManager.Invoking(tm => tm.GetValidBotTokenAsync())
+    _ = await tokenManager.Invoking(tm => tm.GetValidBotTokenAsync())
       .Should().ThrowAsync<InvalidOperationException>()
       .WithMessage("*no refresh token available*");
   }
 
   [Fact]
-  public async Task GetValidBroadcasterTokenAsyncThrowsWhenNoRefreshTokenAvailable()
+  public async Task GetValidBroadcasterTokenAsyncThrowsWhenNoRefreshTokenAvailableAsync()
   {
     // Arrange
     var setupStore = new Mock<ITwitchSetupStore>();
@@ -288,14 +288,14 @@ public sealed class DualOAuthTokenManagerTests
       UpdatedOn = DateTimeOffset.UtcNow,
       BroadcasterTokens = broadcasterTokens,
     };
-    setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
+    _ = setupStore.Setup(s => s.GetAsync(It.IsAny<CancellationToken>()))
       .ReturnsAsync(Result.Ok<TwitchSetup?>(setup));
 
     var tokenManager = CreateTokenManager(setupStore);
     await tokenManager.InitializeAsync();
 
     // Act & Assert
-    await tokenManager.Invoking(tm => tm.GetValidBroadcasterTokenAsync())
+    _ = await tokenManager.Invoking(tm => tm.GetValidBroadcasterTokenAsync())
       .Should().ThrowAsync<InvalidOperationException>()
       .WithMessage("*no refresh token available*");
   }

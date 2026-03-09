@@ -21,6 +21,9 @@ public sealed record AskTheOrbCommand(PersonId PersonId, Content Content) : IReq
 /// Handles the execution of AskTheOrbCommand requests.
 /// Queries the AI agent and returns a response without persisting the exchange.
 /// </summary>
+/// <param name="caramelAIAgent"></param>
+/// <param name="personStore"></param>
+/// <param name="timeProvider"></param>
 public sealed class AskTheOrbCommandHandler(
   ICaramelAIAgent caramelAIAgent,
   IPersonStore personStore,

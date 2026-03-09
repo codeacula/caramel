@@ -14,6 +14,8 @@ public interface ITwitchSetupStore
   /// <summary>
   /// Persists bot account tokens to the database with encryption.
   /// </summary>
+  /// <param name="tokens"></param>
+  /// <param name="cancellationToken"></param>
   Task<Result<TwitchSetup>> SaveBotTokensAsync(
     TwitchAccountTokens tokens,
     CancellationToken cancellationToken = default);
@@ -21,6 +23,8 @@ public interface ITwitchSetupStore
   /// <summary>
   /// Persists broadcaster account tokens to the database with encryption.
   /// </summary>
+  /// <param name="tokens"></param>
+  /// <param name="cancellationToken"></param>
   Task<Result<TwitchSetup>> SaveBroadcasterTokensAsync(
     TwitchAccountTokens tokens,
     CancellationToken cancellationToken = default);

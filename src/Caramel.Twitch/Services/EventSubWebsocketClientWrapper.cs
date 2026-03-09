@@ -1,7 +1,6 @@
 using TwitchLib.EventSub.Core;
 using TwitchLib.EventSub.Core.EventArgs.Channel;
 using TwitchLib.EventSub.Core.EventArgs.User;
-using TwitchLib.EventSub.Websockets.Core.EventArgs;
 
 namespace Caramel.Twitch.Services;
 
@@ -45,7 +44,13 @@ internal sealed class EventSubWebsocketClientWrapper(EventSubWebsocketClient cli
     remove => client.ChannelPointsCustomRewardRedemptionAdd -= value;
   }
 
-  public Task<bool> ConnectAsync() => client.ConnectAsync();
+  public Task<bool> ConnectAsync()
+  {
+    return client.ConnectAsync();
+  }
 
-  public Task<bool> ReconnectAsync() => client.ReconnectAsync();
+  public Task<bool> ReconnectAsync()
+  {
+    return client.ReconnectAsync();
+  }
 }

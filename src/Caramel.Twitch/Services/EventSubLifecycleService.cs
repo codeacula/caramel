@@ -16,6 +16,7 @@ internal sealed class EventSubLifecycleService(
   IEnumerable<IEventSubSubscriptionRegistrar> subscriptionRegistrars,
   IMediator mediator,
   IHttpClientFactory httpClientFactory,
+  ITwitchSetupChangedSubscriber setupChangedSubscriber,
   ILogger<EventSubLifecycleService> logger) : BackgroundService
 {
   private TaskCompletionSource _disconnectTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -34,6 +35,8 @@ internal sealed class EventSubLifecycleService(
 
     // Initialize the dual token manager (loads tokens from database)
     await tokenManager.InitializeAsync(stoppingToken);
+
+    await setupChangedSubscriber.SubscribeAsync(OnSetupChangedAsync, stoppingToken);
 
     while (!stoppingToken.IsCancellationRequested)
     {
@@ -146,6 +149,40 @@ internal sealed class EventSubLifecycleService(
     return false;
   }
 
+  private async Task OnSetupChangedAsync(CancellationToken cancellationToken)
+  {
+    try
+    {
+      var setupResult = await serviceClient.GetTwitchSetupAsync(cancellationToken);
+      if (!setupResult.IsSuccess || setupResult.Value is null)
+      {
+        EventSubLifecycleServiceLogs.SetupReloadSkipped(logger);
+        return;
+      }
+
+      setupState.Update(setupResult.Value);
+      EventSubLifecycleServiceLogs.SetupReloaded(logger, setupResult.Value.BotLogin);
+
+      if (CapturedConnectedState())
+      {
+        await OnWebsocketConnectedAsync(null, new WebsocketConnectedArgs { IsRequestedReconnect = false });
+      }
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (Exception ex)
+    {
+      EventSubLifecycleServiceLogs.SetupReloadFailed(logger, ex.Message);
+    }
+  }
+
+  private bool CapturedConnectedState()
+  {
+    return !string.IsNullOrWhiteSpace(eventSubClient.SessionId);
+  }
+
   /// <summary>
   /// Registers event handlers on the EventSub client exactly once.
   /// </summary>
@@ -165,73 +202,73 @@ internal sealed class EventSubLifecycleService(
     _handlersWired = true;
   }
 
-   private async Task OnWebsocketConnectedAsync(object? sender, WebsocketConnectedArgs args)
-   {
-     if (args.IsRequestedReconnect)
-     {
-       return;
-     }
+  private async Task OnWebsocketConnectedAsync(object? sender, WebsocketConnectedArgs args)
+  {
+    if (args.IsRequestedReconnect)
+    {
+      return;
+    }
 
-     CaramelTwitchProgramLogs.EventSubConnected(logger);
+    CaramelTwitchProgramLogs.EventSubConnected(logger);
 
-     try
-     {
-       var setup = setupState.Current;
-       if (setup is null)
-       {
-         CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
-         return;
-       }
+    try
+    {
+      var setup = setupState.Current;
+      if (setup is null)
+      {
+        CaramelTwitchProgramLogs.EventSubWaitingForSetup(logger);
+        return;
+      }
 
-       // Get bot token (required for all EventSub subscriptions)
-       var botAccessToken = await tokenManager.GetValidBotTokenAsync();
+      // Get bot token (required for all EventSub subscriptions)
+      var botAccessToken = await tokenManager.GetValidBotTokenAsync();
 
-       // Try to get broadcaster token (optional, needed for channel points)
-       string? broadcasterAccessToken = null;
-       try
-       {
-         broadcasterAccessToken = await tokenManager.GetValidBroadcasterTokenAsync();
-       }
-       catch (InvalidOperationException)
-       {
-         // Broadcaster token not available - channel points subscriptions will be skipped
-         EventSubLifecycleServiceLogs.NoBroadcasterTokenWarning(logger);
-       }
+      // Try to get broadcaster token (optional, needed for channel points)
+      string? broadcasterAccessToken = null;
+      try
+      {
+        broadcasterAccessToken = await tokenManager.GetValidBroadcasterTokenAsync();
+      }
+      catch (InvalidOperationException)
+      {
+        // Broadcaster token not available - channel points subscriptions will be skipped
+        EventSubLifecycleServiceLogs.NoBroadcasterTokenWarning(logger);
+      }
 
-       // Numeric IDs are stored in setup — no resolver needed
-       var registrationContext = new EventSubSubscriptionRegistrationContext(
-         HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
-         SessionId: eventSubClient.SessionId,
-         BotUserId: setup.BotUserId,
-         BroadcasterUserId: setup.BroadcasterTokens?.UserId,
-         ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)],
-         BotAccessToken: botAccessToken,
-         BroadcasterAccessToken: broadcasterAccessToken);
+      // Numeric IDs are stored in setup — no resolver needed
+      var registrationContext = new EventSubSubscriptionRegistrationContext(
+        HttpClient: httpClientFactory.CreateClient("TwitchHelix"),
+        SessionId: eventSubClient.SessionId,
+        BotUserId: setup.BotUserId,
+        BroadcasterUserId: setup.BroadcasterTokens?.UserId,
+        ChannelUserIds: [.. setup.Channels.Select(c => c.UserId)],
+        BotAccessToken: botAccessToken,
+        BroadcasterAccessToken: broadcasterAccessToken);
 
-       registrationContext.HttpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
+      registrationContext.HttpClient.DefaultRequestHeaders.Add("Client-Id", twitchConfig.ClientId);
 
-       foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
-       {
-         await registrar.RegisterAsync(registrationContext, _stoppingToken);
-       }
-     }
-     catch (OperationCanceledException)
-     {
-       throw;
-     }
-     catch (HttpRequestException ex)
-     {
-       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, $"Network error: {ex.Message}");
-     }
-     catch (InvalidOperationException ex)
-     {
-       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, $"Invalid state: {ex.Message}");
-     }
-     catch (Exception ex)
-     {
-       CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, ex.Message);
-     }
-   }
+      foreach (var registrar in subscriptionRegistrars.OrderBy(static x => x.GetType().Name, StringComparer.Ordinal))
+      {
+        await registrar.RegisterAsync(registrationContext, _stoppingToken);
+      }
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (HttpRequestException ex)
+    {
+      CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, $"Network error: {ex.Message}");
+    }
+    catch (InvalidOperationException ex)
+    {
+      CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, $"Invalid state: {ex.Message}");
+    }
+    catch (Exception ex)
+    {
+      CaramelTwitchProgramLogs.EventSubSubscriptionSetupFailed(logger, ex.Message);
+    }
+  }
 
   private Task OnWebsocketDisconnectedAsync(object? sender, WebsocketDisconnectedArgs args)
   {
@@ -298,4 +335,13 @@ internal static partial class EventSubLifecycleServiceLogs
 {
   [LoggerMessage(Level = LogLevel.Warning, Message = "Broadcaster token not available; channel points subscriptions will be skipped")]
   public static partial void NoBroadcasterTokenWarning(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "Received Twitch setup change notification but no setup was available to reload")]
+  public static partial void SetupReloadSkipped(ILogger logger);
+
+  [LoggerMessage(Level = LogLevel.Information, Message = "Reloaded Twitch setup after change notification for bot '{BotLogin}'")]
+  public static partial void SetupReloaded(ILogger logger, string botLogin);
+
+  [LoggerMessage(Level = LogLevel.Error, Message = "Failed to reload Twitch setup after change notification: {Error}")]
+  public static partial void SetupReloadFailed(ILogger logger, string error);
 }

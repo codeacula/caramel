@@ -70,7 +70,7 @@ public sealed class OBSConfigOptions : ConfigurationOptions
       {
         errors.Add("Url must be a valid absolute URI");
       }
-      else if (uri.Scheme != "ws" && uri.Scheme != "wss")
+      else if (uri.Scheme is not "ws" and not "wss")
       {
         errors.Add("Url must use 'ws' or 'wss' (WebSocket) protocol, not HTTP/HTTPS");
       }

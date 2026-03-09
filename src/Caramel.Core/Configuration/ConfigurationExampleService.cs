@@ -6,6 +6,10 @@ namespace Caramel.Core.Configuration;
 /// Example service demonstrating how to inject and use IOptions&lt;T&gt; configuration.
 /// This shows the recommended pattern for accessing configuration in services.
 /// </summary>
+/// <param name="aiConfig"></param>
+/// <param name="discordConfig"></param>
+/// <param name="twitchConfig"></param>
+/// <param name="grpcConfig"></param>
 /// <remarks>
 /// Services should always receive configuration through constructor injection of IOptions&lt;T&gt;
 /// rather than directly accessing IConfiguration. This provides several benefits:
@@ -14,27 +18,19 @@ namespace Caramel.Core.Configuration;
 /// - Easier testing (mock IOptions instead of IConfiguration)
 /// - Configuration is validated at startup
 /// </remarks>
-public sealed class ConfigurationExampleService
+/// <remarks>
+/// Constructor demonstrating standard DI pattern for configuration options.
+/// </remarks>
+public sealed class ConfigurationExampleService(
+  IOptions<CaramelAiConfigOptions> aiConfig,
+  IOptions<DiscordConfigOptions> discordConfig,
+  IOptions<TwitchConfigOptions> twitchConfig,
+  IOptions<GrpcConfigOptions> grpcConfig)
 {
-  private readonly CaramelAiConfigOptions _aiConfig;
-  private readonly DiscordConfigOptions _discordConfig;
-  private readonly TwitchConfigOptions _twitchConfig;
-  private readonly GrpcConfigOptions _grpcConfig;
-
-  /// <summary>
-  /// Constructor demonstrating standard DI pattern for configuration options.
-  /// </summary>
-  public ConfigurationExampleService(
-    IOptions<CaramelAiConfigOptions> aiConfig,
-    IOptions<DiscordConfigOptions> discordConfig,
-    IOptions<TwitchConfigOptions> twitchConfig,
-    IOptions<GrpcConfigOptions> grpcConfig)
-  {
-    _aiConfig = aiConfig?.Value ?? throw new ArgumentNullException(nameof(aiConfig));
-    _discordConfig = discordConfig?.Value ?? throw new ArgumentNullException(nameof(discordConfig));
-    _twitchConfig = twitchConfig?.Value ?? throw new ArgumentNullException(nameof(twitchConfig));
-    _grpcConfig = grpcConfig?.Value ?? throw new ArgumentNullException(nameof(grpcConfig));
-  }
+  private readonly CaramelAiConfigOptions _aiConfig = aiConfig?.Value ?? throw new ArgumentNullException(nameof(aiConfig));
+  private readonly DiscordConfigOptions _discordConfig = discordConfig?.Value ?? throw new ArgumentNullException(nameof(discordConfig));
+  private readonly TwitchConfigOptions _twitchConfig = twitchConfig?.Value ?? throw new ArgumentNullException(nameof(twitchConfig));
+  private readonly GrpcConfigOptions _grpcConfig = grpcConfig?.Value ?? throw new ArgumentNullException(nameof(grpcConfig));
 
   /// <summary>
   /// Example method showing how to use configuration in business logic.

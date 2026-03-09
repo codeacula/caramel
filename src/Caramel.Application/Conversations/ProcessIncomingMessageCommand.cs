@@ -29,6 +29,12 @@ public sealed record ProcessIncomingMessageCommand(PersonId PersonId, Content Co
 /// Handles the execution of ProcessIncomingMessageCommand requests.
 /// Orchestrates conversation storage, AI processing with tool planning and validation, and response generation.
 /// </summary>
+/// <param name="caramelAIAgent"></param>
+/// <param name="conversationStore"></param>
+/// <param name="logger"></param>
+/// <param name="personStore"></param>
+/// <param name="personConfig"></param>
+/// <param name="timeProvider"></param>
 public sealed class ProcessIncomingMessageCommandHandler(
   ICaramelAIAgent caramelAIAgent,
   IConversationStore conversationStore,
@@ -168,19 +174,19 @@ public sealed class ProcessIncomingMessageCommandHandler(
       validationResult.BlockedCalls.Count,
       toolResults.Count - validationResult.BlockedCalls.Count);
 
-     // Phase 3: Response Generation
-     var actionsSummary = toolResults.Count == 0
-       ? "None"
-       : string.Join("\n", toolResults.Select(tc => $"- {tc.ToSummary()}"));
+    // Phase 3: Response Generation
+    var actionsSummary = toolResults.Count == 0
+      ? "None"
+      : string.Join("\n", toolResults.Select(tc => $"- {tc.ToSummary()}"));
 
-     if (logger.IsEnabled(LogLevel.Information))
-     {
-       ConversationLogs.ActionsTaken(logger, person.Id.Value, [actionsSummary]);
-     }
+    if (logger.IsEnabled(LogLevel.Information))
+    {
+      ConversationLogs.ActionsTaken(logger, person.Id.Value, [actionsSummary]);
+    }
 
-     var responseResult = await caramelAIAgent
-       .CreateResponseRequest(responseMessages, actionsSummary, userTimezone)
-       .ExecuteAsync(cancellationToken);
+    var responseResult = await caramelAIAgent
+      .CreateResponseRequest(responseMessages, actionsSummary, userTimezone)
+      .ExecuteAsync(cancellationToken);
 
     return !responseResult.Success
       ? $"I encountered an issue while processing your request: {responseResult.ErrorMessage}"
@@ -203,25 +209,22 @@ public sealed class ProcessIncomingMessageCommandHandler(
     };
   }
 
-    private async Task SaveReplyAsync(Conversation conversation, string response, CancellationToken cancellationToken)
+  private async Task SaveReplyAsync(Conversation conversation, string response, CancellationToken cancellationToken)
+  {
+    /// <summary>
+    /// Saves the AI response as a system reply in the conversation.
+    /// </summary>
+    /// <param name="conversation">The conversation to add the reply to.</param>
+    /// <param name="response">The response text to save.</param>
+    /// <param name="cancellationToken">Cancellation token for async operation.</param>
+
+    var addReplyResult = await conversationStore.AddReplyAsync(conversation.Id, new Content(response), cancellationToken);
+
+    if (addReplyResult.IsFailed && logger.IsEnabled(LogLevel.Error))
     {
-      /// <summary>
-      /// Saves the AI response as a system reply in the conversation.
-      /// </summary>
-      /// <param name="conversation">The conversation to add the reply to.</param>
-      /// <param name="response">The response text to save.</param>
-      /// <param name="cancellationToken">Cancellation token for async operation.</param>
-
-     var addReplyResult = await conversationStore.AddReplyAsync(conversation.Id, new Content(response), cancellationToken);
-
-     if (addReplyResult.IsFailed)
-     {
-       if (logger.IsEnabled(LogLevel.Error))
-       {
-         DataAccessLogs.UnableToSaveMessageToConversation(logger, conversation.Id.Value, response);
-       }
-     }
-   }
+      DataAccessLogs.UnableToSaveMessageToConversation(logger, conversation.Id.Value, response);
+    }
+  }
 
   private Result<Reply> CreateReplyToUser(string response)
   {
@@ -255,4 +258,10 @@ public sealed class ProcessIncomingMessageCommandHandler(
   /// <summary>
   /// Snapshot of active todos used during conversation processing.
   /// </summary>
+  /// <param name="caramelAIAgent"></param>
+  /// <param name="conversationStore"></param>
+  /// <param name="logger"></param>
+  /// <param name="personStore"></param>
+  /// <param name="personConfig"></param>
+  /// <param name="timeProvider"></param>
 }

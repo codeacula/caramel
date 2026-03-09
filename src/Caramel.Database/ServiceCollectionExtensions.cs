@@ -1,7 +1,6 @@
 using Caramel.Core.Conversations;
 using Caramel.Core.Data;
 using Caramel.Core.People;
-using Caramel.Core.Security;
 using Caramel.Core.Twitch;
 using Caramel.Database.Conversations;
 using Caramel.Database.Conversations.Events;

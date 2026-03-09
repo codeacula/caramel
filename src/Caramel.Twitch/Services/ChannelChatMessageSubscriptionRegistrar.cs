@@ -8,13 +8,13 @@ internal sealed class ChannelChatMessageSubscriptionRegistrar(
   {
     // Chat messages require bot token
     var accessToken = context.BotAccessToken;
-    
+
     foreach (var channelUserId in context.ChannelUserIds)
     {
       try
       {
         var httpClient = context.HttpClient;
-        httpClient.DefaultRequestHeaders.Remove("Authorization");
+        _ = httpClient.DefaultRequestHeaders.Remove("Authorization");
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
 
         await subscriptionClient.CreateSubscriptionAsync(
