@@ -12,9 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Register MVC controllers
 _ = builder.Services.AddControllers();
 
-// Configuration
-_ = builder.Configuration.AddEnvironmentVariables();
-_ = builder.Configuration.AddUserSecrets<ICaramelTwitch>(optional: true);
+// Configuration is provided by the default host builder sources.
 
 // Logging
 _ = builder.Services.AddLogging(config =>
@@ -39,7 +37,7 @@ _ = builder.Services.AddDataProtection();
 _ = builder.Services.AddHttpClient("TwitchHelix");
 
 // Get TwitchConfig for OAuth setup
-var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<TwitchConfig>() ?? throw new InvalidOperationException("TwitchConfig is missing");
+var twitchConfig = builder.Configuration.GetSection(nameof(TwitchConfig)).Get<TwitchConfig>();
 
 // Register token encryption service (required for token persistence)
 _ = builder.Services.AddSingleton<ITokenEncryptionService>(sp =>

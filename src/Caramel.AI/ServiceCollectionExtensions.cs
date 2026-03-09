@@ -11,12 +11,6 @@ public static class ServiceCollectionExtensions
   public static IServiceCollection AddAiServices(this IServiceCollection services, IConfiguration configuration)
   {
     var caramelAiConfig = configuration.GetSection(nameof(CaramelAiConfig)).Get<CaramelAiConfig>();
-
-    if (caramelAiConfig == null)
-    {
-      Console.WriteLine("No AI configuration set; using default settings.");
-    }
-
     var config = caramelAiConfig ?? new CaramelAiConfig();
 
     _ = services

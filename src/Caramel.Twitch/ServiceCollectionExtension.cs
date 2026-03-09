@@ -15,13 +15,23 @@ public static class ServiceCollectionExtension
       _ = services.AddSingleton(typeof(IEventSubSubscriptionRegistrar), registrarType);
     }
 
-    // Register TwitchConfig from configuration
+    // Register TwitchConfig from configuration with safe defaults so the service can start
+    // when Twitch secrets are not provided yet. Runtime setup can populate the missing data later.
     _ = services.AddSingleton(serviceProvider =>
     {
       var config = serviceProvider.GetRequiredService<IConfiguration>();
-      return config.GetSection(nameof(TwitchConfig)).Get<TwitchConfig>() ?? throw new InvalidOperationException(
-        "The configuration section for TwitchConfig is missing."
-      );
+      var twitchConfig = config.GetSection(nameof(TwitchConfig)).Get<TwitchConfig>();
+
+      return twitchConfig ?? new TwitchConfig
+      {
+        ClientId = string.Empty,
+        ClientSecret = string.Empty,
+        AccessToken = string.Empty,
+        RefreshToken = string.Empty,
+        OAuthCallbackUrl = string.Empty,
+        MessageTheAiRewardId = string.Empty,
+        EncryptionKey = string.Empty
+      };
     });
 
     // Register in-memory Twitch setup state (loaded from DB at runtime)

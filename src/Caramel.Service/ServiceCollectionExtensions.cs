@@ -35,10 +35,14 @@ public static class ServiceCollectionExtensions
         .AddQuartzHostedService(opt => opt.WaitForJobsToComplete = true);
 
     // Register OBS service
-    _ = services.Configure<ObsConfig>(configuration.GetSection(nameof(ObsConfig)));
-    _ = services.AddSingleton<IOBSService, OBSService>();
-    _ = services.AddSingleton<IOBSStatusProvider>(sp => sp.GetRequiredService<IOBSService>());
-    _ = services.AddHostedService(sp => (OBSService)sp.GetRequiredService<IOBSService>());
+    var obsSection = configuration.GetSection(nameof(ObsConfig));
+    if (obsSection.Exists())
+    {
+      _ = services.Configure<ObsConfig>(obsSection);
+      _ = services.AddSingleton<IOBSService, OBSService>();
+      _ = services.AddSingleton<IOBSStatusProvider>(sp => sp.GetRequiredService<IOBSService>());
+      _ = services.AddHostedService(sp => (OBSService)sp.GetRequiredService<IOBSService>());
+    }
 
     return services;
   }

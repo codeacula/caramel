@@ -8,8 +8,7 @@ using NetCord.Hosting.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-_ = builder.Configuration.AddEnvironmentVariables()
-      .AddUserSecrets<ICaramelDiscord>();
+
 
 var redisConnection = builder.Configuration.GetConnectionString("Redis")
   ?? throw new InvalidOperationException("Redis connection string not found");

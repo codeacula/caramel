@@ -25,15 +25,36 @@ public static class ConfigurationServicesExtensions
 
     ArgumentNullException.ThrowIfNull(configuration);
 
-    // Register all configuration option classes
-    RegisterAndValidateOption<CaramelAiConfigOptions>(services, configuration, CaramelAiConfigOptions.SectionName);
-    RegisterAndValidateOption<DiscordConfigOptions>(services, configuration, DiscordConfigOptions.SectionName);
-    RegisterAndValidateOption<TwitchConfigOptions>(services, configuration, TwitchConfigOptions.SectionName);
-    RegisterAndValidateOption<OBSConfigOptions>(services, configuration, OBSConfigOptions.SectionName);
-    RegisterAndValidateOption<GrpcConfigOptions>(services, configuration, GrpcConfigOptions.SectionName);
+    // Register configuration option classes only when their sections are present.
+    RegisterAndValidateOptionIfPresent<CaramelAiConfigOptions>(services, configuration, CaramelAiConfigOptions.SectionName);
+    RegisterAndValidateOptionIfPresent<DiscordConfigOptions>(services, configuration, DiscordConfigOptions.SectionName);
+    RegisterAndValidateOptionIfPresent<TwitchConfigOptions>(services, configuration, TwitchConfigOptions.SectionName);
+    RegisterAndValidateOptionIfPresent<OBSConfigOptions>(services, configuration, OBSConfigOptions.SectionName);
+    RegisterAndValidateOptionIfPresent<GrpcConfigOptions>(services, configuration, GrpcConfigOptions.SectionName);
     RegisterAndValidateOption<DatabaseConfigOptions>(services, configuration, DatabaseConfigOptions.SectionName);
 
     return services;
+  }
+
+  /// <summary>
+  /// Registers a single configuration option type with validation.
+  /// </summary>
+  /// <param name="services"></param>
+  /// <param name="configuration"></param>
+  /// <param name="sectionName"></param>
+  private static void RegisterAndValidateOptionIfPresent<TOptions>(
+    IServiceCollection services,
+    IConfiguration configuration,
+    string sectionName)
+    where TOptions : ConfigurationOptions, new()
+  {
+    var section = configuration.GetSection(sectionName);
+    if (!section.Exists())
+    {
+      return;
+    }
+
+    RegisterAndValidateOption<TOptions>(services, configuration, sectionName);
   }
 
   /// <summary>

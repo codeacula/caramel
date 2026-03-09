@@ -25,13 +25,10 @@ public static class ServiceCollectionExtensions
   {
     const string connectionKey = "Caramel";
     var connectionString = configuration.GetConnectionString(connectionKey) ?? throw new MissingDatabaseStringException(connectionKey);
-    var superAdminConfig = configuration.GetSection(nameof(SuperAdminConfig)).Get<SuperAdminConfig>() ?? new SuperAdminConfig();
-    var personConfig = configuration.GetSection(nameof(PersonConfig)).Get<PersonConfig>() ?? new PersonConfig();
-
     _ = services.AddDbContextPool<CaramelDbContext>(options => options.UseNpgsql(connectionString));
     _ = services.AddSingleton(new CaramelConnectionString(connectionString));
-    _ = services.AddSingleton(superAdminConfig);
-    _ = services.AddSingleton(personConfig);
+    _ = services.AddSingleton(new SuperAdminConfig());
+    _ = services.AddSingleton(new PersonConfig());
     _ = services.AddScoped<ICaramelDbContext, CaramelDbContext>();
 
 

@@ -21,9 +21,14 @@ public static class ServiceCollectionExtension
       .AddSingleton(services =>
       {
         var config = services.GetRequiredService<IConfiguration>();
-        return config.GetSection(nameof(GrpcHostConfig)).Get<GrpcHostConfig>() ?? throw new InvalidOperationException(
-          "The configuration section for GrpcHostConfig is missing."
-        );
+        return config.GetSection(nameof(GrpcHostConfig)).Get<GrpcHostConfig>() ?? new GrpcHostConfig
+        {
+          Host = "localhost",
+          Port = 5270,
+          UseHttps = true,
+          ValidateSslCertificate = true,
+          ApiToken = string.Empty
+        };
       })
       .AddSingleton<GrpcClientLoggingInterceptor>()
       .AddSingleton(services =>
