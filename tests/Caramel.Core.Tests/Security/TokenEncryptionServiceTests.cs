@@ -4,6 +4,7 @@ using Caramel.Core.Security;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Caramel.Core.Tests.Security;
+
 public class TokenEncryptionServiceTests
 {
   private readonly Mock<IDataProtector> _mockProtector = new();

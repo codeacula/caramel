@@ -171,14 +171,14 @@ internal sealed record TwitchSetupChangedTokensSnapshot
     return tokens is null
       ? null
       : new TwitchSetupChangedTokensSnapshot
-    {
-      UserId = tokens.UserId,
-      Login = tokens.Login,
-      AccessToken = tokens.AccessToken,
-      RefreshToken = tokens.RefreshToken,
-      ExpiresAt = tokens.ExpiresAt,
-      LastRefreshedOn = tokens.LastRefreshedOn,
-    };
+      {
+        UserId = tokens.UserId,
+        Login = tokens.Login,
+        AccessToken = tokens.AccessToken,
+        RefreshToken = tokens.RefreshToken,
+        ExpiresAt = tokens.ExpiresAt,
+        LastRefreshedOn = tokens.LastRefreshedOn,
+      };
   }
 }
 

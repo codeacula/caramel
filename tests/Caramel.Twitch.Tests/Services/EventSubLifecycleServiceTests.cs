@@ -948,11 +948,8 @@ public sealed class EventSubLifecycleServiceTests : IDisposable
 
     _ = _mockRegistrar
       .Setup(r => r.RegisterAsync(It.IsAny<EventSubSubscriptionRegistrationContext>(), It.IsAny<CancellationToken>()))
-      .Returns(async (EventSubSubscriptionRegistrationContext _, CancellationToken ct) =>
-      {
-        _ = registrationStarted.TrySetResult();
-        await Task.Delay(Timeout.Infinite, ct); // Blocked until cancelled
-      });
+      .Callback<EventSubSubscriptionRegistrationContext, CancellationToken>((_, _) => _ = registrationStarted.TrySetResult())
+      .Returns((EventSubSubscriptionRegistrationContext _, CancellationToken ct) => Task.Delay(Timeout.Infinite, ct));
 
     using var cts = new CancellationTokenSource();
 

@@ -21,7 +21,7 @@ public sealed class TwitchSetupStore(
       var db = await session.Query<DbTwitchSetup>()
         .FirstOrDefaultAsync(s => s.Id == DbTwitchSetup.WellKnownId, cancellationToken);
 
-      return db is null ? Result.Ok<Domain.Twitch.TwitchSetup?>(null) : Result.Ok((Domain.Twitch.TwitchSetup?)db);
+      return db is null ? Result.Ok<TwitchSetup?>(null) : Result.Ok((TwitchSetup?)db);
     }
     catch (OperationCanceledException)
     {
@@ -29,16 +29,16 @@ public sealed class TwitchSetupStore(
     }
     catch (InvalidOperationException ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup?>($"Invalid operation retrieving Twitch setup: {ex.Message}");
+      return Result.Fail<TwitchSetup?>($"Invalid operation retrieving Twitch setup: {ex.Message}");
     }
     catch (Exception ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup?>($"Unexpected error retrieving Twitch setup: {ex.Message}");
+      return Result.Fail<TwitchSetup?>($"Unexpected error retrieving Twitch setup: {ex.Message}");
     }
   }
 
-  public async Task<Result<Domain.Twitch.TwitchSetup>> SaveAsync(
-    Domain.Twitch.TwitchSetup setup,
+  public async Task<Result<TwitchSetup>> SaveAsync(
+    TwitchSetup setup,
     CancellationToken cancellationToken = default)
   {
     try
@@ -98,15 +98,15 @@ public sealed class TwitchSetupStore(
     }
     catch (InvalidOperationException ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Invalid operation saving Twitch setup: {ex.Message}");
+      return Result.Fail<TwitchSetup>($"Invalid operation saving Twitch setup: {ex.Message}");
     }
     catch (Exception ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving Twitch setup: {ex.Message}");
+      return Result.Fail<TwitchSetup>($"Unexpected error saving Twitch setup: {ex.Message}");
     }
   }
 
-  public async Task<Result<Domain.Twitch.TwitchSetup>> SaveBotTokensAsync(
+  public async Task<Result<TwitchSetup>> SaveBotTokensAsync(
     TwitchAccountTokens tokens,
     CancellationToken cancellationToken = default)
   {
@@ -150,15 +150,15 @@ public sealed class TwitchSetupStore(
     }
     catch (InvalidOperationException ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Invalid operation saving bot tokens: {ex.Message}");
+      return Result.Fail<TwitchSetup>($"Invalid operation saving bot tokens: {ex.Message}");
     }
     catch (Exception ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving bot tokens: {ex.Message}");
+      return Result.Fail<TwitchSetup>($"Unexpected error saving bot tokens: {ex.Message}");
     }
   }
 
-  public async Task<Result<Domain.Twitch.TwitchSetup>> SaveBroadcasterTokensAsync(
+  public async Task<Result<TwitchSetup>> SaveBroadcasterTokensAsync(
     TwitchAccountTokens tokens,
     CancellationToken cancellationToken = default)
   {
@@ -202,11 +202,11 @@ public sealed class TwitchSetupStore(
     }
     catch (InvalidOperationException ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Invalid operation saving broadcaster tokens: {ex.Message}");
+      return Result.Fail<TwitchSetup>($"Invalid operation saving broadcaster tokens: {ex.Message}");
     }
     catch (Exception ex)
     {
-      return Result.Fail<Domain.Twitch.TwitchSetup>($"Unexpected error saving broadcaster tokens: {ex.Message}");
+      return Result.Fail<TwitchSetup>($"Unexpected error saving broadcaster tokens: {ex.Message}");
     }
   }
 }

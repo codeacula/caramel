@@ -111,7 +111,7 @@ public class ResultExtensionsTests
   {
     // Arrange
     const int expectedValue = 42;
-    async Task<int> operationAsync()
+    static async Task<int> operationAsync()
     {
       return expectedValue;
     }
@@ -596,7 +596,5 @@ public class ResultExtensionsTests
   /// <summary>
   /// Test data class
   /// </summary>
-  private sealed class TestData
-  {
-  }
+  private sealed class TestData;
 }
